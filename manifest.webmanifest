@@ -1,0 +1,45 @@
+{
+  "name": "FABRUM — منصة الهندسة المدنية (ACI 318)",
+  "short_name": "FABRUM",
+  "description": "خريطة ACI 318 التفاعلية، الحسابات، الكميات والجداول للخرسانة المسلحة — Reinforced concrete map, calculators and tables.",
+  "lang": "ar",
+  "dir": "rtl",
+  "id": "./",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#2B2A28",
+  "theme_color": "#2B2A28",
+  "categories": [
+    "education",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
