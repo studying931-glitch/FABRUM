@@ -1,5 +1,5 @@
 /* FABRUM service worker — offline-first shell, network-first for the page so updates arrive */
-const V='fabrum-v36-1';
+const V='fabrum-v36-2';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.svg','./favicon.ico','./icon-maskable-192.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
