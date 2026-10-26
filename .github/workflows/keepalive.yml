@@ -9,5 +9,7 @@ jobs:
     steps:
       - name: Ping site and database
         run: |
-          curl -fsS -o /dev/null -w 'site %{http_code}\n' https://fabrum.fabrum.workers.dev/
-          curl -fsS -w '\ndb %{http_code}\n' -H 'apikey: sb_publishable_IJRPqju-kaooUzO59UlolA_apR5JVIK' 'https://tetrxntlejwjjtasycgh.supabase.co/rest/v1/projects?select=id&limit=1'
+          s=$(curl -sS -o /dev/null -w '%{http_code}' https://fabrum.fabrum.workers.dev/)
+          d=$(curl -sS -o /tmp/db.txt -w '%{http_code}' -H 'apikey: sb_publishable_IJRPqju-kaooUzO59UlolA_apR5JVIK' 'https://tetrxntlejwjjtasycgh.supabase.co/rest/v1/projects?select=id&limit=1')
+          echo "site=$s db=$d"; head -c 300 /tmp/db.txt; echo
+          [ "$s" = "200" ] && [ "$d" -ge 200 ] && [ "$d" -lt 500 ]
