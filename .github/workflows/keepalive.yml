@@ -1,0 +1,13 @@
+name: keepalive
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping site and database
+        run: |
+          curl -fsS -o /dev/null -w 'site %{http_code}\n' https://fabrum.fabrum.workers.dev/
+          curl -fsS -w '\ndb %{http_code}\n' -H 'apikey: sb_publishable_IJRPqju-kaooUzO59UlolA_apR5JVIK' 'https://tetrxntlejwjjtasycgh.supabase.co/rest/v1/projects?select=id&limit=1'
