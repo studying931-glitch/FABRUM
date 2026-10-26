@@ -4545,7 +4545,7 @@ input[type=range],input[type=checkbox],input[type=radio]{accent-color:var(--acc)
 /* ===== FABRUM: نشاطاتي (accounts + saved activities + projects + export) ===== */
 (function(){
 'use strict';
-const CFG=window.FAB_SB||{url:'',key:''};
+const CFG=window.FAB_SB||{url:'https://tetrxntlejwjjtasycgh.supabase.co',key:'sb_publishable_IJRPqju-kaooUzO59UlolA_apR5JVIK'};
 const ON=!!(CFG.url&&CFG.key&&CFG.url.indexOf('__')<0);
 const E=esc6,Q=id=>document.getElementById(id);
 const J=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
@@ -4562,7 +4562,7 @@ let BIND=null,D={a:[],p:[],da:[],dp:[]},SY={st:'',busy:false,err:''},PEND=null,A
 
 /* ---------- auth (Supabase GoTrue over fetch) ---------- */
 const AU={s:J(KAU),
- hdr(tok){return{'apikey':CFG.key,'Authorization':'Bearer '+(tok||CFG.key),'Content-Type':'application/json'}},
+ hdr(tok){const h={'apikey':CFG.key,'Content-Type':'application/json'};if(tok)h.Authorization='Bearer '+tok;return h},
  async fromHash(){const h=location.hash;if(!/access_token=|error_description=/.test(h))return false;const p=new URLSearchParams(h.slice(1));history.replaceState(null,'',location.pathname+location.search);
   if(p.get('error_description')){toast6(p.get('error_description').replace(/\+/g,' '));return false}
   const tok=p.get('access_token');try{const r=await fetch(CFG.url+'/auth/v1/user',{headers:AU.hdr(tok)});if(!r.ok)throw 0;const u=await r.json(),m=u.user_metadata||{};
