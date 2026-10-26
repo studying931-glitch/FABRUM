@@ -4705,7 +4705,7 @@ function selList(){return D.a.filter(a=>AV.sel.has(a.id)).sort((x,y)=>x.c-y.c)}
 function delA(ids){ids.forEach(id=>{const i=D.a.findIndex(x=>x.id==id);if(i>=0){D.a.splice(i,1);D.da.push(id)}if(BIND&&BIND.id==id)BIND=null;AV.sel.delete(id)});persist();schedSync();render();inject(true)}
 function dupA(a){const b=clone(a);b.id=uid();b.n=(a.n+' (نسخة)').slice(0,120);b.c=b.u=now();b.dirty=true;b._v=1;D.a.push(b);persist();schedSync();return b}
 
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-ac]');if(!b)return;const a=b.dataset.ac,id=b.dataset.id;
+document.addEventListener('click',async e=>{if(e.target.closest&&e.target.closest('#acb')){act('site:acts');return}const b=e.target.closest('[data-ac]');if(!b)return;const a=b.dataset.ac,id=b.dataset.id;
  if(a=='save'){saveNew();return}
  if(a=='list'){act('site:acts');return}
  if(a=='dupb'){const x=BIND&&actById(BIND.id);if(x){const n=dupA(x);BIND.id=n.id;inject(true);toast6('حُفظت نسخة جديدة')}return}
