@@ -17,7 +17,7 @@
 <script>
 (function(){
  var isFile=location.protocol==='file:';
- if('serviceWorker' in navigator&&!isFile){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+ if('serviceWorker' in navigator&&!isFile){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').then(function(r){try{r.update()}catch(e){}}).catch(function(){});var hadC=!!navigator.serviceWorker.controller,rl=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(hadC&&!rl){rl=true;location.reload()}})})}
  var dp=null,bar=null;
  function T(){return window.LANG==='en'?{t:'Install FABRUM as an app',i:'Install',c:'Not now'}:{t:'ثبّت FABRUM كتطبيق على جهازك',i:'تثبيت',c:'لاحقًا'}}
  function hide(keep){if(bar)bar.classList.remove('on');if(keep){try{localStorage.setItem('fab_pwa_no',String(Date.now()))}catch(e){}}}
