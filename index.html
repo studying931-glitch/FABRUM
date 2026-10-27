@@ -6035,7 +6035,7 @@ class Ctx{constructor(S,ox,oy,k){this.S=S;this.ox=ox;this.oy=oy;this.k=k}
  call(px,py,tx,ty,ar,en,o){o=o||{};this.ln('TEXT',px,py,tx,ty);this.ci('TEXT',px,py,this.pm(.5),1);const right=o.a?o.a:(tx>=px?'l':'r');this.tx('TEXT',tx+(right=='l'?this.pm(1):-this.pm(1)),ty-this.pm(.8),ar,en,{a:right})}
  mark(x,y,m){this.ci('TEXT',x,y,this.pm(2.6));this.tx('TEXT',x,y-this.pm(.9),m,m,{a:'c'})}
 }
-class Sheet{constructor(){this.e=[];this.N=1;this.dm=[]}}
+class Sheet{constructor(){this.e=[];this.N=1;this.dm=[];this.views=[]}}
 SD.Ctx=Ctx;SD.nice=nice;SD.LAY=LAY;
 SD.LAPF=()=>(window.SMX&&SMX.on)?SMX.lap:40;
 SD.HKF=db=>Math.max((window.SMX&&SMX.on)?SMX.hkm:150,((window.SMX&&SMX.on)?SMX.hkf:12)*db);
@@ -6061,7 +6061,7 @@ SD.build=function(k){const def=SD.defs[k];if(!def)return null;let sp;try{sp=def(
  S.N=Math.max.apply(null,pl.map(p=>p.s).concat([1]));const N=S.N;S.title=sp.title;S.k=k;S.sp=sp;S.over=over;S.meta=SD.meta?Object.assign({},SD.meta):null;
  /* views */
  pl.forEach(p=>{const kk=N/p.s,pw=p.v.w/p.s,x0=p.v.x0||0,y0=p.v.y0||0,ox=(p.x+p.px+(p.sw-p.px-p.pr-pw)/2)*N-x0*kk,oy=(p.y+p.rh-CAP-p.py)*N-p.v.h*kk-y0*kk;const C=new Ctx(S,ox,oy,kk);
-  const cx=new Ctx(S,0,0,1);cx.tx('TEXT',(p.x+p.sw/2)*N,(p.y+p.rh-4)*N,p.v.name[0]+'   1:'+p.s,p.v.name[1]+'   SCALE 1:'+p.s,{h:3.5,a:'c',b:1});
+  S.views.push({name:p.v.name,x0:p.x*N,x1:(p.x+p.sw)*N,y0:p.y*N,y1:(p.y+p.rh)*N});const cx=new Ctx(S,0,0,1);cx.tx('TEXT',(p.x+p.sw/2)*N,(p.y+p.rh-4)*N,p.v.name[0]+'   1:'+p.s,p.v.name[1]+'   SCALE 1:'+p.s,{h:3.5,a:'c',b:1});
   p.v.draw(C,p.s)});
  S.nv=S.e.length;SD.frame(S,sp,N);return S};
 SD.frame=function(S,sp,N){const C=new Ctx(S,0,0,1),f=(l,x1,y1,x2,y2)=>C.ln(l,x1*N,y1*N,x2*N,y2*N),t=(x,y,ar,en,o)=>C.tx('TEXT',x*N,y*N,ar,en,o),Lg=x=>typeof x=='string'?[x,x]:x;
@@ -6912,13 +6912,20 @@ function warnHTML(w){if(!w.length)return `<p class='smok'>✓ ${B37('لا توج
  const ic={err:'⛔',warn:'⚠️',info:'ℹ️'};return `<ul class='smw'>${w.map(x=>`<li class='${x.l}'>${ic[x.l]||''} ${B37(x.ar,x.en)}</li>`).join('')}</ul>`}
 function scheduleHTML(o,cnt){const rows=o.bars.map(b=>`<tr><td>${b.m}</td><td>${hh(b.loc)}</td><td>${b.db}</td><td>${nz(b.n,Math.abs(b.n-Math.round(b.n))<1e-9?0:2)}</td><td>${nz(b.L,2)}</td><td>${nz(b.len,2)}</td><td>${nz(b.kg,1)}</td></tr>`).join('');
  return `<div class='tbl wide'><table class='sm'><tr><th>${B37('الرمز','Mark')}</th><th>${B37('الموقع','Location')}</th><th>Ø</th><th>${B37('العدد','No.')}</th><th>${B37('طول القضيب م','Bar length m')}</th><th>${B37('الطول الكلي م','Total m')}</th><th>${B37('الوزن كغم','Weight kg')}</th></tr>${rows}<tr><th colspan='6'>${B37('المجموع لعنصر واحد','Total for one element')}</th><th>${nz(o.kg,1)}</th></tr>${cnt>1?`<tr><th colspan='6'>${B37('× '+cnt+' عنصر متماثل','× '+cnt+' identical elements')}</th><th>${nz(o.kg*cnt,1)}</th></tr>`:''}</table></div><p class='nt'>${B37('الخرسانة','Concrete')}: <b>${nz(o.vol,3)} m³</b>${cnt>1?` (× ${cnt} = <b>${nz(o.vol*cnt,3)} m³</b>)`:''}${o.per?' — '+hh(o.per):''}</p>`}
+let PZ=1,PV=-1;const viewMode=()=>S.meta.view=='true'?'true':'big';
+const previewSVG=Sh=>{let s=svgFor(Sh);const v=PV>=0&&Sh.views&&Sh.views[PV];if(v){const H=297*Sh.N;s=s.replace(/viewBox='[^']*'/,`viewBox='${v.x0.toFixed(0)} ${(H-v.y1).toFixed(0)} ${(v.x1-v.x0).toFixed(0)} ${(v.y1-v.y0).toFixed(0)}'`)}
+ return s.replace('<svg ',`<svg style='width:${Math.round(PZ*100)}%;min-width:${v?0:Math.round(820*PZ)}px' `)};
 let pvT=0;
 function preview(){clearTimeout(pvT);pvT=setTimeout(doPreview,120)}
 function doPreview(){const box=$('smprev');if(!box)return;const e=cur();if(!e){box.innerHTML='';return}
- const r=compute(S.sel);let h='';
+ const vm=viewMode(),r=compute(S.sel,0,vm=='big');let h='';
  if(r.err||!r.svg){h=`<p class='bad'>${B37('تعذّر إنشاء اللوحة من هذه القيم. راجع الأرقام (أبعاد وتسليح موجبة ومتناسقة).','Could not build the sheet from these values. Check the numbers (positive, consistent dimensions and reinforcement).')}</p>${warnHTML(r.warn||[])}`;box.innerHTML=h;return}
- h=`<h3 class='smh'>${B37('المعاينة الحية','Live preview')} <small>${B37('المقياس','Scale')} 1:${r.N}${S.meta.paper=='A4'?' ('+L2('A3 ثم تُطبع A4','A3 layout printed on A4')+')':''}</small></h3>${warnHTML(r.warn)}<div class='smsvg'>${svgFor(r.S)}</div>${scheduleHTML(r.o,e.cnt)}`;
+ h=`<h3 class='smh'>${B37('المعاينة الحية','Live preview')} <small>${B37('المقياس','Scale')} 1:${r.N}${S.meta.paper=='A4'?' ('+L2('A3 ثم تُطبع A4','A3 layout printed on A4')+')':''}</small></h3>${warnHTML(r.warn)}${viewBar(r.S,vm)}<div class='smsvg'>${previewSVG(r.S)}</div>${scheduleHTML(r.o,e.cnt)}`;
  box.innerHTML=h;const n=$('smtot');if(n)n.innerHTML=totals()}
+function viewBar(Sh,vm){const vs=Sh.views||[];if(PV>=vs.length)PV=-1;const on=c=>c?' on':'';
+ return `<div class='smtb'><span class='smseg'><button type='button' data-sma='vw:big' class='${on(vm=='big').trim()}'>🔍 ${B37('مقاطع مكبّرة للوضوح','Enlarged details')}</button><button type='button' data-sma='vw:true' class='${on(vm=='true').trim()}'>📏 ${B37('حجم حقيقي 1:1','True size 1:1')}</button></span><span class='smseg'><button type='button' data-sma='zm:-' aria-label='-'>−</button><b>${Math.round(PZ*100)}%</b><button type='button' data-sma='zm:+' aria-label='+'>＋</button><button type='button' data-sma='zm:0' aria-label='reset'>⟲</button></span></div>
+ <div class='smchips'><button type='button' data-sma='pv:-1' class='smchip${on(PV<0).trim()?' on':''}'>${B37('اللوحة كاملة','Whole sheet')}</button>${vs.map((v,i)=>`<button type='button' data-sma='pv:${i}' class='smchip${PV==i?' on':''}'>${B37(v.name[0],v.name[1])}</button>`).join('')}</div>
+ <p class='nt'>${vm=='big'?B37('المقاطع والتفاصيل مكبّرة ليسهل قراءتها، ومقياس كل منظر مكتوب على عنوانه. للقياس الدقيق بالأوتوكاد اختر «حجم حقيقي».','Sections and details are enlarged so they are readable, and each view title carries its own scale. For exact measuring in AutoCAD choose "True size".'):B37('كل المناظر بالحجم الحقيقي 1:1 فالمسافات المقاسة تطابق الأرقام. كبّر أو اختر منظرًا لرؤية التفاصيل.','All views are full size 1:1, so measured distances match the numbers. Zoom in or pick a view to see the details.')}</p>`}
 function totals(){if(!S.list.length)return '';let kg=0,vol=0,rows='';
  S.list.forEach((e,i)=>{const r=SM.sheet(e,ctxFor(i));if(!r.o)return;const k=r.o.kg*e.cnt,v=r.o.vol*e.cnt;kg+=k;vol+=v;rows+=`<tr><td>${i+1}</td><td>${E(e.name)}</td><td>${E(L2(SPEC[e.k].ar,SPEC[e.k].en))}</td><td>${e.cnt}</td><td>${nz(r.o.kg,1)}</td><td>${nz(k,1)}</td><td>${nz(v,3)}</td></tr>`});
  return `<div class='tbl wide'><table class='sm'><tr><th>#</th><th>${B37('العنصر','Element')}</th><th>${B37('النوع','Type')}</th><th>${B37('العدد','No.')}</th><th>${B37('حديد (كغم) للواحد','Steel (kg) each')}</th><th>${B37('حديد كلي (كغم)','Total steel (kg)')}</th><th>${B37('خرسانة (م³)','Concrete (m³)')}</th></tr>${rows}<tr><th colspan='5'>${B37('مجموع الملف','File total')}</th><th>${nz(kg,1)}</th><th>${nz(vol,3)}</th></tr></table></div><p class='nt'>${B37('عناصر الرافت والسقف والجدران والسلالم المحسوبة «لكل متر» أو «لكل م²» تُضرب كميتها في العدد كما هي؛ اجعل العدد مساويًا للمتراج أو المساحة إن أردت الكمية الكلية.','Elements quoted "per metre" or "per m²" are multiplied by the count as they are; set the count to the length or area if you want the full quantity.')}</p>`}
@@ -6950,7 +6957,10 @@ document.addEventListener('change',ev=>{const t=ev.target;if(!t||!t.closest||!t.
  else if(t.dataset.smm=='paper'){preview()}});
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('#sm37 [data-sma]');if(!b)return;const a=b.dataset.sma,e=cur();
  if(a=='add'){const k=$('smnew').value;S.list.push(newEntry(k));S.sel=S.list.length-1;save();renderAll();return}
- if(a.indexOf('sel:')==0){S.sel=+a.slice(4);save();renderList();renderForm();preview();return}
+ if(a.indexOf('vw:')==0){S.meta.view=a.slice(3);save();preview();return}
+ if(a.indexOf('zm:')==0){const z=a.slice(3);PZ=z=='0'?1:Math.max(.5,Math.min(8,z=='+'?PZ*1.5:PZ/1.5));preview();return}
+ if(a.indexOf('pv:')==0){PV=+a.slice(3);preview();return}
+ if(a.indexOf('sel:')==0){PV=-1;S.sel=+a.slice(4);save();renderList();renderForm();preview();return}
  if(a=='dup'&&e){const c=JSON.parse(JSON.stringify(e));c.id=uid();c.name=e.name+' (2)';S.list.splice(S.sel+1,0,c);S.sel++;save();renderAll();return}
  if(a=='del'&&e){S.list.splice(S.sel,1);S.sel=Math.max(0,Math.min(S.sel,S.list.length-1));save();renderAll();return}
  if(a=='up'&&S.sel>0){const x=S.list.splice(S.sel,1)[0];S.sel--;S.list.splice(S.sel,0,x);save();renderAll();return}
@@ -6968,15 +6978,15 @@ function askScale(items,kind){return new Promise(res=>{const old=$('smdlg');if(o
  <p class='nt'>${B37('الرسم نفسه دائمًا بالحجم الحقيقي 1:1 (وحدة الرسم = 1 مم) فتطابق المسافات المقاسة الأرقام المكتوبة. المقياس هنا هو مقياس طباعة اللوحة على الورق: يحدد حجم الإطار والنصوص. اطبع أو اسحب بنفس المقياس الذي تختاره.','The drawing itself is always full size 1:1 (1 drawing unit = 1 mm), so measured distances match the printed dimensions. The scale here is the plot scale of the sheet: it sets the frame and text size. Plot or place it at the scale you choose.')}</p>
  <label><span>${B37('مقياس الطباعة','Plot scale')}</span><select id='smdsc'><option value='0'>${L2('حسب إعداد كل عنصر (تلقائي افتراضيًا)','Per element setting (automatic by default)')}</option>${SCL.map(n=>`<option value='${n}'>1:${n}</option>`).join('')}</select></label>
  <div id='smdtb'></div>
- <label class='smdck'><input type='checkbox' id='smdenl'> ${B37('مقاطع وتفاصيل مكبّرة للوضوح (غير مطابقة للقياس في AutoCAD)','Enlarged sections and details for readability (not measurable true size in AutoCAD)')}</label>
+ <label class='smdck'><input type='checkbox' id='smdenl'> ${B37('مقاطع وتفاصيل مكبّرة للوضوح (على كل منظر مقياسه). غير مطابقة للقياس بالأوتوكاد، فاتركها بدون تفعيل إذا تريد قياسات حقيقية.','Enlarged sections and details for readability (each view shows its own scale). Not measurable true size in AutoCAD, so leave it off when you need true measurements.')}</label>
  <div class='smdbtn'><button type='button' id='smdok' class='smdgo'>${B37('تصدير','Export')}</button><button type='button' id='smdno'>${B37('إلغاء','Cancel')}</button></div></div>`;
  document.body.appendChild(d);
- const sel=$('smdsc'),ck=$('smdenl');sel.value=String(LASTASK.scale);if(sel.value!=String(LASTASK.scale))sel.value='0';ck.checked=!!LASTASK.enl;
+ const sel=$('smdsc'),ck=$('smdenl');sel.value=String(LASTASK.scale);if(sel.value!=String(LASTASK.scale))sel.value='0';ck.checked=kind=='dxf'?!!LASTASK.dxf:(LASTASK.prn!==undefined?!!LASTASK.prn:!(S&&S.meta&&S.meta.view=='true'));
  const paint=()=>{const sc=+sel.value||0,enl=ck.checked;let h=`<table class='sm'><tr><th>${B37('اللوحة','Sheet')}</th><th>${B37('المقياس','Scale')}</th><th>${B37('الحالة','Status')}</th></tr>`;
   items.forEach(it=>{let r=null;try{r=it.build(sc,enl)}catch(x){console.log('askScale',x)}
    h+=`<tr><td>${E(it.name)}</td>`+(r?`<td>1:${r.N}</td><td class='${r.over.length?'smbad':'smgood'}'>${r.over.length?'⚠ '+B37('لا تتسع المناظر التالية بهذا المقياس: ','These views do not fit at this scale: ')+E(r.over.join('، ')):'✓ '+B37('تتسع على الورق','Fits the sheet')}</td>`:`<td>-</td><td class='smbad'>⛔ ${B37('تعذّر الرسم','Could not draw')}</td>`)+'</tr>'});
   $('smdtb').innerHTML=h+'</table>'};
- const close=v=>{document.removeEventListener('keydown',kd,true);d.remove();if(v)LASTASK={scale:v.scale,enl:v.enl};res(v)};
+ const close=v=>{document.removeEventListener('keydown',kd,true);d.remove();if(v){LASTASK.scale=v.scale;if(kind=='dxf')LASTASK.dxf=v.enl;else LASTASK.prn=v.enl}res(v)};
  const kd=e=>{if(e.key=='Escape'){e.stopPropagation();close(null)}};document.addEventListener('keydown',kd,true);
  sel.addEventListener('change',paint);ck.addEventListener('change',paint);
  $('smdok').addEventListener('click',()=>close({scale:+sel.value||0,enl:ck.checked}));$('smdno').addEventListener('click',()=>close(null));
@@ -7025,7 +7035,7 @@ const css=`.sm37 .smh{margin:18px 0 6px;font-size:17px}.sm37 .smh small{font-wei
 .smbox{border:1px solid var(--line);border-radius:12px;padding:6px 12px;margin:10px 0}.smbox summary{cursor:pointer;font-weight:700;padding:4px 0}.smchips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}.smchip{display:flex;flex-direction:column;align-items:flex-start;gap:0;text-align:start}.smchip small{font-size:11px;color:var(--mute)}.smchip.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--bg))}
 .smadd{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}.smadd select{max-width:260px}.smdel{color:#c0392b}.smx{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:6px 0;padding:8px;border:1px dashed var(--line);border-radius:10px}.smx label{flex-direction:column;width:90px}.smx input[type=text]{width:150px}
 .smw{list-style:none;padding:0;margin:8px 0}.smw li{padding:6px 10px;margin:4px 0;border-radius:8px;border:1px solid var(--line);font-size:13px}.smw li.err{background:color-mix(in srgb,#c0392b 12%,var(--bg));border-color:#c0392b}.smw li.warn{background:color-mix(in srgb,#e0a800 14%,var(--bg));border-color:#d6a100}.smok{color:#1e8e3e;font-size:13px}
-.smsvg{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;-webkit-overflow-scrolling:touch}.smsvg svg{display:block;width:100%;min-width:820px;height:auto;background:#fff}.smex{display:flex;flex-wrap:wrap;gap:8px}.smex button{display:flex;flex-direction:column;align-items:flex-start;text-align:start;min-width:170px}.smex small{color:var(--mute);font-size:11px}.smb{margin:6px 0}
+.smsvg{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;-webkit-overflow-scrolling:touch}.smsvg svg{display:block;height:auto;background:#fff;max-width:none}.smtb{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}.smseg{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:10px;padding:3px}.smseg button{border:0!important;padding:5px 10px!important}.smseg button.on{background:color-mix(in srgb,var(--acc) 16%,var(--bg))!important;color:var(--acc)!important;font-weight:700}.smseg b{min-width:44px;text-align:center;font-size:13px}.smex{display:flex;flex-wrap:wrap;gap:8px}.smex button{display:flex;flex-direction:column;align-items:flex-start;text-align:start;min-width:170px}.smex small{color:var(--mute);font-size:11px}.smb{margin:6px 0}
 #smpr{display:none}
 .smdlg{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}.smdbox{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:14px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.4)}.smdbox h3{margin:0}.smdbox select{padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}.smdbox table{width:100%;font-size:13px}.smdbox td.smbad{color:#c0392b}.smdbox td.smgood{color:#1e8e3e}.smdck{flex-direction:row!important;align-items:flex-start;gap:8px!important}.smdbtn{display:flex;gap:8px;justify-content:flex-end}.smdbtn button{padding:8px 16px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;font:inherit}.smdgo{border-color:var(--acc)!important;color:var(--acc)!important;font-weight:700}`;
 document.head.insertAdjacentHTML('beforeend','<style id="smcss">'+css+'</style>');
@@ -7033,7 +7043,7 @@ document.head.insertAdjacentHTML('beforeend','<style id="smcss">'+css+'</style>'
 function summary(T){return T.list.map(e=>e.name+(e.cnt>1?' ×'+e.cnt:'')).join('، ').slice(0,110)}
 function report(T){T=T||S;if(!T||!T.list||!T.list.length)return{html:'<p>-</p>',sheets:[]};let h='',sh=[];const X=window.XT6||(x=>x);
  const mp=T.meta||{};h+=`<table><tr><td>${B37('المشروع','Project')}</td><td data-keep='1'>${E(mp.pj||'-')}</td></tr><tr><td>${B37('المصمم / المراجع','Designed / checked by')}</td><td data-keep='1'>${E(mp.des||'-')} / ${E(mp.chk||'-')}</td></tr></table>`;
- T.list.forEach((e,i)=>{const r=SM.sheet(e,ctxF(T,i));if(!r.S||!r.o){h+=`<h3 data-keep='1'>${i+1}. ${E(e.name)}</h3><p>-</p>`;return}
+ T.list.forEach((e,i)=>{const r=SM.sheet(e,Object.assign(ctxF(T,i),{enl:1}));if(!r.S||!r.o){h+=`<h3 data-keep='1'>${i+1}. ${E(e.name)}</h3><p>-</p>`;return}
   h+=`<h3 data-keep='1'>${i+1}. ${E(e.name)} — ${B37(SPEC[e.k].ar,SPEC[e.k].en)}${e.cnt>1?' ×'+e.cnt:''}</h3><div style='background:#fff;border:1px solid #888'>${svgFor(r.S).replace(/min-width:[^;']*;?/,'')}</div>${scheduleHTML(r.o,e.cnt)}`;
   const rows=[[X('الرمز'),X('الموقع'),'Ø',X('العدد'),X('طول القضيب م'),X('الطول الكلي م'),X('الوزن كغم')]].concat(r.o.bars.map(b=>[b.m,hh(b.loc),b.db,+(+b.n).toFixed(2),+(+b.L).toFixed(2),+(+b.len).toFixed(2),+(+b.kg).toFixed(1)]));rows.push(['','','','','',X('المجموع'),+(+r.o.kg).toFixed(1)]);
   sh.push({name:(i+1)+'. '+String(e.name).slice(0,24),rows:rows})});
