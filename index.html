@@ -5631,7 +5631,7 @@ function mkMenu37(){
   qa('#mlist details').forEach(d=>{const has=[...d.querySelectorAll('.mi')].some(b=>b.style.display!='none');d.style.display=has?'':'none';if(has)d.open=true});
   if(!any)l.insertAdjacentHTML('beforeend',`<p class='nt'>${B('لا نتائج','No results')}</p>`)}
 }
-mkMenu=mkMenu37;window.mkMenu=mkMenu;
+mkMenu=mkMenu37;window.mkMenu=mkMenu;window.MS37=MS;
 /* ================= Phase 2: beam with given section (T/L, doubly, torsion, deflection, cracking) ================= */
 var LASTBX=null;
 const BXSUP=['بسيط','طرف مستمر','طرفان مستمران','كابولي'];
@@ -7619,6 +7619,181 @@ bk.addEventListener('click',()=>{if(depth>0)history.back();else if(cur&&cur!='ho
 ui();
 new MutationObserver(ui).observe(document.documentElement,{attributes:true,attributeFilter:['lang','dir']});
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#lg'))setTimeout(ui,80)});
+})();
+</script>
+<script>/*ux39*/
+(()=>{
+const T=(a,e)=>window.B37(a,e),EN=()=>window.LANG=='en',P=(a,e)=>EN()?e:a;
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MS=window.MS37,G=window.G6;
+const NF=(x,d)=>(+x).toLocaleString('en-US',{maximumFractionDigits:d==null?2:d});
+/* ===================== titles of every tool ===================== */
+function titles(){const m={};MS.forEach(s=>s[2].forEach(it=>{if(/^(node|path|mwshow|tour|dl|about|mail|map|list|tree|home)/.test(it[0]))return;m[it[0]]={t:it[1],k:it[2]||''}}));Object.entries(DS).forEach(([k,x])=>{m['calc:'+k]={t:x.n,k:''}});return m}
+let TT=null;const tt=()=>TT||(TT=titles());
+/* ===================== favourites + recent tools ===================== */
+const gl=k=>{const v=st.g(k);return Array.isArray(v)?v:[]};
+const isFav=k=>gl('tfav').includes(k);
+function toggleFav(k){let a=gl('tfav');a=a.includes(k)?a.filter(x=>x!=k):[k,...a];st.s('tfav',a);try{mkMenu()}catch(e){}}
+function pushRec(k){if(!tt()[k])return;let a=gl('trec').filter(x=>x!=k);a.unshift(k);st.s('trec',a.slice(0,10))}
+const chips=(L)=>L.filter(k=>tt()[k]).map(k=>`<button data-a='${esc(k)}'>${esc(tt()[k].t)}</button>`).join(' ');
+function curKey(){const p=document.body.dataset.pg;if(p=='calc')return 'calc:'+dm;if(p=='site')return 'site:'+CUR6;return p}
+function injectStar(){try{const k=curKey();if(!tt()[k])return;const p=document.body.dataset.pg,root=p=='calc'?$('design'):$('pg');if(!root||root.hidden)return;
+ root.querySelectorAll('.tfr').forEach(e=>e.remove());
+ const f=isFav(k),h=`<div class='tfr'><button class='tfv' data-tf='${esc(k)}' aria-pressed='${f}'>${f?'★ '+P('في مفضلة الأدوات','In favourite tools'):'☆ '+P('أضف الأداة للمفضلة','Add tool to favourites')}</button></div>`;
+ const g=root.querySelector('.tg6');if(g)g.insertAdjacentHTML('beforebegin',h);else{const t=root.querySelector('h2');if(t)t.insertAdjacentHTML('afterend',h);else root.insertAdjacentHTML('afterbegin',h)}}catch(e){}}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-tf]');if(!b)return;toggleFav(b.dataset.tf);injectStar()});
+document.head.insertAdjacentHTML('beforeend',`<style id='ux39css'>.tfr{margin:6px 0}.tfv{border-radius:999px;padding:5px 14px;font-size:13px}.tfv[aria-pressed=true]{background:var(--gold,#e0a02f);color:#1a1a1a}.sr39 .grp{margin:12px 0}.sr39 .grp h3{margin:6px 0}.sr39 .hit{display:block;width:100%;text-align:start;margin:4px 0;padding:8px 12px;border-radius:10px}.sr39 .hit small{display:block;opacity:.75;font-weight:400;margin-top:2px}.pj39 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card)}.pj39 .row.on{border-color:var(--gold,#e0a02f)}.pj39 .row b{flex:1 1 140px}.pj39 .row button{padding:5px 10px;font-size:13px}.pj39 input[type=text],.pj39 input:not([type]){width:100%}.ctl{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}.ctl label{display:flex;flex-direction:column;font-size:13px;gap:2px}.ctl input[type=range]{width:100%}.ctl output{font-weight:700}.ib39 svg,.ss39 svg{display:block;width:100%!important;min-width:0!important;max-width:520px;height:auto;margin:6px auto}.ib39 .ok{color:#1e8e3e;font-weight:700}.ib39 .no{color:#c0392b;font-weight:700}.ib39 table{width:100%;min-width:0!important}</style>`);
+/* ===================== projects ===================== */
+const PK=k=>k=='s6'||k=='bbs'||k=='qrows'||k=='gl'||k=='prj'||k=='prjinfo'||k=='sm37'||k.indexOf('in_')==0;
+const pkeys=()=>{const o=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('fab_')==0&&PK(k.slice(4)))o.push(k)}return o};
+const projs=()=>{const o=st.g('projects');return o&&typeof o=='object'?o:{}};
+const snapshot=()=>{try{sv6()}catch(e){}const d={};pkeys().forEach(k=>{d[k]=localStorage.getItem(k)});return d};
+const active=()=>{const a=st.g('projactive');return a&&projs()[a]?a:null};
+function saveProj(id,name){const P0=projs();const prev=P0[id];P0[id]={n:name!=null?name:(prev?prev.n:'مشروع'),t:Date.now(),d:snapshot()};
+ try{localStorage.setItem('fab_projects',JSON.stringify(P0));return true}catch(e){toast6(P('تعذر الحفظ: ذاكرة المتصفح ممتلئة. صدّر مشروعًا واحذف غيره.','Could not save: browser storage is full. Export a project and delete others.'));return false}}
+function openProj(id){const p=projs()[id];if(!p)return;if(active()&&active()!=id)saveProj(active());NOSAVE=true;pkeys().forEach(k=>localStorage.removeItem(k));Object.entries(p.d).forEach(([k,v])=>{try{localStorage.setItem(k,v)}catch(e){}});st.s('projactive',id);setTimeout(()=>location.reload(),450)}
+function newProj(){if(active())saveProj(active());NOSAVE=true;pkeys().forEach(k=>localStorage.removeItem(k));st.s('projactive',null);setTimeout(()=>location.reload(),450)}
+const uid=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+let autoT=0,NOSAVE=false;function auto(){const a=active();if(!a||NOSAVE)return;if(Date.now()-autoT<4000)return;autoT=Date.now();saveProj(a)}
+addEventListener('pagehide',()=>{const a=active();if(a&&!NOSAVE)saveProj(a)});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState=='hidden'){const a=active();if(a&&!NOSAVE)saveProj(a)}});
+const cnt=d=>{let n=0;Object.keys(d).forEach(k=>{if(k=='fab_s6'){try{n+=Object.keys(JSON.parse(d[k])).length}catch(e){}}else n++});return n};
+SITE.projects=function(){const pj=projs(),a=active(),ids=Object.keys(pj).sort((x,y)=>pj[y].t-pj[x].t);
+ return `<div class='gp pj39'><h2>${T('مشاريعي المحفوظة','My saved projects')}</h2><p class='nt'>${T('احفظ كل مدخلات الأدوات (الحسابات والكميات والمساحة والتقارير) باسم مشروع على هذا الجهاز، وارجع له متى ما تريد. أي تغيير تسويه بالمشروع المفتوح ينحفظ تلقائيًا. المشاريع تنحفظ بمتصفح هذا الجهاز فقط، فصدّر ملفًا إذا تريد تنقلها لجهاز آخر أو تحتفظ بنسخة.','Save all tool inputs (design calculations, quantities, surveying and reports) under a project name on this device and come back to it any time. Changes you make in the open project are saved automatically. Projects live in this device browser only, so export a file if you want to move one to another device or keep a copy.')}</p>
+ <div class='box'><h3>${T('المشروع الحالي','Current project')}</h3><p>${a?`<b>${esc(pj[a].n)}</b> <span class='nt'>(${T('محفوظ تلقائيًا','autosaved')})</span>`:`<span class='nt'>${T('لا يوجد مشروع مفتوح: المدخلات الحالية غير مرتبطة باسم.','No project open: the current inputs are not tied to a name.')}</span>`}</p>
+ <label>${T('اسم المشروع','Project name')}<input id='pjn39' type='text' maxlength='60' value='${a?esc(pj[a].n):''}'></label>
+ <p><button data-px='save'>${a?T('💾 حفظ باسم جديد','💾 Save as a new project'):T('💾 حفظ كمشروع','💾 Save as project')}</button> ${a?`<button data-px='rename'>${T('✏️ تغيير الاسم','✏️ Rename')}</button>`:''} <button data-px='new'>${T('🆕 مشروع جديد (فارغ)','🆕 New empty project')}</button></p></div>
+ <div class='box'><h3>${T('المشاريع المحفوظة','Saved projects')} (${ids.length})</h3>${ids.length?ids.map(i=>`<div class='row${i==a?' on':''}'><b>${esc(pj[i].n)}</b><small class='nt'>${new Date(pj[i].t).toLocaleString('en-GB')} · ${cnt(pj[i].d)} ${T('عنصر','items')}</small><button data-px='open|${i}'>${T('فتح','Open')}</button><button data-px='upd|${i}'>${T('تحديث بالحالي','Overwrite with current')}</button><button data-px='exp|${i}'>${T('تصدير','Export')}</button><button data-px='del|${i}'>${T('حذف','Delete')}</button></div>`).join(''):`<p class='nt'>${T('ما اكو مشاريع محفوظة بعد.','No saved projects yet.')}</p>`}
+ <p><label class='btn'>${T('📥 استيراد مشروع من ملف','📥 Import a project file')}<input type='file' id='pjf39' accept='.json,application/json' hidden></label></p></div>${WN6}</div>`};
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-px]');if(!b)return;const [op,id]=b.dataset.px.split('|'),nm=()=>(($('pjn39')||{}).value||'').trim()||P('مشروع بدون اسم','Untitled project');
+ if(op=='save'){const i=uid();if(saveProj(i,nm())){st.s('projactive',i);toast6(P('تم حفظ المشروع','Project saved'));rr6()}}
+ else if(op=='rename'){const a=active();if(a){const p0=projs();p0[a].n=nm();try{localStorage.setItem('fab_projects',JSON.stringify(p0))}catch(x){}rr6()}}
+ else if(op=='new'){if(confirm(P('سيتم فتح مشروع فارغ. المشروع الحالي المفتوح ينحفظ أولًا، لكن المدخلات غير المحفوظة باسم ستضيع. تكمل؟','An empty project will open. The open project is saved first, but inputs not saved under a name will be lost. Continue?')))newProj()}
+ else if(op=='open'){openProj(id)}
+ else if(op=='upd'){if(confirm(P('استبدال محتوى هذا المشروع بالمدخلات الحالية؟','Replace this project with the current inputs?'))){if(saveProj(id)){st.s('projactive',id);toast6(P('تم التحديث','Updated'));rr6()}}}
+ else if(op=='del'){if(confirm(P('حذف المشروع نهائيًا؟','Delete this project permanently?'))){const p0=projs();delete p0[id];localStorage.setItem('fab_projects',JSON.stringify(p0));if(st.g('projactive')==id)st.s('projactive',null);rr6()}}
+ else if(op=='exp'){const p=projs()[id];if(!p)return;const blob=new Blob([JSON.stringify({fabrum:1,name:p.n,time:p.t,data:p.d})],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='FABRUM_'+p.n.replace(/[^\w؀-ۿ-]+/g,'_')+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},500)}});
+document.addEventListener('change',e=>{const t=e.target;if(t.id!='pjf39'||!t.files||!t.files[0])return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);if(!j||j.fabrum!==1||!j.data)throw 0;const d={};Object.entries(j.data).forEach(([k,v])=>{if(k.indexOf('fab_')==0&&PK(k.slice(4))&&typeof v=='string')d[k]=v});const p0=projs(),i=uid();p0[i]={n:String(j.name||'مشروع مستورد').slice(0,60),t:Date.now(),d:d};localStorage.setItem('fab_projects',JSON.stringify(p0));toast6(P('تم استيراد المشروع','Project imported'));rr6()}catch(x){toast6(P('الملف غير صالح','Invalid file'))}};rd.readAsText(t.files[0])});
+/* ===================== global search ===================== */
+const norm=s=>String(s||'').toLowerCase().replace(/[ً-ٰٟـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').replace(/\s+/g,' ').trim();
+let IDX=null;
+function buildIdx(){const tools=Object.entries(tt()).map(([k,v])=>{const g=G[k];const ex=g?[g[0][0],g[0][1],g[2][0],g[2][1]].concat(g[1].flat()).join(' '):'';return{k:k,t:v.t,tx:norm(v.t+' '+v.k+' '+ex)}});
+ const topics=N.map(n=>({k:'node:'+n.id,t:n.l,s:n.s,tx:norm(n.l+' '+n.s+' '+(n.k||[]).join(' '))}));
+ const gl2=GL.split(';').map(x=>x.split('|')).map(r=>({e:r[0],a:r[1],tx:norm(r[0]+' '+r[1])}));
+ const calc=Object.entries(DS).map(([k,x])=>({k:'calc:'+k,t:x.n,tx:norm(x.n+' '+(x.eq||[]).map(q=>q.join(' ')).join(' '))}));
+ IDX={tools,topics,gl:gl2,calc}}
+const S39={q:''};
+const hit=(k,t,sub)=>`<button class='hit' data-a='${esc(k)}'>${esc(t)}${sub?`<small>${esc(sub)}</small>`:''}</button>`;
+function doSearch(q){if(!IDX)buildIdx();const Q=norm(q),box=$('sr39');if(!box)return;S39.q=q;
+ if(Q.length<2){box.innerHTML=`<p class='nt'>${T('اكتب حرفين على الأقل.','Type at least two characters.')}</p>`;return}
+ const ws=Q.split(' ');const m=tx=>ws.every(w=>tx.includes(w));
+ const seen=new Set(),tools=IDX.tools.filter(x=>m(x.tx)&&!seen.has(x.k)&&seen.add(x.k)),calc=IDX.calc.filter(x=>m(x.tx)&&!seen.has(x.k)&&seen.add(x.k)),top=IDX.topics.filter(x=>m(x.tx)),gl3=IDX.gl.filter(x=>m(x.tx));
+ const sec=(h,l,f,lim)=>l.length?`<div class='grp'><h3>${h} (${l.length})</h3>${l.slice(0,lim).map(f).join('')}${l.length>lim?`<p class='nt'>${T('عرض أول '+lim+' نتيجة فقط، ضيّق البحث.','Showing only the first '+lim+' results, narrow your search.')}</p>`:''}</div>`:'';
+ const out=sec(T('أدوات','Tools'),tools.concat(calc),x=>hit(x.k,x.t),12)+sec(T('مواضيع الملوية','Spiral topics'),top,x=>hit(x.k,x.t,x.s.slice(0,90)+'…'),8)+(gl3.length?`<div class='grp'><h3>${T('مصطلحات','Glossary')} (${gl3.length})</h3><div class='tbl'><table style='min-width:0'>${gl3.slice(0,15).map(x=>`<tr><td dir='ltr'>${esc(x.e)}</td><td data-keep='1'>${esc(x.a)}</td></tr>`).join('')}</table></div></div>`:'');
+ box.innerHTML=out||`<p class='nt'>${T('لا نتائج. جرّب كلمة ثانية أو بالإنجليزي.','No results. Try another word or search in English.')}</p>`}
+SITE.search=function(){return `<div class='gp sr39'><h2>${T('البحث الشامل','Search everything')}</h2><p class='nt'>${T('ابحث عن أداة أو موضوع أو مصطلح. يشمل الأدوات وشرحها ومواضيع الملوية وقاموس المصطلحات، بالعربي أو الإنجليزي.','Search for a tool, topic or term. It covers tools and their guides, spiral topics and the glossary, in Arabic or English.')}</p><input id='gs39' type='search' placeholder='${esc(P('ابحث هنا… مثال: لياسة، عزم، anchorage','Search here… e.g. plaster, moment, anchorage'))}' value='${esc(S39.q)}' autocomplete='off'><div id='sr39'></div></div>`};
+R6.search=function(){doSearch(S39.q);const i=$('gs39');if(i&&!S39.q){i.focus()}};
+document.addEventListener('input',e=>{const t=e.target;if(t.id=='gs39')doSearch(t.value);
+ if(t.id=='hs39'){S39.q=t.value;act('site:search');setTimeout(()=>{const i=$('gs39');if(i){i.value=S39.q;i.focus();doSearch(S39.q)}},60)}});
+/* ===================== interactive beam section ===================== */
+D6('ib',{b:300,h:500,cv:40,ds:10,db:20,n:4,nt:2,dtp:16,fc:25,fy:420,dag:20});
+const IBC=[['b','العرض b (مم)','Width b (mm)',150,600,10],['h','الارتفاع h (مم)','Depth h (mm)',250,900,10],['cv','الغطاء الصافي (مم)','Clear cover (mm)',20,75,5],['ds','قطر الكانة (مم)','Stirrup dia. (mm)',8,16,2],['db','قطر الحديد السفلي (مم)','Bottom bar dia. (mm)',12,32,2],['n','عدد الأسياخ السفلية','Bottom bars',2,10,1],['nt','عدد الأسياخ العلوية','Top bars',0,6,1],['dtp','قطر الحديد العلوي (مم)','Top bar dia. (mm)',10,25,2],['fc','f’c (MPa)','f’c (MPa)',20,60,1],['fy','fy (MPa)','fy (MPa)',280,520,20]];
+function ibCalc(){const I=S6.ib,b=+I.b,h=+I.h,cv=+I.cv,ds=+I.ds,db=+I.db,n=+I.n,fc=+I.fc,fy=+I.fy,dag=+I.dag||20;
+ const us=b-2*(cv+ds),smin=Math.max(25,db,4/3*dag),nmax=Math.max(1,Math.floor((us+smin)/(db+smin)));
+ const n1=Math.min(n,nmax),n2=n-n1,y1=cv+ds+db/2,y2=y1+db+25,cy=(n1*y1+n2*y2)/n,d=h-cy;
+ const As=n*Math.PI*db*db/4,b1=fc<=28?0.85:Math.max(0.65,0.85-0.05*(fc-28)/7),a=As*fy/(0.85*fc*b),c=a/b1,et=0.003*(d-c)/c,ey=fy/200000;
+ const phi=et>=ey+0.003?0.9:et<=ey?0.65:0.65+0.25*(et-ey)/0.003,Mn=As*fy*(d-a/2)/1e6,pMn=phi*Mn,Asmin=Math.max(0.25*Math.sqrt(fc)/fy,1.4/fy)*b*d,sp=n1>1?(us-n1*db)/(n1-1):us-db;
+ return{us,smin,nmax,n1,n2,y1,y2,d,As,b1,a,c,et,ey,phi,Mn,pMn,Asmin,rho:As/(b*d),sp,fits:n2==0,okMin:As>=Asmin,okEt:et>=0.004}}
+function ibSvg(){const I=S6.ib,r=ibCalc(),b=+I.b,h=+I.h,cv=+I.cv,ds=+I.ds,db=+I.db,n=+I.n,nt=+I.nt,dtp=+I.dtp,W=360,H=400,k=Math.min(240/b,300/h),ox=(W-b*k)/2+10,oy=40,bx=x=>ox+x*k,by=y=>oy+(h-y)*k;
+ const S='fill:none;stroke:currentColor;stroke-width:1.2;opacity:1',tx=(x,y,t,an,col)=>`<text x='${x}' y='${y}' text-anchor='${an||'middle'}' style='font-size:11px;fill:${col||'currentColor'};stroke:none;opacity:1'>${t}</text>`;
+ let g=`<rect x='${bx(0)}' y='${by(h)}' width='${b*k}' height='${h*k}' style='fill:#c9c2b2;fill-opacity:.35;stroke:currentColor;stroke-width:1.5;opacity:1'/>`;
+ g+=`<rect x='${bx(0)}' y='${by(h)}' width='${b*k}' height='${Math.min(r.a,h)*k}' style='fill:#3b82c4;fill-opacity:.35;stroke:none;opacity:1'/>`;
+ g+=`<line x1='${bx(0)-6}' y1='${by(h)+r.c*k}' x2='${bx(b)+6}' y2='${by(h)+r.c*k}' style='stroke:#c0392b;stroke-width:1.2;stroke-dasharray:5 3;opacity:1'/>`;
+ const sx=bx(cv+ds/2),sw=(b-2*cv-ds)*k,sy=by(h-cv-ds/2),sh=(h-2*cv-ds)*k;
+ g+=`<rect x='${sx}' y='${sy}' width='${sw}' height='${sh}' rx='${Math.max(3,2*ds*k)}' style='fill:none;stroke:#7a5c1e;stroke-width:${Math.max(1.2,ds*k)};opacity:1'/>`;
+ const row=(cnt,dia,y)=>{let o='';const us=b-2*(cv+ds)-dia,x0=cv+ds+dia/2;for(let i=0;i<cnt;i++){const x=cnt==1?b/2:x0+us*i/(cnt-1);o+=`<circle cx='${bx(x)}' cy='${by(y)}' r='${Math.max(2.2,dia*k/2)}' style='fill:#2b2b2b;stroke:none;opacity:1'/>`}return o};
+ g+=row(r.n1,db,r.y1);if(r.n2>0)g+=row(r.n2,db,r.y2);if(nt>0)g+=row(nt,dtp,h-cv-ds-dtp/2);
+ const dx=bx(b)+18;g+=`<line x1='${dx}' y1='${by(h)}' x2='${dx}' y2='${by(h-r.d)}' style='stroke:#1e8e3e;stroke-width:1.2;opacity:1'/>`+tx(dx+4,by(h)+r.d*k/2,'d','start','#1e8e3e');
+ g+=`<line x1='${bx(0)}' y1='${by(0)+16}' x2='${bx(b)}' y2='${by(0)+16}' style='stroke:currentColor;stroke-width:1;opacity:1'/>`+tx(bx(b/2),by(0)+30,'b = '+b+' mm');
+ g+=tx(bx(0)-4,by(h/2),'h = '+h,'end');
+ g+=tx(bx(b)+6,by(h)+r.c*k-3,'c','start','#c0392b');g+=tx(bx(0)+4,by(h)+Math.min(r.a,h)*k/2+4,'a','start','#3b82c4');
+ return `<svg viewBox='0 0 ${W} ${H}' preserveAspectRatio='xMidYMid meet' style='width:100%!important;min-width:0!important;height:auto;opacity:1'>${g}</svg>`}
+function ibOut(){const r=ibCalc(),I=S6.ib,ck=(ok,y,nn)=>`<span class='${ok?'ok':'no'}'>${ok?'✔ ':'✘ '}${ok?y:nn}</span>`;
+ return ibSvg()+`<div class='tbl'><table class='sm' style='width:100%;min-width:0!important'>
+ <tr><td>${T('مساحة الحديد السفلي As','Bottom steel area As')}</td><td><b>${NF(r.As,0)}</b> mm² (${I.n}Ø${I.db})</td></tr>
+ <tr><td>${T('العمق الفعّال d','Effective depth d')}</td><td><b>${NF(r.d,0)}</b> mm</td></tr>
+ <tr><td>${T('عمق كتلة الضغط a ومحور التعادل c','Stress block depth a and neutral axis c')}</td><td><b>${NF(r.a,1)}</b> / <b>${NF(r.c,1)}</b> mm</td></tr>
+ <tr><td>${T('انفعال الشد εt','Tension strain εt')}</td><td><b>${NF(r.et,4)}</b> (εty = ${NF(r.ey,4)})</td></tr>
+ <tr><td>${T('معامل φ','Factor φ')}</td><td><b>${NF(r.phi,2)}</b></td></tr>
+ <tr><td>${T('مقاومة العزم φMn','Moment strength φMn')}</td><td><b>${NF(r.pMn,1)}</b> kN·m</td></tr>
+ <tr><td>${T('نسبة الحديد ρ','Steel ratio ρ')}</td><td>${NF(r.rho*100,2)} %</td></tr></table></div>
+ <p>${ck(r.fits,T('الأسياخ تتسع بصف واحد','Bars fit in one layer'),T('لا تتسع بصف واحد: وُضع '+r.n2+' بصف ثانٍ','Do not fit in one layer: '+r.n2+' placed in a second layer'))}<br>
+ ${ck(r.sp>=r.smin,T('المسافة الصافية بين الأسياخ '+NF(r.sp,0)+' مم ≥ الحد '+NF(r.smin,0),'Clear spacing '+NF(r.sp,0)+' mm ≥ limit '+NF(r.smin,0)),T('المسافة الصافية '+NF(r.sp,0)+' مم أقل من الحد '+NF(r.smin,0)+' مم (25 مم أو القطر أو 4/3 من حجم الركام)','Clear spacing '+NF(r.sp,0)+' mm is below the limit '+NF(r.smin,0)+' mm (25 mm, bar diameter or 4/3 aggregate size)'))}<br>
+ ${ck(r.okMin,T('الحديد ≥ الحد الأدنى '+NF(r.Asmin,0)+' مم²','Steel ≥ minimum '+NF(r.Asmin,0)+' mm²'),T('الحديد أقل من الحد الأدنى '+NF(r.Asmin,0)+' مم²','Steel below the minimum '+NF(r.Asmin,0)+' mm²'))}<br>
+ ${ck(r.okEt,T('εt ≥ 0.004: مقطع مقبول للانحناء','εt ≥ 0.004: acceptable flexural section'),T('εt < 0.004: الحديد كثير، كبّر المقطع أو قلّل الحديد','εt < 0.004: too much steel, enlarge the section or reduce steel'))}</p>`}
+SITE.intbeam=function(){const I=S6.ib;return `<div class='gp ib39'><h2>${T('مخطط تفاعلي: مقطع الجسر وتوزيع الحديد','Interactive diagram: beam section and bar layout')}</h2><p class='nt'>${T('حرّك المنزلقات وشاهد المقطع يتغير: الكانة والأسياخ ومحور التعادل وكتلة الضغط، مع مقاومة العزم وفحوصات التباعد والحد الأدنى. حسابات مبسطة لمقطع مستطيل مسلّح بالشد فقط (الحديد العلوي للرسم وغير محسوب)، للتعلم فقط.','Move the sliders and watch the section change: stirrup, bars, neutral axis and compression block, with the moment strength and the spacing and minimum-steel checks. Simplified calculations for a rectangular section reinforced in tension only (top bars are drawn but not counted), for learning only.')}</p>
+ <div class='box'><h3>${T('1) الأبعاد والحديد','1) Dimensions and steel')}</h3><div class='ctl'>${IBC.map(c=>`<label>${T(c[1],c[2])} <output data-ibo='${c[0]}'>${I[c[0]]}</output><input type='range' data-ib='${c[0]}' min='${c[3]}' max='${c[4]}' step='${c[5]}' value='${I[c[0]]}'></label>`).join('')}</div></div>
+ <div class='box'><h3>${T('2) المقطع والنتائج','2) Section and results')}</h3><div id='ibo'>${ibOut()}</div></div>
+ <div class='box'><h3>${T('3) ماذا نتعلم؟','3) What to notice')}</h3><ul><li>${T('زِد عدد الأسياخ: ترتفع المقاومة لكن يقل εt وينخفض φ، وإذا زدت كثيرًا يصير الانهيار بالضغط وهو ممنوع.','Add bars: strength rises but εt falls and φ drops; add too many and the failure becomes compression-controlled, which is not allowed.')}</li><li>${T('كبّر القطر أو العدد حتى لا تتسع الأسياخ بصف: ينتقل جزء للصف الثاني فيقل العمق الفعّال d.','Increase the diameter or number until the bars no longer fit in one layer: some move to a second layer and the effective depth d drops.')}</li><li>${T('زيادة h تزيد d وتزيد المقاومة أكثر من زيادة الحديد.','Increasing h raises d and adds more strength than adding steel.')}</li></ul></div>${WN6}</div>`};
+document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.ib)return;S6.ib[t.dataset.ib]=+t.value;const o=document.querySelector(`[data-ibo='${t.dataset.ib}']`);if(o)o.textContent=t.value;const b=$('ibo');if(b)b.innerHTML=ibOut();try{sv6()}catch(x){}});
+/* ===================== interactive stress-strain ===================== */
+D6('iss',{fc:30,fy:420,eps:0.002});
+const ISC=[['fc','f’c (MPa)','f’c (MPa)',17,70,1],['fy','fy (MPa)','fy (MPa)',280,550,10],['eps','الانفعال ε (الحالي)','Strain ε (current)',0,0.012,0.0001]];
+function issCalc(){const I=S6.iss,fc=+I.fc,fy=+I.fy,e=+I.eps,Ec=4700*Math.sqrt(fc),e0=2*fc/Ec,Es=200000,ey=fy/Es;
+ const sc=x=>x<=e0?fc*(2*x/e0-(x/e0)*(x/e0)):Math.max(0,fc*(1-0.15*(x-e0)/(0.0038-e0))),ss=x=>Math.min(Es*x,fy);
+ return{fc,fy,e,Ec,e0,ey,Es,sc,ss,cc:e<=0.003?sc(e):0,s:ss(e)}}
+function issPlot(kind,r){const W=340,H=240,L=44,Bt=30,pw=W-L-12,ph=H-Bt-14,xm=kind=='c'?0.0042:0.012,ym=(kind=='c'?r.fc:r.fy)*1.15;
+ const X=x=>L+x/xm*pw,Y=y=>H-Bt-y/ym*ph;const S=(c,w,da)=>`fill:none;stroke:${c};stroke-width:${w||1.5};opacity:1${da?';stroke-dasharray:'+da:''}`;
+ const tx=(x,y,t,an,col)=>`<text x='${x}' y='${y}' text-anchor='${an||'middle'}' style='font-size:10.5px;fill:${col||'currentColor'};stroke:none;opacity:1'>${t}</text>`;
+ let g=`<line x1='${L}' y1='${Y(0)}' x2='${W-8}' y2='${Y(0)}' style='${S('currentColor',1)}'/><line x1='${L}' y1='${Y(0)}' x2='${L}' y2='10' style='${S('currentColor',1)}'/>`;
+ let pts=[];const N=120;for(let i=0;i<=N;i++){const x=xm*i/N;if(kind=='c'&&x>0.0035)break;pts.push(X(x).toFixed(1)+','+Y(kind=='c'?r.sc(x):r.ss(x)).toFixed(1))}
+ g+=`<polyline points='${pts.join(' ')}' style='${S(kind=='c'?'#3b82c4':'#c07a1e',2.4)}'/>`;
+ if(kind=='c'){g+=`<line x1='${X(0.003)}' y1='${Y(0)}' x2='${X(0.003)}' y2='12' style='${S('#c0392b',1.2,'5 3')}'/>`+tx(X(0.003)-3,22,'εcu = 0.003','end','#c0392b');
+  g+=`<line x1='${L}' y1='${Y(0.85*r.fc)}' x2='${W-8}' y2='${Y(0.85*r.fc)}' style='${S('#7a7a7a',1,'3 3')}'/>`+tx(L+3,Y(0.85*r.fc)-3,'0.85 f’c','start','#7a7a7a');
+  [0,0.001,0.002,0.003,0.004].forEach(v=>{g+=tx(X(v),H-Bt+14,String(v).replace('0.00','.00').replace(/^0$/,'0'))});g+=tx(L+pw/2,H-4,P('الانفعال ε (ضغط)','Strain ε (compression)'));g+=tx(L-6,14,P('σ (MPa)','σ (MPa)'),'end')}
+ else{g+=`<line x1='${X(r.ey)}' y1='${Y(0)}' x2='${X(r.ey)}' y2='${Y(r.fy)}' style='${S('#7a7a7a',1,'3 3')}'/>`+tx(X(r.ey)+3,Y(r.fy*0.5),'εy = '+NF(r.ey,4),'start','#7a7a7a');
+  const et=r.ey+0.003;g+=`<line x1='${X(et)}' y1='${Y(0)}' x2='${X(et)}' y2='${Y(r.fy)+0}' style='${S('#1e8e3e',1.2,'5 3')}'/>`+tx(X(et)+3,Y(r.fy*0.2),P('حد التحكم بالشد','Tension-controlled limit'),'start','#1e8e3e');
+  [0,0.004,0.008,0.012].forEach(v=>{g+=tx(X(v),H-Bt+14,String(v))});g+=tx(L+pw/2,H-4,P('الانفعال ε (شد)','Strain ε (tension)'));g+=tx(L-6,14,'σ (MPa)','end');g+=tx(L-4,Y(r.fy)+3,String(r.fy),'end')}
+ const ex=kind=='c'?Math.min(r.e,0.0042):r.e,ey=kind=='c'?(r.e<=0.003?r.sc(r.e):0):r.ss(r.e);
+ g+=`<circle cx='${X(ex)}' cy='${Y(ey)}' r='5.5' style='fill:#c0392b;stroke:#fff;stroke-width:1.2;opacity:1'/>`;
+ return `<svg viewBox='0 0 ${W} ${H}' preserveAspectRatio='xMidYMid meet' style='width:100%!important;min-width:0!important;height:auto;opacity:1'>${g}</svg>`}
+function issOut(){const r=issCalc(),I=S6.iss;
+ const cs=r.e>0.003?T('الخرسانة تجاوزت 0.003: تُعتبر انهارت بالسحق','Concrete passed 0.003: considered crushed'):r.e>=r.e0?T('بعد القمة: الخرسانة تفقد قوتها تدريجيًا','Past the peak: concrete is losing strength'):T('الخرسانة تحمّل بقوة متزايدة','Concrete carrying increasing stress');
+ const ss=r.e<r.ey?T('الحديد مرن: يرجع لو أُزيل الحمل','Steel is elastic: it recovers if unloaded'):r.e<r.ey+0.003?T('الحديد خضع، ومقطع الجسر بمنطقة انتقالية','Steel has yielded; a beam would be in the transition zone'):T('الحديد خضع بوضوح: سلوك لدن قبل الانهيار (مقطع متحكَّم بالشد)','Steel has clearly yielded: ductile behaviour before failure (tension-controlled)');
+ return `<div class='tbl'><table class='sm' style='width:100%;min-width:0!important'><tr><td>Ec = 4700√f’c</td><td><b>${NF(r.Ec,0)}</b> MPa</td></tr><tr><td>ε0 (${T('قمة الخرسانة','concrete peak')})</td><td><b>${NF(r.e0,4)}</b></td></tr><tr><td>εy = fy/Es (Es = 200000)</td><td><b>${NF(r.ey,4)}</b></td></tr><tr><td>${T('إجهاد الخرسانة عند ε','Concrete stress at ε')} = ${NF(r.e,4)}</td><td><b>${NF(r.cc,1)}</b> MPa</td></tr><tr><td>${T('إجهاد الحديد عند ε','Steel stress at ε')}</td><td><b>${NF(r.s,0)}</b> MPa</td></tr></table></div><p>${cs}.<br>${ss}.</p>`}
+SITE.intss=function(){const I=S6.iss;return `<div class='gp ss39'><h2>${T('مخطط تفاعلي: منحنى الإجهاد والانفعال','Interactive diagram: stress-strain curves')}</h2><p class='nt'>${T('حرّك الانفعال وشاهد الإجهاد على منحنى الخرسانة (ضغط) ومنحنى الحديد (شد). منحنى الخرسانة نموذج مبسط (هوغنستاد)، والحديد مرن-لدن مثالي، للتعلم فقط.','Move the strain and watch the stress on the concrete curve (compression) and the steel curve (tension). The concrete curve is a simplified (Hognestad) model and the steel is ideal elastic-plastic, for learning only.')}</p>
+ <div class='box'><h3>${T('1) المواد والانفعال','1) Materials and strain')}</h3><div class='ctl ib39'>${ISC.map(c=>`<label>${T(c[1],c[2])} <output data-sso='${c[0]}'>${I[c[0]]}</output><input type='range' data-ss='${c[0]}' min='${c[3]}' max='${c[4]}' step='${c[5]}' value='${I[c[0]]}'></label>`).join('')}</div></div>
+ <div class='box'><h3>${T('2) المنحنيان والنتائج','2) The curves and results')}</h3><div id='sso'>${issBody()}</div></div>
+ <div class='box'><h3>${T('3) ماذا نتعلم؟','3) What to notice')}</h3><ul><li>${T('الخرسانة تنهار عند انفعال قرابة 0.003 بينما الحديد يخضع عند نحو 0.002، لهذا نصمم لكي يخضع الحديد قبل أن تسحق الخرسانة.','Concrete fails at a strain near 0.003 while steel yields around 0.002, so we design for the steel to yield before the concrete crushes.')}</li><li>${T('بعد الخضوع يبقى الحديد عند fy مهما زاد الانفعال: هذا يعطي إنذارًا (تشققات وهبوط) قبل الانهيار.','After yield the steel stays at fy however much the strain grows: this gives warning (cracks and deflection) before failure.')}</li><li>${T('الخرسانة العالية المقاومة أكثر هشاشة: قمتها تأتي عند انفعال أكبر وتنزل أسرع.','Higher-strength concrete is more brittle: its peak comes at a larger strain and it falls faster.')}</li></ul></div>${WN6}</div>`};
+function issBody(){return `<p class='nt'>${T('الخرسانة','Concrete')}</p>${issPlot('c',issCalc())}<p class='nt'>${T('حديد التسليح','Reinforcing steel')}</p>${issPlot('s',issCalc())}${issOut()}`}
+document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.ss)return;S6.iss[t.dataset.ss]=+t.value;const o=document.querySelector(`[data-sso='${t.dataset.ss}']`);if(o)o.textContent=t.value;const b=$('sso');if(b)b.innerHTML=issBody();try{sv6()}catch(x){}});
+/* ===================== menu items, guides ===================== */
+const ed=MS.find(s=>s[0]=='🎓');if(ed){ed[2].splice(1,0,['site:intbeam','مخطط تفاعلي: مقطع الجسر وتوزيع الحديد','interactive beam section reinforcement bars diagram'],['site:intss','مخطط تفاعلي: منحنى الإجهاد والانفعال','interactive stress strain curve concrete steel diagram'])}
+const ac=MS.find(s=>s[0]=='⭐');if(ac){ac[2].unshift(['site:search','البحث الشامل','search find everything'],['site:projects','مشاريعي المحفوظة','projects save restore export import backup'])}
+const gd=(w,s,u)=>[[w[0],w[1]],s.map(x=>[x[0],x[1]]),[u[0],u[1]]];
+G['site:search']=gd(['يبحث بالأدوات وشرحها ومواضيع الملوية والقاموس بخانة واحدة.','Searches tools and their guides, spiral topics and the glossary from one box.'],[['اكتب كلمة بالعربي أو الإنجليزي.','Type a word in Arabic or English.'],['اضغط النتيجة لتفتح الأداة أو الموضوع.','Press a result to open the tool or topic.'],['المصطلحات تظهر بجدول مباشر.','Glossary terms appear in a table right there.']],['توصل لأي أداة بدون ما تتذكر مكانها بالقائمة.','Reach any tool without remembering where it sits in the menu.']);
+G['site:projects']=gd(['حفظ كل مدخلات الأدوات باسم مشروع على جهازك واسترجاعها لاحقًا.','Save all tool inputs under a project name on your device and restore them later.'],[['اكتب اسم المشروع واضغط حفظ كمشروع.','Type a project name and press Save as project.'],['افتح مشروعًا محفوظًا من القائمة، وكل تعديل ينحفظ تلقائيًا بداخله.','Open a saved project from the list; every change is saved into it automatically.'],['صدّر ملفًا لتنقله لجهاز آخر أو تحتفظ بنسخة، واستورده متى ما تريد.','Export a file to move it to another device or keep a copy, and import it any time.']],['تشتغل على أكثر من مشروع بدون ما تضيع مدخلات أي واحد.','Work on several projects without losing the inputs of any of them.']);
+G['site:intbeam']=gd(['مقطع جسر يتغير مباشرة مع الأبعاد والحديد.','A beam section that changes live with the dimensions and steel.'],[['حرّك المنزلقات: العرض والارتفاع والغطاء وقطر وعدد الأسياخ.','Move the sliders: width, depth, cover, bar diameter and count.'],['شاهد محور التعادل وكتلة الضغط والعمق الفعّال.','Watch the neutral axis, compression block and effective depth.'],['اقرأ مقاومة العزم وفحوصات التباعد والحد الأدنى.','Read the moment strength and the spacing and minimum checks.']],['تفهم كيف يتحكم الحديد والأبعاد بسلوك الجسر.','Understand how steel and dimensions control beam behaviour.']);
+G['site:intss']=gd(['منحنيا الإجهاد والانفعال للخرسانة بالضغط والحديد بالشد.','Stress-strain curves for concrete in compression and steel in tension.'],[['اختر f’c وfy.','Choose f’c and fy.'],['حرّك الانفعال وشاهد النقطة على المنحنيين.','Move the strain and watch the dot on both curves.'],['اقرأ حالة الخرسانة والحديد بالأسفل.','Read the state of the concrete and steel below.']],['تفهم لماذا يخضع الحديد قبل أن تنهار الخرسانة.','Understand why steel yields before concrete crushes.']);
+/* ===================== wiring ===================== */
+function afterNav(){injectStar();const k=curKey();pushRec(k);auto()}
+{const _g=go;go=function(){const r=_g.apply(this,arguments);try{afterNav()}catch(e){}return r}}
+{const _r=rr6;rr6=function(){const r=_r.apply(this,arguments);try{injectStar()}catch(e){}return r}}
+{const _d=drawDesign;drawDesign=function(){const r=_d.apply(this,arguments);try{injectStar()}catch(e){}return r}}
+{const _P=PG;PG=function(p,v){let h=_P.apply(this,arguments);if(p=='home'&&typeof h=='string'){
+  const box=`<p><input id='hs39' type='search' placeholder='${esc(P('🔎 ابحث عن أداة أو موضوع أو مصطلح…','🔎 Search for a tool, topic or term…'))}' autocomplete='off' style='width:100%'></p>`;
+  h=h.replace('</p>','</p>'+box);
+  const f=gl('tfav'),rc=gl('trec').filter(x=>!f.includes(x)).slice(0,6);
+  h+=(f.length?`<h3>★ ${T('أدواتي المفضلة','My favourite tools')}</h3>${chips(f)}`:'')+(rc.length?`<h3>🕘 ${T('آخر الأدوات المفتوحة','Recently opened tools')}</h3>${chips(rc)}`:'')}
+ return h}}
+{const _m=mkMenu;mkMenu=function(){const r=_m.apply(this,arguments);try{const l=$('mlist');if(!l||(($('ms')||{}).value||'').trim())return r;
+  const f=gl('tfav'),rc=gl('trec').filter(x=>!f.includes(x)).slice(0,6);
+  const sec=(t,L)=>L.length?`<details open><summary>${t}</summary>${L.filter(k=>tt()[k]).map(k=>`<button class='mi' data-a='${esc(k)}'>${esc(tt()[k].t)}</button>`).join('')}</details>`:'';
+  const g=l.querySelector(".mi[data-a='guide']");
+  if(g&&!l.querySelector(".mi[data-a='site:search'][data-top]"))g.insertAdjacentHTML('afterend',`<button class='mi' data-a='site:search' data-top='1'>🔎 ${T('البحث الشامل','Search everything')}</button>`);
+  const anchor=l.querySelector(':scope>details');if(anchor)anchor.insertAdjacentHTML('beforebegin',sec('★ '+P('أدواتي المفضلة','My favourite tools'),f)+sec('🕘 '+P('آخر الأدوات','Recent tools'),rc))}catch(e){}return r}}
+window.MK39=mkMenu;try{mkMenu()}catch(e){}
+if(document.body.dataset.pg=='home'){try{act('home')}catch(e){}}
 })();
 </script>
 </body>
