@@ -8146,5 +8146,256 @@ function hubPage(id){const c=SEC[id];if(!c)return `<h2>${T('القسم غير م
 window.SEC39=SEC;
 })();
 </script>
+<script>/*spl39*/
+(()=>{
+const T=(a,e)=>window.B37(a,e),EN=()=>window.LANG=='en',P=(a,e)=>EN()?e:a;
+const F=(x,d)=>(+x).toLocaleString('en-US',{maximumFractionDigits:d==null?2:d});
+const N0=x=>{const v=+x;return isFinite(v)?v:0};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const IN=(ns,p,v)=>I6(ns,p,v,{t:'n'});
+const LB=(a,e,inner)=>L6(T(a,e),inner);
+const MS=window.MS37,G=window.G6;
+const out=(id,h)=>{const e=$(id);if(e)e.innerHTML=h};
+const CB=(ns,p,val,a,e)=>`<label class='ci'><input type='checkbox' data-s6='${ns}|${p}'${val?' checked':''}><span>${T(a,e)}</span></label>`;
+const ck=(ok,a,b)=>`<div style='font-weight:700;color:${ok?'#1e8e3e':'#c0392b'}'>${ok?'✔ ':'✘ '}${ok?a:b}</div>`;
+const NT=(a,e)=>`<p class='nt'>${T(a,e)}</p>`;
+const wn=a=>`<div style='font-weight:700;color:#b9770e'>⚠ ${a}</div>`;
+const SEL=(ns,p,val,opts,re)=>`<select data-s6='${ns}|${p}'${re?" data-re='1'":''}>${opts.map(o=>`<option value='${o[0]}'${String(val)==String(o[0])?' selected':''}>${P(o[1],o[2])}</option>`).join('')}</select>`;
+/* fixtures: key, ar, en, DFU, min trap/outlet diameter (mm), label, colour, vent diameter note */
+const FXD=[['wc','مرحاض','Water closet',3,100,'WC','#a0522d'],['lav','مغسلة','Wash basin',1,50,'LV','#2a7ab0'],['sh','دش','Shower',2,50,'SH','#2a7ab0'],['bt','حوض استحمام','Bathtub',2,50,'BT','#2a7ab0'],['sk','مغسلة مطبخ','Kitchen sink',2,50,'SK','#3a9d5d'],['wm','غسالة','Washing machine',2,50,'WM','#3a9d5d'],['fd','مصرف أرضي','Floor drain',2,50,'FD','#7a6a58'],['bd','بيديه','Bidet',1,50,'BD','#2a7ab0']];
+const COL={50:'#3b8bd9',75:'#2aa198',100:'#d9822b',125:'#b5543a',150:'#8e2f2f'};
+D6('spl',{u:'m',tool:'pan',mode:'auto',ft:'wc',ortho:1,walls:[],mp:[],fx:[],out:null,hide:{},s75:2,s100:1,c0:0.5,ic:'both',icmax:12,vent:1,vh:3,bd:[{d:50,n:21},{d:75,n:42},{d:100,n:216},{d:125,n:428},{d:150,n:720}],dfu:{wc:3,lav:1,sh:2,bt:2,sk:2,wm:2,fd:2,bd:1}});
+/* ---------------- state kept in memory ---------------- */
+let BG=null,VB=null,PEND=null,PEND2=null,DRAG=null,NET=null;
+const SU={m:1,cm:0.01,mm:0.001};
+/* ---------------- DXF import (ASCII) ---------------- */
+function parseDXF(txt){const L=txt.split(/\r?\n/),pr=[];for(let k=0;k+1<L.length;k+=2)pr.push([L[k].trim(),L[k+1]]);
+ const lay={},st={segs:0,ins:0,skip:0};let p=0;while(p<pr.length&&!(pr[p][0]=='2'&&pr[p][1].trim()=='ENTITIES'))p++;if(p>=pr.length)p=0;
+ const add=(l,a,b,c,d)=>{(lay[l]=lay[l]||[]).push(a,b,c,d);st.segs++};
+ const poly=(l,pts,cl)=>{for(let i=0;i+1<pts.length;i++)add(l,pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]);if(cl&&pts.length>2)add(l,pts[pts.length-1][0],pts[pts.length-1][1],pts[0][0],pts[0][1])};
+ let cur=null;
+ while(p<pr.length){if(pr[p][0]!='0'){p++;continue}const ty=pr[p][1].trim();let q=p+1;const at=[];while(q<pr.length&&pr[q][0]!='0'){at.push(pr[q]);q++}p=q;
+  const g=c=>{const r=at.find(a=>a[0]==c);return r?r[1].trim():''},gn=c=>parseFloat(g(c))||0,l=g('8')||'0';
+  if(ty=='ENDSEC'&&cur==null&&st.segs>0)break;
+  if(ty=='LINE')add(l,gn('10'),gn('20'),gn('11'),gn('21'));
+  else if(ty=='LWPOLYLINE'){const pts=[];let x=null;at.forEach(a=>{if(a[0]=='10')x=parseFloat(a[1]);else if(a[0]=='20'&&x!=null){pts.push([x,parseFloat(a[1])]);x=null}});poly(l,pts,(parseInt(g('70'))||0)&1)}
+  else if(ty=='POLYLINE'){cur={l:l,pts:[],cl:(parseInt(g('70'))||0)&1}}
+  else if(ty=='VERTEX'&&cur){cur.pts.push([gn('10'),gn('20')])}
+  else if(ty=='SEQEND'&&cur){poly(cur.l,cur.pts,cur.cl);cur=null}
+  else if(ty=='CIRCLE'){const cx=gn('10'),cy=gn('20'),r=gn('40'),pts=[];for(let i=0;i<=24;i++)pts.push([cx+r*Math.cos(i*Math.PI/12),cy+r*Math.sin(i*Math.PI/12)]);poly(l,pts,0)}
+  else if(ty=='ARC'){const cx=gn('10'),cy=gn('20'),r=gn('40');let a0=gn('50'),a1=gn('51');if(a1<=a0)a1+=360;const n=Math.max(4,Math.ceil((a1-a0)/12)),pts=[];for(let i=0;i<=n;i++){const a=(a0+(a1-a0)*i/n)*Math.PI/180;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)])}poly(l,pts,0)}
+  else if(ty=='INSERT')st.ins++;else if(!/^(TEXT|MTEXT|DIMENSION|HATCH|POINT|ATTRIB|ATTDEF|SOLID|3DFACE|VIEWPORT|LEADER|IMAGE)$/.test(ty))st.skip++;
+  if(st.segs>250000)break}
+ return{lay:lay,st:st}}
+function bgExtent(){let a=1e18,b=1e18,c=-1e18,d=-1e18;const u=SU[S6.spl.u]||1;
+ if(BG)for(const n in BG.lay){if(S6.spl.hide[n])continue;const A=BG.lay[n];for(let i=0;i<A.length;i+=2){const x=A[i]*u,y=A[i+1]*u;if(x<a)a=x;if(x>c)c=x;if(y<b)b=y;if(y>d)d=y}}
+ const S=S6.spl;S.walls.concat(S.mp).forEach(w=>{a=Math.min(a,w[0],w[2]);c=Math.max(c,w[0],w[2]);b=Math.min(b,w[1],w[3]);d=Math.max(d,w[1],w[3])});S.fx.forEach(f=>{a=Math.min(a,f.x);c=Math.max(c,f.x);b=Math.min(b,f.y);d=Math.max(d,f.y)});if(S.out){a=Math.min(a,S.out.x);c=Math.max(c,S.out.x);b=Math.min(b,S.out.y);d=Math.max(d,S.out.y)}
+ if(a>c){a=0;b=0;c=12;d=9}return[a,b,c,d]}
+function fitView(){const e=bgExtent(),w=Math.max(1,e[2]-e[0]),h=Math.max(1,e[3]-e[1]);VB={x:e[0]-w*0.05,y:-(e[3]+h*0.05),w:w*1.1,h:h*1.1};VB.fit=1}
+/* ---------------- geometry helpers ---------------- */
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+function projSeg(p,s){const dx=s[2]-s[0],dy=s[3]-s[1],l2=dx*dx+dy*dy;let t=l2?((p[0]-s[0])*dx+(p[1]-s[1])*dy)/l2:0;t=Math.max(0,Math.min(1,t));return[s[0]+t*dx,s[1]+t*dy]}
+const eqp=(a,b)=>Math.abs(a[0]-b[0])<1e-6&&Math.abs(a[1]-b[1])<1e-6;
+/* ---------------- network: routing, tree, sizing ---------------- */
+const TOL=0.15;
+function buildNet(){const S=S6.spl;if(!S.out||!S.fx.length)return null;const O=[S.out.x,S.out.y];let segs=[];const warn=[],skip={};
+ if(S.mode!='auto')S.mp.forEach(m=>{if(Math.hypot(m[2]-m[0],m[3]-m[1])>1e-6)segs.push([m[0],m[1],m[2],m[3]])});
+ const split=c=>{for(let i=0;i<segs.length;i++){const s=segs[i];if(eqp([s[0],s[1]],c)||eqp([s[2],s[3]],c))return;const pp=projSeg(c,s);if(dist(pp,c)<1e-6){segs.splice(i,1,[s[0],s[1],c[0],c[1]],[c[0],c[1],s[2],s[3]]);return}}};
+ const addPath=pts=>{for(let i=0;i+1<pts.length;i++)if(!eqp(pts[i],pts[i+1]))segs.push([pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]])};
+ const nearest=p=>{let best=null,bd=1e18;segs.forEach(s=>{const c=projSeg(p,s),d=dist(c,p);if(d<bd){bd=d;best=c}});return{c:best,d:bd}};
+ // outlet joins the manual network
+ if(segs.length){const n=nearest(O);if(n.d<=TOL){split(n.c);if(n.d>1e-6)addPath([O,n.c])}else if(S.mode=='mix'){split(n.c);addPath([O,[O[0],n.c[1]],n.c])}else warn.push(T('نقطة الخروج غير موصولة بالأنابيب المرسومة.','The outlet is not connected to the drawn pipes.'))}
+ const order=S.fx.map((f,i)=>({f:f,i:i})).sort((a,b)=>(Math.abs(a.f.x-O[0])+Math.abs(a.f.y-O[1]))-(Math.abs(b.f.x-O[0])+Math.abs(b.f.y-O[1])));
+ const start={};
+ order.forEach(o=>{const f=[o.f.x,o.f.y];
+  if(S.mode!='auto'&&segs.length){const n=nearest(f);if(n.d<=TOL){split(n.c);if(n.d>1e-6)addPath([f,n.c]);start[o.i]=f;return}if(S.mode=='manual'){skip[o.i]=1;return}}
+  else if(S.mode=='manual'){skip[o.i]=1;return}
+  let best=null,bl=1e18;
+  const consider=(c,dir)=>{const l=Math.abs(c[0]-f[0])+Math.abs(c[1]-f[1]);if(l<bl-1e-9){bl=l;best={c:c,dir:dir}}};
+  consider(O,'n');segs.forEach(s=>{const hz=Math.abs(s[3]-s[1])<1e-6,vt=Math.abs(s[2]-s[0])<1e-6;
+   if(hz){const cx=Math.max(Math.min(s[0],s[2]),Math.min(Math.max(s[0],s[2]),f[0]));consider([cx,s[1]],'h')}else if(vt){const cy=Math.max(Math.min(s[1],s[3]),Math.min(Math.max(s[1],s[3]),f[1]));consider([s[0],cy],'v')}else consider(projSeg(f,s),'n')});
+  const c=best.c;let pts;if(best.dir=='v')pts=[f,[f[0],c[1]],c];else pts=[f,[c[0],f[1]],c];
+  if(!eqp(f,c)){split(c);addPath(pts)}start[o.i]=f});
+ const nodes=[],idx={},key=p=>Math.round(p[0]*1000)+','+Math.round(p[1]*1000),nd=p=>{const k=key(p);if(idx[k]==null){idx[k]=nodes.length;nodes.push({p:[p[0],p[1]],adj:[],fx:[]})}return idx[k]};
+ const oi=nd(O);const E=[];segs.forEach(s=>{const a=nd([s[0],s[1]]),b=nd([s[2],s[3]]);if(a!=b&&!E.some(e=>(e[0]==a&&e[1]==b)||(e[0]==b&&e[1]==a))){E.push([a,b]);nodes[a].adj.push(b);nodes[b].adj.push(a)}});
+ S.fx.forEach((f,i)=>{if(start[i])nodes[nd(start[i])].fx.push(i)});
+ const par=new Array(nodes.length).fill(-2),ord=[oi];par[oi]=-1;for(let h=0;h<ord.length;h++){const n=ord[h];nodes[n].adj.forEach(m=>{if(par[m]==-2){par[m]=n;ord.push(m)}})}
+ if(ord.length<nodes.length)warn.push(T('أجزاء من الأنابيب غير متصلة بنقطة الخروج.','Some pipes are not connected to the outlet.'));
+ if(E.length>ord.length-1)warn.push(T('توجد حلقة مغلقة أو تداخل بين أنابيب؛ تُهمل بعض الأنابيب بالحساب.','A closed loop or overlapping pipes exist; some pipes are ignored in the calculation.'));
+ const sk=Object.keys(skip);if(sk.length)warn.push(T('أجهزة غير موصولة بأنبوب مرسوم: '+sk.map(i=>(FXD.find(x=>x[0]==S.fx[i].t)||[0,0,0,0,0,'?'])[5]+(+i+1)).join('، ')+'. ارسم لها أنبوبًا أو استعمل وضع «مختلط».','Fixtures not connected to a drawn pipe: '+sk.map(i=>(FXD.find(x=>x[0]==S.fx[i].t)||[0,0,0,0,0,'?'])[5]+(+i+1)).join(', ')+'. Draw a pipe for them or use mixed mode.'));
+ nodes.forEach(n=>{n.ch=[]});ord.forEach(n=>{if(par[n]>=0)nodes[par[n]].ch.push(n)});
+ const dfu=S.dfu,fxd=t=>FXD.find(x=>x[0]==t)||[t,t,t,0,50];
+ const own=n=>nodes[n].fx.reduce((a,i)=>a+N0(dfu[S.fx[i].t]),0),ownWC=n=>nodes[n].fx.some(i=>S.fx[i].t=='wc'),ownMin=n=>nodes[n].fx.reduce((a,i)=>Math.max(a,fxd(S.fx[i].t)[4]),0);
+ const D=new Array(nodes.length).fill(0),dsum=new Array(nodes.length).fill(0),wc=new Array(nodes.length).fill(false),mn=new Array(nodes.length).fill(0);
+ const bdt=S.bd.map(b=>({d:N0(b.d),n:N0(b.n)})).filter(b=>b.d>0).sort((a,b)=>a.d-b.d);
+ for(let h=ord.length-1;h>=0;h--){const n=ord[h];dsum[n]=own(n);wc[n]=ownWC(n);mn[n]=ownMin(n);nodes[n].ch.forEach(c=>{dsum[n]+=dsum[c];wc[n]=wc[n]||wc[c];mn[n]=Math.max(mn[n],mn[c])});
+  let d=(bdt.find(b=>b.n>=dsum[n])||bdt[bdt.length-1]||{d:100}).d;if(bdt.length&&dsum[n]>bdt[bdt.length-1].n)warn.push(T('مجموع وحدات التصريف '+dsum[n]+' أكبر من آخر صف بالجدول.','The drainage fixture units '+dsum[n]+' exceed the last row of the table.'));
+  if(wc[n])d=Math.max(d,100);d=Math.max(d,mn[n]);nodes[n].ch.forEach(c=>{d=Math.max(d,D[c])});D[n]=d}
+ const slOf=d=>Math.max(0.1,N0(d<=75?S.s75:S.s100))/100,len=new Array(nodes.length).fill(0),fall=new Array(nodes.length).fill(0);
+ ord.forEach(n=>{if(par[n]>=0){len[n]=dist(nodes[n].p,nodes[par[n]].p);fall[n]=(fall[par[n]]||0)+slOf(D[n])*len[n]}});
+ let mx=0;ord.forEach(n=>{mx=Math.max(mx,fall[n])});const Dout=N0(S.c0)+mx;
+ const depth=n=>Dout-fall[n];
+ const ic=new Array(nodes.length).fill(false);ic[oi]=true;
+ ord.forEach(n=>{if(n==oi)return;const k=nodes[n].ch.length;let bend=false;if(k==1){const a=nodes[par[n]].p,b=nodes[n].p,c=nodes[nodes[n].ch[0]].p;bend=Math.abs((b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0]))>1e-6*Math.max(1,len[n])}
+  nodes[n].bend=bend;if(S.ic!='none'&&(k>=2||(S.ic=='both'&&bend&&!nodes[n].fx.length&&D[n]>=75)))ic[n]=true});
+ const vents=[];if(S.vent)ord.forEach(n=>{if(n!=oi&&!nodes[n].ch.length&&nodes[n].fx.length)vents.push(n)});
+ const sp=N0(S.icmax);if(sp>0)ord.forEach(n=>{if(!nodes[n].ch.length&&n!=oi){let d=0,m=n;while(m!=oi){d+=len[m];if(ic[par[m]]||ic[m]&&m!=n){if(d>sp+1e-6)warn.push(T('أبعد نقطة تبعد '+F(d,1)+' م عن أقرب نقطة تنظيف (الحد '+F(sp,1)+' م).','A point is '+F(d,1)+' m from the nearest cleanout (limit '+F(sp,1)+' m).'));d=0}m=par[m]}if(d>sp+1e-6)warn.push(T('أبعد جهاز يبعد '+F(d,1)+' م عن أقرب نقطة تنظيف (الحد '+F(sp,1)+' م).','The farthest fixture is '+F(d,1)+' m from the nearest cleanout (limit '+F(sp,1)+' m).'))}});
+ if(D[oi]>100)warn.push(T('قطر الخروج المحسوب '+D[oi]+' مم. توصيلة الدار بالشبكة العامة 100 مم فقط حسب مدونة الشبكات (7/4-2 ب)؛ استعمل بيارة أو منهلًا أو غيّر الجدول.','The computed outlet diameter is '+D[oi]+' mm. A house connection to the public network is 100 mm only per the network code (2-7.4 b); use a septic tank or manhole or change the table.'));
+ if(!S.fx.some(f=>f.t=='wc'))warn.push(T('لا يوجد مرحاض بالمخطط.','There is no water closet in the plan.'));
+ if(Dout>1.5)warn.push(T('عمق القعر عند الخروج '+F(Dout,2)+' م؛ قلل الأطوال أو ارفع الميل أو راجع منسوب الشبكة العامة.','The invert depth at the outlet is '+F(Dout,2)+' m; shorten the runs, reduce slope or check the public sewer level.'));
+ const uniq=[];warn.forEach(w=>{if(uniq.indexOf(w)<0)uniq.push(w)});
+ return{nodes:nodes,par:par,ord:ord,D:D,dsum:dsum,len:len,fall:fall,Dout:Dout,depth:depth,ic:ic,vents:vents,oi:oi,warn:uniq,slOf:slOf}}
+/* quantities */
+function qty(N){const S=S6.spl,by={},Q={bends:0,tees:0,co:0,vents:N.vents.length,ventL:N.vents.length*N0(S.vh),fx:S.fx.length,trench:0,len:0};
+ N.ord.forEach(n=>{if(n==N.oi)return;const d=N.D[n],l=N.len[n];by[d]=(by[d]||0)+l;Q.len+=l;const dep=(N.depth(n)+N.depth(N.par[n]))/2;Q.trench+=l*(d/1000+0.4)*Math.max(0,dep+d/1000+0.1);
+  const nd=N.nodes[n];if(nd.bend&&!nd.fx.length)Q.bends++;if(nd.ch.length>=2||(nd.ch.length==1&&nd.fx.length))Q.tees++;if(N.ic[n])Q.co++});
+ Q.co+=N.ic[N.oi]?1:0;Q.by=by;return Q}
+{const st=document.createElement('style');st.textContent='#t6{pointer-events:none}';document.head.appendChild(st)}
+/* ---------------- history, state helpers ---------------- */
+const HIST=[];
+function snapSt(){const S=S6.spl;HIST.push(JSON.stringify({walls:S.walls,mp:S.mp,fx:S.fx,out:S.out}));if(HIST.length>60)HIST.shift()}
+const clamp3=x=>Math.round(x*1000)/1000;
+/* ---------------- DXF export ---------------- */
+function exportDXF(N){const S=S6.spl,out=[],p=(c,v)=>out.push(String(c),String(v)),f=x=>(+x).toFixed(4),used={},u=SU[S.u]||1;
+ const line=(l,a,b,c,d)=>{used[l]=1;p(0,'LINE');p(8,l);p(10,f(a));p(20,f(b));p(30,0);p(11,f(c));p(21,f(d));p(31,0)};
+ const circ=(l,x,y,r)=>{used[l]=1;p(0,'CIRCLE');p(8,l);p(10,f(x));p(20,f(y));p(30,0);p(40,f(r))};
+ const txt=(l,x,y,h,s)=>{used[l]=1;p(0,'TEXT');p(8,l);p(10,f(x));p(20,f(y));p(30,0);p(40,f(h));p(1,String(s).replace(/[^\x20-\x7e]/g,'?'))};
+ const sq=(l,x,y,r)=>{line(l,x-r,y-r,x+r,y-r);line(l,x+r,y-r,x+r,y+r);line(l,x+r,y+r,x-r,y+r);line(l,x-r,y+r,x-r,y-r)};
+ if(BG)for(const n in BG.lay){if(S.hide[n])continue;const A=BG.lay[n];for(let i=0;i<A.length;i+=4)line('BACKGROUND',A[i]*u,A[i+1]*u,A[i+2]*u,A[i+3]*u)}
+ S.walls.forEach(w=>line('A-WALL',w[0],w[1],w[2],w[3]));
+ let a=1e18,b=1e18,c=-1e18,d=-1e18;const ext=(x,y)=>{a=Math.min(a,x);c=Math.max(c,x);b=Math.min(b,y);d=Math.max(d,y)};
+ const e=bgExtent();ext(e[0],e[1]);ext(e[2],e[3]);const h=Math.max(0.12,Math.max(e[2]-e[0],e[3]-e[1])/150);
+ if(N){N.ord.forEach(n=>{if(n==N.oi)return;const q=N.nodes[n].p,r=N.nodes[N.par[n]].p;line('PLUMB-D'+N.D[n],q[0],q[1],r[0],r[1]);const l=N.len[n];if(l>h*6)txt('PLUMB-TEXT',(q[0]+r[0])/2+h*0.3,(q[1]+r[1])/2+h*0.3,h*0.8,'D'+N.D[n])});
+  N.ord.forEach(n=>{if(N.ic[n]){const q=N.nodes[n].p;sq('PLUMB-CO',q[0],q[1],h*0.6);txt('PLUMB-TEXT',q[0]+h*0.8,q[1]-h*1.4,h*0.8,n==N.oi?'OUT':'CO')}});
+  N.vents.forEach(n=>{const q=N.nodes[n].p;circ('PLUMB-VENT',q[0]+h*1.2,q[1]+h*1.2,h*0.5);txt('PLUMB-VENT',q[0]+h*1.9,q[1]+h*1.0,h*0.7,'V')});
+  const Q=qty(N);let ty=e[1]-h*3;txt('PLUMB-TEXT',e[0],ty,h*1.1,'DRAINAGE SCHEDULE (FLAGGED DEFAULTS - CHECK LOCAL CODE)');ty-=h*2;Object.keys(Q.by).sort((x,y)=>x-y).forEach(k=>{txt('PLUMB-TEXT',e[0],ty,h,'D'+k+' mm : '+F(Q.by[k],2)+' m');ty-=h*1.6});
+  txt('PLUMB-TEXT',e[0],ty,h,'Cleanouts: '+Q.co+'  Vents: '+Q.vents+'  Fixtures: '+Q.fx);ext(e[0],ty)}
+ S.fx.forEach((q,i)=>{const t=FXD.find(x=>x[0]==q.t)||[0,0,0,0,0,'?'];circ('PLUMB-FIXT',q.x,q.y,h*0.6);txt('PLUMB-FIXT',q.x+h*0.8,q.y+h*0.3,h*0.8,t[5]+(i+1))});
+ if(S.out){sq('PLUMB-CO',S.out.x,S.out.y,h);circ('PLUMB-CO',S.out.x,S.out.y,h*0.5);ext(S.out.x,S.out.y)}
+ const H=[],hh=(cc,v)=>H.push(String(cc),String(v));
+ hh(0,'SECTION');hh(2,'HEADER');hh(9,'$ACADVER');hh(1,'AC1009');hh(9,'$INSUNITS');hh(70,6);hh(9,'$EXTMIN');hh(10,f(a));hh(20,f(b));hh(9,'$EXTMAX');hh(10,f(c));hh(20,f(d));hh(0,'ENDSEC');
+ hh(0,'SECTION');hh(2,'TABLES');hh(0,'TABLE');hh(2,'LTYPE');hh(70,1);hh(0,'LTYPE');hh(2,'CONTINUOUS');hh(70,0);hh(3,'Solid line');hh(72,65);hh(73,0);hh(40,0);hh(0,'ENDTAB');
+ hh(0,'TABLE');hh(2,'STYLE');hh(70,1);hh(0,'STYLE');hh(2,'STANDARD');hh(70,0);hh(40,0);hh(41,1);hh(50,0);hh(71,0);hh(42,0.2);hh(3,'txt');hh(4,'');hh(0,'ENDTAB');
+ const LC={'BACKGROUND':8,'A-WALL':7,'PLUMB-FIXT':3,'PLUMB-CO':1,'PLUMB-VENT':5,'PLUMB-TEXT':2,'PLUMB-D50':5,'PLUMB-D75':4,'PLUMB-D100':30,'PLUMB-D125':6,'PLUMB-D150':1};
+ hh(0,'TABLE');hh(2,'LAYER');hh(70,Object.keys(used).length);Object.keys(used).forEach(k=>{hh(0,'LAYER');hh(2,k);hh(70,0);hh(62,LC[k]||7);hh(6,'CONTINUOUS')});hh(0,'ENDTAB');hh(0,'ENDSEC');hh(0,'SECTION');hh(2,'ENTITIES');
+ return H.join('\r\n')+'\r\n'+out.join('\r\n')+'\r\n0\r\nENDSEC\r\n0\r\nEOF\r\n'}
+/* ---------------- drawing ---------------- */
+const upx=()=>{const sv=$('spl_svg');if(!sv||!VB)return 1;const cw=sv.clientWidth||600,ch=sv.clientHeight||400;return 1/Math.min(cw/VB.w,ch/VB.h)};
+const fxd=t=>FXD.find(x=>x[0]==t)||[t,t,t,0,50,'?','#555'];
+const colD=d=>COL[d]||(d>150?'#6b1f1f':'#444');
+function splDraw(){const g=$('spl_g'),sv=$('spl_svg');if(!g||!sv)return;const S=S6.spl;if(!VB)fitView();
+ sv.setAttribute('viewBox',VB.x+' '+VB.y+' '+VB.w+' '+VB.h);const u=upx(),Y=y=>-y;let h='';
+ NET=null;try{NET=buildNet()}catch(e){NET=null;console.error(e)}
+ const st=(c,w,d)=>`style='fill:none;stroke:${c};stroke-width:${w};vector-effect:non-scaling-stroke;opacity:1${d?';stroke-dasharray:'+d:''}'`;
+ // grid dots omitted; background
+ if(BG){const uu=SU[S.u]||1;for(const n in BG.lay){if(S.hide[n])continue;const A=BG.lay[n];let d='';for(let i=0;i<A.length;i+=4)d+='M'+clamp3(A[i]*uu)+' '+clamp3(-A[i+1]*uu)+'L'+clamp3(A[i+2]*uu)+' '+clamp3(-A[i+3]*uu);h+=`<path d='${d}' ${st('#8a8f98',1)}/>`}}
+ if(S.walls.length)h+=`<path d='${S.walls.map(w=>'M'+w[0]+' '+Y(w[1])+'L'+w[2]+' '+Y(w[3])).join('')}' ${st('#2b2f36',2.5)}/>`;
+ if(!NET&&S.mp.length)h+=`<path d='${S.mp.map(w=>'M'+w[0]+' '+Y(w[1])+'L'+w[2]+' '+Y(w[3])).join('')}' ${st('#d9822b',2,'6 4')}/>`;
+ if(NET){const N=NET;N.ord.forEach(n=>{if(n==N.oi)return;const a=N.nodes[n].p,b=N.nodes[N.par[n]].p,d=N.D[n];h+=`<path d='M${a[0]} ${Y(a[1])}L${b[0]} ${Y(b[1])}' ${st(colD(d),Math.max(2,Math.min(6,d/25)))}/>`;
+   const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,l=N.len[n],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1;
+   if(l>u*34)h+=`<text x='${mx+(-dy/L)*u*7-u*10}' y='${Y(my)+(dx/L)*u*7*-1+u*3}' style='font-size:${u*10}px;fill:${colD(d)};stroke:none;font-weight:700'>${d}</text>`;
+   const ax=a[0]*0.35+b[0]*0.65,ay=a[1]*0.35+b[1]*0.65;if(l>u*40){const ux=dx/L,uy=dy/L,s=u*5;h+=`<path d='M${ax+ux*s} ${Y(ay+uy*s)}L${ax-ux*s-uy*s*0.7} ${Y(ay-uy*s+ux*s*0.7)}L${ax-ux*s+uy*s*0.7} ${Y(ay-uy*s-ux*s*0.7)}Z' style='fill:${colD(d)};stroke:none;opacity:1'/>`}});
+  N.ord.forEach(n=>{if(N.ic[n]&&n!=N.oi){const q=N.nodes[n].p,r=u*5;h+=`<rect x='${q[0]-r}' y='${Y(q[1])-r}' width='${r*2}' height='${r*2}' style='fill:#fff;stroke:#c0392b;stroke-width:1.5;vector-effect:non-scaling-stroke;opacity:1'/>`}});
+  N.vents.forEach(n=>{const q=N.nodes[n].p,r=u*4.5;h+=`<circle cx='${q[0]+u*9}' cy='${Y(q[1])-u*9}' r='${r}' style='fill:#fff;stroke:#2a7ab0;stroke-width:1.5;vector-effect:non-scaling-stroke;opacity:1'/><text x='${q[0]+u*9-u*3}' y='${Y(q[1])-u*9+u*3.3}' style='font-size:${u*9}px;fill:#2a7ab0;stroke:none;font-weight:700'>V</text>`})}
+ S.fx.forEach((q,i)=>{const t=fxd(q.t),r=u*8;h+=`<circle cx='${q.x}' cy='${Y(q.y)}' r='${r}' style='fill:${t[6]};stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke;opacity:.95'/><text x='${q.x}' y='${Y(q.y)+u*3.2}' text-anchor='middle' style='font-size:${u*9}px;fill:#fff;stroke:none;font-weight:700'>${t[5]}</text>`});
+ if(S.out){const r=u*9;h+=`<rect x='${S.out.x-r}' y='${Y(S.out.y)-r}' width='${r*2}' height='${r*2}' style='fill:#fff;stroke:#c0392b;stroke-width:2;vector-effect:non-scaling-stroke;opacity:1'/><circle cx='${S.out.x}' cy='${Y(S.out.y)}' r='${r*0.45}' style='fill:#c0392b;stroke:none;opacity:1'/><text x='${S.out.x+r*1.3}' y='${Y(S.out.y)+u*3.5}' style='font-size:${u*11}px;fill:#c0392b;stroke:none;font-weight:700'>OUT</text>`}
+ g.innerHTML=h;splPv(null);splRes()}
+function splPv(cur){const pv=$('spl_pv');if(!pv)return;const S=S6.spl,Y=y=>-y;let h='';const u=upx();
+ if(PEND){h+=`<circle cx='${PEND[0]}' cy='${Y(PEND[1])}' r='${u*4}' style='fill:#d9822b;stroke:none;opacity:1'/>`;if(cur)h+=`<path d='M${PEND[0]} ${Y(PEND[1])}L${cur[0]} ${Y(cur[1])}' style='fill:none;stroke:#d9822b;stroke-width:2;stroke-dasharray:6 4;vector-effect:non-scaling-stroke;opacity:1'/><text x='${cur[0]+u*8}' y='${Y(cur[1])-u*8}' style='font-size:${u*11}px;fill:#d9822b;stroke:none;font-weight:700'>${F(dist(PEND,cur),2)} m</text>`}
+ else if(cur)h+=`<circle cx='${cur[0]}' cy='${Y(cur[1])}' r='${u*3}' style='fill:#2a7ab0;stroke:none;opacity:.8'/>`;
+ pv.innerHTML=h}
+/* ---------------- results ---------------- */
+function splRes(){const S=S6.spl,N=NET;const lead=`<p class='nt'>${T('القيم الافتراضية (وحدات التصريف، جدول الأقطار، الميول، التهوية) قيم دولية بأسلوب IPC وليست من مدونة عراقية؛ عدّلها من الجداول أدناه وفق المدونة العراقية للتأسيسات الصحية بالمباني عند توفرها. الوحيد المأخوذ من مدونة عراقية هو أن توصيلة الدار بالشبكة العامة 100 مم (6/101).','The defaults (fixture units, diameter table, slopes, venting) are international IPC-style values, not from an Iraqi code; edit them in the tables below to match the Iraqi building plumbing code when available. The only Iraqi value used is the 100 mm house connection to the public sewer (6/101).')}</p>`;
+ if(!N){out('o_spl',lead+NT(S.out?'ضع جهازًا واحدًا على الأقل.':'ضع نقطة الخروج (OUT) على المخطط ثم الأجهزة.','Place the outlet (OUT) on the plan, then the fixtures.'));return}
+ const Q=qty(N),pipes=N.ord.filter(n=>n!=N.oi);
+ const rows=pipes.map((n,k)=>{const d=N.D[n],sl=N.slOf(d);return `<tr><td>#${k+1}</td><td>${F(N.len[n],2)}</td><td>${N.dsum[n]}</td><td><b>${d}</b></td><td>${F(sl*100,2)}</td><td>${F(N.depth(n),2)}</td><td>${F(N.depth(N.par[n]),2)}</td><td>${N.ic[n]?'CO':''}${N.nodes[n].fx.length?(N.ic[n]?' · ':'')+N.nodes[n].fx.map(i=>fxd(S.fx[i].t)[5]+(i+1)).join(','):''}</td></tr>`}).join('');
+ const byk=Object.keys(Q.by).sort((a,b)=>a-b);
+ out('o_spl',lead+(N.warn.length?N.warn.map(wn).join(''):ck(true,T('لا تحذيرات على حدود الفحص المدخلة','No warnings on the entered checks')))+
+  `<h4>${T('الكميات','Quantities')}</h4><div class='tbl wide'><table class='sm'><tr><th>${T('البند','Item')}</th><th>${T('الكمية','Quantity')}</th></tr>${byk.map(k=>`<tr><td>${T('أنبوب','Pipe')} ${k} mm</td><td>${F(Q.by[k],2)} m</td></tr>`).join('')}<tr><td>${T('مجموع الأنابيب الأفقية','Total horizontal pipe')}</td><td><b>${F(Q.len,2)} m</b></td></tr><tr><td>${T('نقاط التنظيف (Cleanout) بما فيها الخروج','Cleanouts including the outlet')}</td><td>${Q.co}</td></tr><tr><td>${T('وصلات T/Y (تقريبي)','T/Y fittings (approx.)')}</td><td>${Q.tees}</td></tr><tr><td>${T('انعطافات (زوايا) بالأنابيب','Bends in the pipes')}</td><td>${Q.bends}</td></tr><tr><td>${T('مواسير تهوية (وارتفاعها '+F(N0(S.vh),1)+' م)','Vent pipes (height '+F(N0(S.vh),1)+' m)')}</td><td>${Q.vents} (${F(Q.ventL,1)} m)</td></tr><tr><td>${T('الأجهزة','Fixtures')}</td><td>${Q.fx}</td></tr><tr><td>${T('حفر الخندق (تقريبي)','Trench excavation (approx.)')}</td><td>${F(Q.trench,2)} m³</td></tr><tr><td>${T('عمق القعر عند الخروج','Invert depth at the outlet')}</td><td>${F(N.Dout,2)} m</td></tr></table></div>`+
+  `<h4>${T('جدول الأنابيب','Pipe table')}</h4><div class='tbl wide'><table class='sm'><tr><th>#</th><th>L (m)</th><th>DFU</th><th>D (mm)</th><th>S %</th><th>${T('عمق القعر أعلى','Upper invert depth')} (m)</th><th>${T('عمق القعر أسفل','Lower invert depth')} (m)</th><th>${T('عند النهاية','At the end')}</th></tr>${rows}</table></div>`+
+  NT('العمق مقاس من سطح الأرض حتى قعر الأنبوب على افتراض أرض مستوية. الأنبوب يبدأ من الجهاز نحو الخروج، والقطر هو الأكبر الذي يتطلبه الجدول لمجموع الوحدات التي تمر فيه.','Depth is from ground level to the pipe invert assuming level ground. A pipe starts at the fixture and runs to the outlet; its diameter is the largest required by the table for the units passing through it.')+
+  `<p><button data-a6='spl|dxf'>${T('⬇ تصدير DXF','⬇ Export DXF')}</button> <button data-a6='spl|print'>${T('🖨 اطبع الجداول','🖨 Print the tables')}</button></p>`)}
+/* ---------------- page ---------------- */
+const TOOLS=[['pan','✋','تحريك','Pan'],['wall','▭','جدار','Wall'],['fx','🚽','جهاز','Fixture'],['out','⬛','خروج','Outlet'],['pipe','✏','أنبوب يدوي','Manual pipe'],['ers','🗑','مسح','Erase']];
+const HINT={pan:['اسحب لتحريك المخطط، وعجلة الفأرة أو الأصابع للتكبير.','Drag to pan; mouse wheel or two fingers to zoom.'],wall:['اضغط لبداية الجدار ثم لنهايته، ويستمر الخط. اضغط على النقطة الأخيرة أو «إنهاء» لإيقافه.','Click the wall start then its end; the line continues. Click the last point or press Finish to stop.'],fx:['اختر نوع الجهاز ثم اضغط مكانه على المخطط.','Choose the fixture type, then click its place on the plan.'],out:['اضغط مكان خروج الصرف (البيارة أو المنهل أو الشارع).','Click where the drain leaves the house (septic tank, manhole or street).'],pipe:['ارسم الأنبوب نقطة بعد نقطة من الجهاز إلى الخروج. انتهِ بالضغط على النقطة الأخيرة. وضع «مختلط» يكمل الباقي تلقائيًا.','Draw the pipe point by point from the fixture to the outlet. Finish by clicking the last point. Mixed mode completes the rest automatically.'],ers:['اضغط على جدار أو جهاز أو أنبوب لحذفه.','Click a wall, fixture or pipe to delete it.']};
+SITE.swplan=function(){const S=S6.spl,ly=BG?Object.keys(BG.lay):[];
+ return `<div class='gp'><h2>${T('مخطط الصرف الصحي للدار','House drainage layout')}</h2>${NT('ارسم مخطط الدار (أو استورد ملف DXF)، ضع الأجهزة الصحية ونقطة خروج الصرف، فيرسم الموقع الأنابيب تلقائيًا ويحسب الأقطار والميول والأعماق ونقاط التنظيف والتهوية والكميات، ثم تصدّر النتيجة إلى DXF. يمكنك أيضًا رسم الأنابيب بنفسك.','Draw the house plan (or import a DXF), place the fixtures and the drain outlet, and the site routes the pipes automatically and computes diameters, slopes, depths, cleanouts, venting and quantities, then exports the result to DXF. You can also draw the pipes yourself.')}
+ <div class='box'><h3>${T('1) المخطط','1) The plan')}</h3>
+ <div class='gr2'><label class='btn'>${T('📥 استيراد DXF (نصي)','📥 Import DXF (ASCII)')}<input type='file' accept='.dxf' data-splimp='1' hidden></label>${LB('وحدة ملف DXF','DXF units',SEL('spl','u',S.u,[['m','متر','Metres'],['cm','سنتيمتر','Centimetres'],['mm','مليمتر','Millimetres']],1))}</div>
+ ${ly.length?`<div style='margin:6px 0'>${ly.map((n,i)=>`<label class='ci' style='display:inline-flex;margin-inline-end:10px'><input type='checkbox' data-a6='spl|lay|${i}'${S.hide[n]?'':' checked'}><span>${esc(n)} <small>(${BG.lay[n].length/4})</small></span></label>`).join('')}</div>`+NT('ملف DWG غير مدعوم؛ احفظه من الأوتوكاد بصيغة DXF (ASCII). الخلفية تبقى في المتصفح ولا تُحفظ مع المشروع، فاستورد الملف ثانية عند الفتح.','DWG is not supported; save it from AutoCAD as DXF (ASCII). The background stays in the browser and is not saved with the project, so import the file again when you reopen.'):''}
+ <div class='gr2'>${LB('طريقة الأنابيب','Pipe mode',SEL('spl','mode',S.mode,[['auto','تلقائي بالكامل','Fully automatic'],['mix','مختلط: أنابيبي ثم تكمل تلقائيًا','Mixed: my pipes, then auto-complete'],['manual','يدوي فقط','Manual only']],1))}${LB('نوع الجهاز الذي يوضع','Fixture to place',SEL('spl','ft',S.ft,FXD.map(x=>[x[0],x[1],x[2]]),0))}</div>
+ <div class='tb6' style='display:flex;flex-wrap:wrap;gap:6px;margin:6px 0'>${TOOLS.map(t=>`<button data-a6='spl|tool:${t[0]}' style='${S.tool==t[0]?'outline:3px solid #2a7ab0;font-weight:700':''}'>${t[1]} ${T(t[2],t[3])}</button>`).join('')}<button data-a6='spl|fin'>${T('إنهاء الخط','Finish line')}</button><button data-a6='spl|undo'>↩ ${T('تراجع','Undo')}</button><button data-a6='spl|zi'>＋</button><button data-a6='spl|zo'>－</button><button data-a6='spl|fit'>${T('ملاءمة','Fit')}</button></div>
+ <label class='ci'><input type='checkbox' data-s6='spl|ortho'${S.ortho?' checked':''}><span>${T('اجبار الخطوط أفقية/عمودية','Force horizontal/vertical lines')}</span></label>
+ <p class='nt' id='spl_hint'>${T(HINT[S.tool][0],HINT[S.tool][1])}</p>
+ <div id='spl_cv' style='border:1px solid #9aa;border-radius:8px;background:#fff;overflow:hidden'><svg id='spl_svg' xmlns='http://www.w3.org/2000/svg' direction='ltr' font-family='Arial,Tahoma,sans-serif' style='display:block;width:100%!important;height:min(62vh,540px)!important;min-width:0!important;max-width:none!important;touch-action:none;background:#fff;direction:ltr;cursor:crosshair'><g id='spl_g'></g><g id='spl_pv'></g></svg></div>
+ <p style='margin-top:6px'><button data-a6='spl|demo'>${T('🏠 حمّل دارًا تجريبية','🏠 Load a sample house')}</button> <button data-a6='spl|clrp'>${T('امسح الأنابيب اليدوية','Clear manual pipes')}</button> <button data-a6='spl|clra'>${T('امسح كل شيء','Clear everything')}</button></p></div>
+ <div class='box'><h3>${T('2) الافتراضات','2) Assumptions')}</h3><div class='gr2'>${LB('ميل الأنابيب حتى 75 مم (%)','Slope for pipes up to 75 mm (%)',IN('spl','s75',S.s75))}${LB('ميل الأنابيب 100 مم فأكثر (%)','Slope for pipes 100 mm and above (%)',IN('spl','s100',S.s100))}${LB('عمق قعر أبعد جهاز (م)','Invert depth at the farthest fixture (m)',IN('spl','c0',S.c0))}${LB('أقصى مسافة بين نقاط التنظيف (م)','Maximum distance between cleanouts (m)',IN('spl','icmax',S.icmax))}${LB('نقاط التنظيف','Cleanouts',SEL('spl','ic',S.ic,[['none','عند الخروج فقط','Outlet only'],['br','عند التفرعات','At junctions'],['both','عند التفرعات والانعطافات','At junctions and bends']],1))}${LB('ارتفاع ماسورة التهوية (م)','Vent pipe height (m)',IN('spl','vh',S.vh))}</div>${CB('spl','vent',S.vent,'مواسير تهوية عند نهاية كل فرع فيه جهاز','Vent pipe at the end of each branch with a fixture')}
+ <h4>${T('وحدات التصريف (DFU) لكل جهاز','Drainage fixture units (DFU) per fixture')}</h4><div class='gr2'>${FXD.map(x=>LB(x[1]+' ('+x[5]+')',x[2]+' ('+x[5]+')',IN('spl','dfu.'+x[0],S.dfu[x[0]]))).join('')}</div>
+ <h4>${T('القطر الأفقي حسب مجموع الوحدات','Horizontal pipe diameter by total units')}</h4><div class='tbl'><table class='sm'><tr><th>${T('القطر (مم)','Diameter (mm)')}</th><th>${T('أقصى وحدات','Max units')}</th></tr>${S.bd.map((b,i)=>`<tr><td>${IN('spl','bd.'+i+'.d',b.d)}</td><td>${IN('spl','bd.'+i+'.n',b.n)}</td></tr>`).join('')}</table></div>${NT('أي أنبوب يمر به مرحاض لا يقل عن 100 مم. قيم الجدول الافتراضية للأقطار 50/75/100/125/150 هي من أسلوب IPC (21، 42، 216، 428، 720 وحدة بميل 1%).','Any pipe carrying a water closet is at least 100 mm. The default diameter table values for 50/75/100/125/150 mm follow the IPC style (21, 42, 216, 428, 720 units at 1% slope).')}</div>
+ <div class='box'><h3>${T('3) النتائج','3) Results')}</h3><div id='o_spl'></div></div>${WN6}</div>`};
+function setHint(){const e=$('spl_hint'),h=HINT[S6.spl.tool];if(e&&h)e.innerHTML=T(h[0],h[1])}
+/* ---------------- interaction ---------------- */
+const toXY=(sv,e)=>{const m=sv.getScreenCTM();if(!m)return[0,0];const pt=sv.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(m.inverse());return[q.x,q.y]};
+function snapP(w){const S=S6.spl,u=upx();let best=null,bd=u*11;const cand=[];
+ S.walls.concat(S.mp).forEach(s=>{cand.push([s[0],s[1]],[s[2],s[3]])});S.fx.forEach(f=>cand.push([f.x,f.y]));if(S.out)cand.push([S.out.x,S.out.y]);if(NET&&S.tool=='pipe')NET.nodes.forEach(n=>cand.push(n.p));
+ cand.forEach(c=>{const d=dist(c,w);if(d<bd){bd=d;best=c}});if(best)return[best[0],best[1]];
+ if(S.tool=='pipe'||S.tool=='wall'){const sg=S.tool=='pipe'?S.mp.concat(NET&&S.mode!='manual'?[]:[]):S.walls;let pb=null,pd=u*11;sg.forEach(s=>{const c=projSeg(w,s),d=dist(c,w);if(d<pd){pd=d;pb=c}});if(pb)return[clamp3(pb[0]),clamp3(pb[1])]}
+ let q=[w[0],w[1]];if(PEND&&S.ortho&&(S.tool=='wall'||S.tool=='pipe')){if(Math.abs(q[0]-PEND[0])>Math.abs(q[1]-PEND[1]))q[1]=PEND[1];else q[0]=PEND[0]}
+ const st=Math.pow(10,Math.floor(Math.log10(VB.w/100)));return[clamp3(Math.round(q[0]/st)*st),clamp3(Math.round(q[1]/st)*st)]}
+function ptSegDist(p,s){return dist(projSeg(p,s),p)}
+function click(w){const S=S6.spl,u=upx(),p=snapP(w),t=S.tool;
+ if(t=='wall'||t=='pipe'){if(!PEND){PEND=p}else if(dist(PEND,p)<u*8){PEND=null}else{snapSt();(t=='wall'?S.walls:S.mp).push([PEND[0],PEND[1],p[0],p[1]]);PEND=[p[0],p[1]];if(t=='pipe'&&S.mode=='auto'){S.mode='mix';sv6();PEND=null;rr6();toast6(P('تم تفعيل الوضع المختلط: أنابيبك أولًا ثم يكمل الباقي تلقائيًا','Mixed mode switched on: your pipes first, then the rest automatically'));return}}}
+ else if(t=='fx'){snapSt();S.fx.push({t:S.ft,x:p[0],y:p[1]})}
+ else if(t=='out'){snapSt();S.out={x:p[0],y:p[1]}}
+ else if(t=='ers'){let best=null,bd=u*14;S.fx.forEach((f,i)=>{const d=dist([f.x,f.y],w);if(d<bd){bd=d;best=['fx',i]}});if(S.out&&dist([S.out.x,S.out.y],w)<bd){bd=dist([S.out.x,S.out.y],w);best=['out']}
+  S.mp.forEach((s,i)=>{const d=ptSegDist(w,s);if(d<bd){bd=d;best=['mp',i]}});S.walls.forEach((s,i)=>{const d=ptSegDist(w,s);if(d<bd){bd=d;best=['walls',i]}});
+  if(best){snapSt();if(best[0]=='out')S.out=null;else S[best[0]].splice(best[1],1)}}
+ sv6();splDraw()}
+function zoomAt(f,ux,uy){VB.x=ux-(ux-VB.x)*f;VB.y=uy-(uy-VB.y)*f;VB.w*=f;VB.h*=f;const sv=$('spl_svg');if(sv)sv.setAttribute('viewBox',VB.x+' '+VB.y+' '+VB.w+' '+VB.h)}
+let rafZ=0;const lazyDraw=()=>{if(rafZ)return;rafZ=requestAnimationFrame(()=>{rafZ=0;splDraw()})};
+R6.swplan=function(){const sv=$('spl_svg');if(!sv)return;if(sv.dataset.on){splDraw();return}sv.dataset.on='1';const PT={};let D=null;
+ const two=()=>{const k=Object.keys(PT);return k.length>=2?[PT[k[0]],PT[k[1]]]:null};
+ sv.addEventListener('pointerdown',e=>{try{sv.setPointerCapture(e.pointerId)}catch(x){}PT[e.pointerId]={x:e.clientX,y:e.clientY};const t=two();D={x:e.clientX,y:e.clientY,moved:false,vb:{x:VB.x,y:VB.y,w:VB.w,h:VB.h},u:upx(),pd:t?Math.hypot(t[0].x-t[1].x,t[0].y-t[1].y):0,multi:!!t,vb2:null};if(t)D.vb2={x:VB.x,y:VB.y,w:VB.w,h:VB.h}});
+ sv.addEventListener('pointermove',e=>{if(PT[e.pointerId])PT[e.pointerId]={x:e.clientX,y:e.clientY};
+  if(D&&PT[e.pointerId]){const t=two();
+   if(t){const d=Math.hypot(t[0].x-t[1].x,t[0].y-t[1].y);if(D.pd>0&&d>0){D.multi=true;D.moved=true;const f=D.pd/d,v=D.vb2,cx=(t[0].x+t[1].x)/2,cy=(t[0].y+t[1].y)/2,m=toXY(sv,{clientX:cx,clientY:cy});VB.w=v.w*f;VB.h=v.h*f;VB.x=m[0]-(m[0]-v.x)*f;VB.y=m[1]-(m[1]-v.y)*f;sv.setAttribute('viewBox',VB.x+' '+VB.y+' '+VB.w+' '+VB.h);lazyDraw()}return}
+   const dx=e.clientX-D.x,dy=e.clientY-D.y;if(!D.moved&&Math.hypot(dx,dy)<6)return;if(D.multi)return;D.moved=true;VB.x=D.vb.x-dx*D.u;VB.y=D.vb.y-dy*D.u;sv.setAttribute('viewBox',VB.x+' '+VB.y+' '+VB.w+' '+VB.h);return}
+  const m=toXY(sv,e);splPv(S6.spl.tool=='pan'?null:snapP([m[0],-m[1]]))});
+ const up=e=>{if(!D||!PT[e.pointerId]){delete PT[e.pointerId];return}const wasMulti=D.multi,moved=D.moved;delete PT[e.pointerId];if(!Object.keys(PT).length){const d=D;D=null;if(moved){fixFit();splDraw()}else if(!wasMulti&&e.type=='pointerup'){const m=toXY(sv,e);if(S6.spl.tool!='pan')click([m[0],-m[1]])}}};
+ const fixFit=()=>{};
+ sv.addEventListener('pointerup',up);sv.addEventListener('pointercancel',up);
+ sv.addEventListener('wheel',e=>{e.preventDefault();const m=toXY(sv,e),f=e.deltaY>0?1.2:1/1.2;zoomAt(f,m[0],m[1]);lazyDraw()},{passive:false});
+ sv.addEventListener('pointerleave',()=>splPv(null));
+ setHint();splDraw()};
+document.addEventListener('keydown',e=>{if(e.key=='Escape'&&PEND&&CUR6=='swplan'){PEND=null;splPv(null)}});
+/* ---------------- actions ---------------- */
+function demo(){const S=S6.spl;snapSt();S.walls=[[0,0,12,0],[12,0,12,9],[12,9,0,9],[0,9,0,0],[2.5,0,2.5,3],[5,0,5,9],[0,3,5,3],[8.5,0,8.5,3.5],[8.5,3.5,12,3.5]];S.mp=[];S.mode='auto';
+ S.fx=[['wc',0.7,0.6],['lav',1.8,0.6],['sh',0.7,2.3],['fd',1.8,2.3],['wc',3.0,0.6],['lav',4.3,0.6],['bt',4.3,2.2],['wm',9.5,0.6],['sk',11.3,0.6]].map(a=>({t:a[0],x:a[1],y:a[2]}));S.out={x:6.5,y:-1.2};BG=null;S.hide={};fitView()}
+A6.spl=(op,i)=>{const S=S6.spl;
+ if(op&&op.indexOf('tool:')==0){S.tool=op.slice(5);PEND=null;rr6();return}
+ if(op=='fin'){PEND=null;splPv(null)}
+ else if(op=='undo'){const h=HIST.pop();if(h){const o=JSON.parse(h);S.walls=o.walls;S.mp=o.mp;S.fx=o.fx;S.out=o.out;PEND=null;splDraw()}}
+ else if(op=='zi'||op=='zo'){if(!VB)fitView();const f=op=='zi'?1/1.3:1.3;zoomAt(f,VB.x+VB.w/2,VB.y+VB.h/2);splDraw()}
+ else if(op=='fit'){fitView();splDraw()}
+ else if(op=='lay'){const n=BG&&Object.keys(BG.lay)[i];if(n){S.hide[n]=!S.hide[n];splDraw()}}
+ else if(op=='demo'){demo();rr6()}
+ else if(op=='clrp'){snapSt();S.mp=[];PEND=null;splDraw()}
+ else if(op=='clra'){snapSt();S.walls=[];S.mp=[];S.fx=[];S.out=null;BG=null;PEND=null;S.hide={};VB=null;rr6()}
+ else if(op=='dxf'){const d=exportDXF(NET);xSave('FABRUM-house-drainage.dxf',d,'application/dxf').then(ok=>{if(ok)toast6(P('تم تجهيز ملف DXF (الوحدة متر، الطبقات: A-WALL وPLUMB-*)','DXF file ready (metres; layers A-WALL and PLUMB-*)'))})}
+ else if(op=='print'){const e=$('o_spl'),sv=$('spl_svg');prt6(EN()?'House drainage layout':'مخطط الصرف الصحي للدار',(sv?`<div style='margin-bottom:10px'>${sv.outerHTML}</div>`:'')+(e?e.innerHTML:''))}};
+HK6.spl=function(path,v){if(path=='u'){VB=null}};
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.splimp)return;const f=t.files&&t.files[0];if(!f)return;if(f.size>40e6){toast6(P('الملف كبير جدًا (أكثر من 40 ميغابايت)','The file is too large (over 40 MB)'));return}
+ const rd=new FileReader();rd.onload=()=>{const txt=String(rd.result);if(/^AutoCAD Binary DXF/.test(txt)){toast6(P('ملف DXF ثنائي غير مدعوم؛ احفظه بصيغة ASCII','Binary DXF is not supported; save it as ASCII DXF'));return}
+  let r;try{r=parseDXF(txt)}catch(x){toast6(P('تعذر قراءة الملف','Could not read the file'));return}
+  if(!r.st.segs){toast6(P('لم يُعثر على خطوط بالملف. ربما العناصر كتل (INSERT) فقط؛ فكّكها (EXPLODE) بالأوتوكاد ثم احفظ.','No lines found. The drawing may contain only blocks (INSERT); explode them in AutoCAD and save again.'));return}
+  BG=r;const S=S6.spl;S.hide={};let a=1e18,c=-1e18;for(const n in r.lay){const A=r.lay[n];for(let i=0;i<A.length;i+=2){a=Math.min(a,A[i]);c=Math.max(c,A[i])}}const w=c-a;S.u=w>3000?'mm':w>300?'cm':'m';VB=null;sv6();rr6();
+  toast6(P('تم استيراد '+r.st.segs+' خطًا. تحقق من الوحدة (متر/سم/مم) ثم ضع الأجهزة.'+(r.st.ins?' ('+r.st.ins+' كتلة لم تُستورد)':''),r.st.segs+' lines imported. Check the unit (m/cm/mm), then place the fixtures.'+(r.st.ins?' ('+r.st.ins+' blocks were not imported)':'')))};
+ rd.readAsText(f);t.value=''});
+/* ---------------- menu and guide ---------------- */
+{const sx=MS.find(s=>s[0]=='🚰');if(sx&&!sx[2].some(x=>x[0]=='site:swplan'))sx[2].unshift(['site:swplan','مخطط الصرف الصحي للدار: رسم تلقائي ويدوي وDXF','house drainage layout plan auto routing dxf fixtures pipes cleanout vent مخطط صرف صحي دار بيت أنابيب'])}
+G['site:swplan']=[['ارسم مخطط الدار أو استورد DXF، ضع الأجهزة الصحية ونقطة الخروج، فيرسم الموقع الأنابيب ويحسب الأقطار والأعماق والكميات.','Draw the house plan or import a DXF, place the fixtures and the outlet, and the site routes the pipes and computes diameters, depths and quantities.'],[['استورد DXF أو ارسم الجدران بأداة «جدار» أو حمّل الدار التجريبية.','Import a DXF, draw the walls with the Wall tool, or load the sample house.'],['اختر نوع الجهاز واضغط مكانه، وضع نقطة الخروج OUT.','Choose a fixture type and click its place; set the OUT point.'],['اترك الوضع تلقائيًا أو ارسم أنابيبك بنفسك (وضع مختلط أو يدوي).','Leave it automatic, or draw your own pipes (mixed or manual mode).'],['راجع التحذيرات والجداول وعدّل الافتراضات ثم صدّر DXF.','Review the warnings and tables, edit the assumptions, then export DXF.']],['تحصل على مخطط أنابيب مع الأقطار ونقاط التنظيف والتهوية وكميات وملف DXF.','Get a pipe layout with diameters, cleanouts, venting, quantities and a DXF file.']];
+try{mkMenu()}catch(e){}
+})();
+</script>
 </body>
 </html>
