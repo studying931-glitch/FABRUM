@@ -10231,7 +10231,7 @@ function guessCfg(n,o){
  if(S().role=='3d')return has3&&!Object.values(PS().files).some(x=>x.role!='3d'&&x.inc!==false)?{m:'mesh'}:{m:'ignore'};
  if(/wall|lift|elevator|core|جدار|حائط|مصعد/i.test(n)&&o.nc>0&&o.nst&&o.nst.od>0)return{m:'col',h:3,k:1,nest:true};
  if(/stair|درج|سلم/i.test(n)&&!/landing|rest|بسطة|ساحة|opening|فتحة/i.test(n)&&o.len>0&&!o.nc)return{m:'stair',sh:3,tw:150,en:true,k:1};
- if(/column|col\b|عمود|اعمدة|أعمدة|foot|foundation|fndn|قاعدة|قواعد|اساس|أساس|pad\b|pile|خازوق|خوازيق/i.test(n)&&o.nc+o.ncir+(o.nl||0)>0)return{m:'col',h:/foot|foundation|fndn|قاعدة|قواعد|اساس|أساس|pad\b/i.test(n)?.6:3,k:1,lp:(o.nl||0)>o.nc+o.ncir};
+ if(/column|col\b|عمود|اعمدة|أعمدة|foot|foundation|fndn|قاعدة|قواعد|اساس|أساس|pad\b|pile|خازوق|خوازيق/i.test(n)&&o.nc+o.ncir+(o.nl||0)>0)return{m:'col',h:/foot|foundation|fndn|قاعدة|قواعد|اساس|أساس|pad\b/i.test(n)?.6:3,k:1,lp:(o.nl||0)>0};
  if(/beam|جسر|كمر|حزام|tie\b|lintel|wall|جدار|حائط|lift|elevator|مصعد|core|strip|شريطي/i.test(n)&&o.tw&&o.tw.l>0&&o.tw.l*2>=0.5*o.len){const bm=/beam|جسر|كمر|حزام|tie\b|lintel/i.test(n);const dr=bm?'':Object.keys(S().ls).find(x=>/door|باب|ابواب|أبواب/i.test(x)&&(S().ls[x].nc>0||Object.keys(S().ls[x].ins).length))||'',wn=bm?'':Object.keys(S().ls).find(x=>/window|شباك|شبابيك|نافذة|نوافذ/i.test(x)&&(S().ls[x].nc>0||Object.keys(S().ls[x].ins).length))||'';return{m:'twin',h:bm?.5:/strip|شريطي/i.test(n)?.5:3,k:1,el:bm,mw:bm?400:0,ol:dr,o2:wn}}
  if(/rebar|reinf|steel|حديد|تسليح/i.test(n))return{m:'rebar',d:12,k:1};
  if(/wall|جدار|حائط|بلوك|brick|block/i.test(n)&&o.len>0)return{m:'wall',h:3,t:200,k:1};
@@ -10342,14 +10342,19 @@ const inTri=(x,y,t)=>{const d1=(x-t[2])*(t[1]-t[3])-(t[0]-t[2])*(y-t[3]),d2=(x-t
 const inFp=(c,x,y,t)=>{if(!c.fp)return true;const e=t||0.02;for(let i=0;i<c.fp.length;i++){const q=c.fp[i];if(x<Math.min(q[0],q[2],q[4])-e||x>Math.max(q[0],q[2],q[4])+e||y<Math.min(q[1],q[3],q[5])-e||y>Math.max(q[1],q[3],q[5])+e)continue;if(inTri(x,y,q))return true}return false};
 function h3(x,y,zb,zt,lf,bd){let best=null;
  for(let i=0;i<C3C.length;i++){const c=C3C[i];if(lf&&lf.length&&lf.indexOf(c.l)<0)continue;if(x<c.x0-1e-6||x>c.x1+1e-6||y<c.y0-1e-6||y>c.y1+1e-6)continue;if(c.fp&&!inFp(c,x,y))continue;if(c.open===1&&(c.x1-c.x0)*(c.y1-c.y0)>1.5)continue;
-  if(bd){const ov=Math.min(c.z1,bd[1])-Math.max(c.z0,bd[0]);if(ov<0.5*(c.z1-c.z0)-1e-6)continue}
-  let z0=c.z0,z1=c.z1;if(isNum(zb))z0=Math.max(z0,+zb);if(isNum(zt))z1=Math.min(z1,+zt);const hh=z1-z0;if(hh<=1e-6)continue;
+  const isC=bd&&/col|عمود|اعمدة|أعمدة/i.test(c.l);
+  if(bd){const ov=Math.min(c.z1,bd[1])-Math.max(c.z0,bd[0]);if(isC?ov<0.5*(bd[1]-bd[0])-1e-6:ov<0.5*(c.z1-c.z0)-1e-6)continue}
+  let z0=c.z0,z1=c.z1;if(isC){z0=Math.max(z0,bd[0]);z1=Math.min(z1,bd[1])}if(isNum(zb))z0=Math.max(z0,+zb);if(isNum(zt))z1=Math.min(z1,+zt);const hh=z1-z0;if(hh<=1e-6)continue;
   const pr=lf&&lf.length?lf.indexOf(c.l):0;
   if(!best||pr<best.pr||(pr==best.pr&&(c.ar<best.ar-1e-9||(Math.abs(c.ar-best.ar)<1e-9&&hh>best.h))))best={ar:c.ar,h:hh,z0:z0,z1:z1,c:c,pr:pr}}
  return best}
 /* ---- automatic registration of the 3D model against the current plan, and storey detection ---- */
 const hit3=(x,y,lf,t)=>{t=t||0.05;for(let i=0;i<C3C.length;i++){const c=C3C[i];if(lf&&lf.length&&lf.indexOf(c.l)<0)continue;if(x>=c.x0-t&&x<=c.x1+t&&y>=c.y0-t&&y<=c.y1+t&&(!c.fp||inFp(c,x,y,t)))return c}return null};
-function planPts(f,maxA){const pts=[],ks=Object.assign({},DQ.pg||{},DQ.el||{});Object.keys(ks).forEach(n=>{const c=cfgOf(n);if(c.m=='ignore')return;((DQ.pg||{})[n]||[]).concat(c.lp&&DQ.lp&&DQ.lp[n]?DQ.lp[n]:[]).forEach(q=>{const a=q.a*f*f;if(a>=0.01&&a<=maxA&&!(q.dp%2)){const w=(q.bw||0)*f,h=(q.bh||0)*f;pts.push([q.cx*f,q.cy*f,Math.min(w,h),Math.max(w,h)])}});if(c.m=='twin')((DQ.el&&DQ.el[n])||[]).forEach(e=>{if(e.sl*f>0.3){const w=(e.x1-e.x0)*f,h=(e.y1-e.y0)*f;pts.push([(e.x0+e.x1)/2*f,(e.y0+e.y1)/2*f,Math.min(w,h),Math.max(w,h)])}})});return pts}
+/* loose-line loops of a layer, minus any that duplicate a closed polyline already there */
+/* a 3D layer that is a (block) wall, not structural concrete */
+const isBW=x=>/wall|جدار|جدران/i.test(x||'')&&!/beam|col|foot|found|fndn|slab|flor/i.test(x||'');
+function lpx(n,c){if(!(c&&c.lp&&DQ.lp&&DQ.lp[n]))return[];const pg=(DQ.pg&&DQ.pg[n])||[];return DQ.lp[n].filter(q=>!pg.some(g=>{const t=0.01*Math.max(q.bw||0,q.bh||0,1e-9);return Math.abs(g.cx-q.cx)<t&&Math.abs(g.cy-q.cy)<t&&Math.abs(g.a-q.a)<0.02*q.a}))}
+function planPts(f,maxA){const pts=[],ks=Object.assign({},DQ.pg||{},DQ.el||{});Object.keys(ks).forEach(n=>{const c=cfgOf(n);if(c.m=='ignore')return;((DQ.pg||{})[n]||[]).concat(lpx(n,c)).forEach(q=>{const a=q.a*f*f;if(a>=0.01&&a<=maxA&&!(q.dp%2)){const w=(q.bw||0)*f,h=(q.bh||0)*f;pts.push([q.cx*f,q.cy*f,Math.min(w,h),Math.max(w,h)])}});if(c.m=='twin')((DQ.el&&DQ.el[n])||[]).forEach(e=>{if(e.sl*f>0.3){const w=(e.x1-e.x0)*f,h=(e.y1-e.y0)*f;pts.push([(e.x0+e.x1)/2*f,(e.y0+e.y1)/2*f,Math.min(w,h),Math.max(w,h)])}})});return pts}
 function alignCur(f){const s=S();
  if(isNum(s.ox)&&isNum(s.oy))return s.al={ox:+s.ox,oy:+s.oy,sc:'man'};
  const sig=C3C.length+':'+C3C.reduce((a,c)=>a+c.ar,0).toFixed(3)+':'+f;if(DQ._alk===sig&&DQ._al){s.al=DQ._al;return DQ._al}
@@ -10378,7 +10383,7 @@ function bands3(){const lv=levels3(),b=[];for(let i=1;i<lv.length;i++)if(lv[i]-l
 function bandOf(n,c,f,al,lfs,ref){const s=S();if(!s.bd)s.bd={};const key=(ref?ref.b.toFixed(2)+':':'')+n+'|'+(lfs||[]).join(',')+'|'+C3C.length+'|'+(al.ox||0).toFixed(2)+'|'+(c.m||'');if(s.bd[n]&&s.bd[n].k===key)return s.bd[n].v;
  const bands=bands3();
  let pts=[];const E=(DQ.el&&DQ.el[n])||[];
- if(c.m=='twin')E.forEach(e=>pts.push([(e.x0+e.x1)/2*f,(e.y0+e.y1)/2*f]));else(DQ.pg[n]||[]).concat(c.lp&&DQ.lp&&DQ.lp[n]?DQ.lp[n]:[]).forEach(q=>{if(!(q.dp%2)){const w=(q.bw||0)*f,h=(q.bh||0)*f;pts.push(q.a*f*f<=6?[q.cx*f,q.cy*f,Math.min(w,h),Math.max(w,h)]:[q.cx*f,q.cy*f])}});
+ if(c.m=='twin')E.forEach(e=>pts.push([(e.x0+e.x1)/2*f,(e.y0+e.y1)/2*f]));else(DQ.pg[n]||[]).concat(lpx(n,c)).forEach(q=>{if(!(q.dp%2)){const w=(q.bw||0)*f,h=(q.bh||0)*f;pts.push(q.a*f*f<=6?[q.cx*f,q.cy*f,Math.min(w,h),Math.max(w,h)]:[q.cx*f,q.cy*f])}});
  let v=null;
  if(pts.length>=1&&bands.length>1){if(pts.length>400)pts=pts.filter((_,i)=>i%Math.ceil(pts.length/400)==0);
   const bx0=Math.min(...pts.map(p=>p[0]))-1,bx1=Math.max(...pts.map(p=>p[0]))+1,by0=Math.min(...pts.map(p=>p[1]))-1,by1=Math.max(...pts.map(p=>p[1]))+1;
@@ -10426,7 +10431,7 @@ function computeFile(){
   const k=N0(c.k)||1,Lm=o.len*f,Am=o.area*f*f,ds=c.desc||n,f2=f*f;
   const R=(desc,x)=>rows.push(Object.assign({desc:desc,layer:n,mode:c.m,L:0,A:0,V:0,N:0,W:0,Fm:0,d:0},x));
   const lf0=C3C.length&&c.h3!==false&&c.m!='stair'?lay3(n,c):[],use3=!!(C3C.length&&c.m!='stair'&&(c.h3===true||c.h3===1||(c.h3===undefined&&lf0.length))),lf=use3?lf0:null,bnd=use3&&!isNum(zb)&&!isNum(zt)?(SB?{b:SB[0],t:SB[1],m:0,n:0,man:1}:(NECK&&c.m=='col'&&/col|عمود|اعمدة|أعمدة/i.test(n)&&!/foot|found|fndn|قاعد|اساس|أساس/i.test(n)?{b:NECK[0],t:NECK[1],m:0,n:0,man:2}:(bandOf(n,c,f,al,lf,REF)||(c.m=='len'&&REF?{b:REF.b,t:REF.t,m:0,n:0,man:3}:null)))):null,bdr=bnd?[bnd.b,bnd.t]:null;if(use3&&bnd)(S().bdi||(S().bdi={}))[n]=bnd;
-  const pgs=(DQ.pg[n]||[]).concat(c.lp&&DQ.lp&&DQ.lp[n]?DQ.lp[n]:[]);
+  const pgs=(DQ.pg[n]||[]).concat(lpx(n,c));
   {const ncl=pgs.filter(q=>q.cl).length;if(ncl)warn.push(P('الطبقة «'+n+'»: '+ncl+' شكلًا مرسومًا بخطوط ناقصة ضلع (مفتوح) أُغلق تلقائيًا؛ راجع الرسم.','Layer “'+n+'”: '+ncl+' shapes drawn with a missing side were closed automatically; check the drawing.'))}
   const lfb=use3&&c.m=='col'&&lf.length&&!c.h3l?L3N().filter(l=>!/beam|wall|flor|slab|stair|strs|fndn|found|foot/i.test(l)&&lf.indexOf(l)<0):[];
   const M=(q)=>{if(!use3)return null;const x=q.cx*f+al.ox,y=q.cy*f+al.oy;let m=h3(x,y,zb,zt,lf,bdr);if(!m&&lfb.length)m=h3(x,y,zb,zt,lfb,bdr);return m};
@@ -10468,8 +10473,8 @@ function computeFile(){
     if(use3&&nu)warn.push(P('الطبقة «'+n+'»: '+nu+' عنصرًا بلا مطابقة 3D ('+(c.m=='col'&&bnd?'استُعمل ارتفاع الطابق '+F(bnd.t-bnd.b,2)+' م':'استُعمل الارتفاع الافتراضي')+').','Layer “'+n+'”: '+nu+' elements had no 3D match ('+(c.m=='col'&&bnd?'storey height '+F(bnd.t-bnd.b,2)+' m used':'default height used')+').'));
     if(o.tw&&o.tw.u>0.2*o.len)warn.push(P('الطبقة «'+n+'»: '+F(o.tw.u*f,1)+' م من الخطوط غير مقترنة (أكثر من 20%)؛ تأكد أن العنصر مرسوم بخطين متوازيين.','Layer “'+n+'”: '+F(o.tw.u*f,1)+' m of lines are unpaired (over 20%); check the element is drawn with two parallel lines.'))}
    const bk=Object.keys(BYL);
-   if(L0>0&&c.m=='twin'&&use3&&bk.filter(x=>x!='—').length>1)bk.sort().forEach(x=>{const b=BYL[x];R(ds+' ← '+(x=='—'?P('بدون مطابقة 3D (افتراضي)','no 3D match (default)'):P('مجسّم 3D: ','3D: ')+x)+' ('+b.n+')',{L:b.L,A:b.A,V:b.V,Fm:b.Fm})});
-   else if(L0>0)R(ds+(c.m=='twin'&&c.el?P(' ('+els.filter(e=>e.layer==n).length+' عنصر — التفصيل بجدول العناصر)',' ('+els.filter(e=>e.layer==n).length+' elements — see element table)'):''),{L:L0,A:A0,V:V0,Fm:F0});
+   if(L0>0&&c.m=='twin'&&use3&&bk.filter(x=>x!='—').length>1)bk.sort().forEach(x=>{const b=BYL[x];R(ds+' ← '+(x=='—'?P('بدون مطابقة 3D (افتراضي)','no 3D match (default)'):P('مجسّم 3D: ','3D: ')+x)+' ('+b.n+')',{L:b.L,A:b.A,V:b.V,Fm:b.Fm,bw:isBW(x)})});
+   else if(L0>0)R(ds+(c.m=='twin'&&c.el?P(' ('+els.filter(e=>e.layer==n).length+' عنصر — التفصيل بجدول العناصر)',' ('+els.filter(e=>e.layer==n).length+' elements — see element table)'):''),{L:L0,A:A0,V:V0,Fm:F0,bw:c.m=='twin'&&use3&&bk.length==1&&isBW(bk[0])});
    [['ol','oh','_o1'],['o2','h2','_o2']].forEach(q=>{const ol=c[q[0]],oh=N0(c[q[1]]),r=wallOpen(n,c,q[2].slice(1),ol);if(r&&r.cnt&&oh>0)R(P('ناقص: فتحات «'+ol+'» ('+r.cnt+') — ','Less: openings “'+ol+'” ('+r.cnt+') — ')+ds,{A:-r.W*oh*k,V:-r.W*oh*t*k,Fm:-2*r.W*oh*k})})}
   else if(c.m=='col'){const hd=N0(c.h),nest=c.nest===true,ev=[],od=[];pgs.forEach(q=>{(nest&&q.dp%2?od:ev).push(q)});
    if(ev.length>0){let a=0,v=0,fm=0,nm=0,nu=0,bl=0,ex=0;
@@ -10510,7 +10515,8 @@ function computeFile(){
    hasSl=lays.some(n=>{const c=cfgOf(n);return c.m=='vol'||(c.h3!==false&&lay3(n,c).some(l=>/fndn|found|foot/i.test(l)))}),
    hasSt=lays.some(n=>cfgOf(n).m=='stair'),hasVol=lays.some(n=>cfgOf(n).m=='vol'),
    GR=[{k:'sl',re:/flor|slab|roof/i,skip:hasSl,ar:'السقف / البلاطة',en:'Slab/roof',fm:1,cnt:'قطعة',cne:'pieces'},
-    {k:'gs',re:/flor|slab/i,skip:!hasSl||hasVol,ar:'بلاطة الأرضية فوق رقاب الأعمدة',en:'Ground slab above column necks',fm:1,cnt:'قطعة',cne:'pieces',zt:c=>c.z1<=0.1&&c.z1>=-0.3},{k:'st',re:/stair|strs/i,skip:hasSt,ar:'الدرج',en:'Stairs',fm:0,cnt:'درجة/بسطة',cne:'flights/landings'}];
+    {k:'gs',re:/flor|slab/i,skip:!hasSl||hasVol,ar:'بلاطة الأرضية فوق رقاب الأعمدة',en:'Ground slab above column necks',fm:1,cnt:'قطعة',cne:'pieces',zt:c=>c.z1<=0.1&&c.z1>=-0.3},{k:'st',re:/stair|strs/i,skip:hasSt,ar:'الدرج',en:'Stairs',fm:0,cnt:'درجة/بسطة',cne:'flights/landings'},
+    {k:'ln',re:/fndn|found|foot/i,skip:!hasSl,ar:'صبة النظافة (خرسانة عادية) تحت القواعد',en:'Lean concrete (blinding) under footings',fm:0,cnt:'قطعة',cne:'pieces',zt:c=>c.z1-c.z0<=0.15&&c.ta>0.2}];
   let bd=SB?{b:SB[0],t:SB[1]}:null;
   if(!bd&&!isNum(zb)&&!isNum(zt)){const bi=s.bdi||{};const k=Object.keys(bi).filter(n=>bi[n]&&layNames().indexOf(n)>=0).sort((a,b)=>(cfgOf(b).m=='col'?1:0)-(cfgOf(a).m=='col'?1:0)||bi[b].m-bi[a].m)[0];if(k)bd={b:bi[k].b,t:bi[k].t}}
   else if(!bd&&(isNum(zb)||isNum(zt)))bd={b:isNum(zb)?+zb:-1e9,t:isNum(zt)?+zt:1e9};
@@ -10537,15 +10543,15 @@ function computeFile(){
 /* all files of the project */
 let SLABDONE={},USED3=new Set();
 function computeAll(){
- SLABDONE={};USED3=new Set();const P0=PS(),cur0=P0.cur,out={rows:[],stairs:[],els:[],warn:[],byFile:[],lv:{}};buildC3();
+ SLABDONE={};USED3=new Set();const P0=PS(),cur0=P0.cur,out={rows:[],blk:[],stairs:[],els:[],warn:[],byFile:[],lv:{}};buildC3();
  P0.ord.forEach(id=>{const fl=P0.files[id];if(!fl||fl.inc===false)return;useFile(id);
   let r;if(DQ){r=computeFile();fl.cache={rows:r.rows,stairs:r.stairs,els:r.els,warn:r.warn}}else if(fl.cache)r=Object.assign({},fl.cache,{warn:(fl.cache.warn||[]).concat([P('الملف «'+fl.fn+'» محفوظ بدون هندسة: أعد رفعه لتحديث الحساب.','File “'+fl.fn+'” is saved without geometry: upload it again to refresh the calculation.')])});else r={rows:[],stairs:[],els:[],warn:[]};
   const m=N0(fl.mult)||1,lv=fl.lvl||'';
   const tag=x=>Object.assign({},x,{fid:id,fn:fl.fn,lvl:lv,mult:m});
   const sc=x=>{const y=tag(x);['L','A','V','N','W','Fm','waist','steps'].forEach(q=>{if(y[q])y[q]*=m});return y};
-  r.rows.forEach(x=>out.rows.push(sc(x)));(r.stairs||[]).forEach(x=>{const y=tag(x);['V','A','Fm','waist','steps'].forEach(q=>{if(y[q])y[q]*=m});out.stairs.push(y)});(r.els||[]).forEach(x=>{const y=tag(x);y.V*=m;y.A*=m;y.Fm*=m;out.els.push(y)});
+  r.rows.forEach(x=>(x.bw?out.blk:out.rows).push(sc(x)));(r.stairs||[]).forEach(x=>{const y=tag(x);['V','A','Fm','waist','steps'].forEach(q=>{if(y[q])y[q]*=m});out.stairs.push(y)});(r.els||[]).forEach(x=>{const y=tag(x);y.V*=m;y.A*=m;y.Fm*=m;out.els.push(y)});
   (r.warn||[]).forEach(w=>out.warn.push((P0.ord.length>1?fl.fn+' ▸ ':'')+w));
-  const tot={id:id,fn:fl.fn,lvl:lv,mult:m,L:0,A:0,V:0,N:0,W:0,Fm:0};r.rows.forEach(x=>['L','A','V','N','W','Fm'].forEach(q=>{tot[q]+=(x[q]||0)*m}));out.byFile.push(tot)});
+  const tot={id:id,fn:fl.fn,lvl:lv,mult:m,L:0,A:0,V:0,N:0,W:0,Fm:0};r.rows.forEach(x=>{if(!x.bw)['L','A','V','N','W','Fm'].forEach(q=>{tot[q]+=(x[q]||0)*m})});out.byFile.push(tot)});
  /* project-level rebar rows from texts */
  rbRows().forEach(r=>{const tl=rbTL(r),d=N0(r.d);if(!(tl>0)||!(d>0))return;const fl=r.fid!==undefined?P0.files[r.fid]:null,m=fl?(N0(fl.mult)||1):1;out.rows.push({desc:P('حديد (من النص): ','Rebar (from text): ')+(r.t||('Ø'+d)),layer:P('نص','Text'),mode:'rebar',L:tl*m,A:0,V:0,N:0,W:tl*m*d*d/162.2,Fm:0,d:d,fid:r.fid,fn:fl?fl.fn:'',lvl:fl?fl.lvl:'',mult:m})});
  useFile(cur0);
@@ -10567,13 +10573,14 @@ function resHtml(out){
  out=out||computeAll();const rows=out.rows,P0=PS();
  if(!P0.ord.length)return '';
  if(!rows.length)return `<div class='box'><h3>${T('جدول الكميات','Quantity table')}</h3>${NT('اختر نوع الحساب لطبقة واحدة على الأقل.','Choose a quantity type for at least one layer.')}</div>`;
- const st=steel(rows),cell=(x,d)=>x?F(x,d):'',tt=totRow(rows),multi=P0.ord.length>1;
+ const st=steel(rows),cell=(x,d)=>x?F(x,d):'',tt=totRow(rows),multi=P0.ord.length>1,blk=out.blk||[];
  const tb=`<table class='sm' id='dxq_tbl'><thead><tr>${head().map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.desc)}</td><td>${esc(r.layer)}</td><td>${esc(r.fn||'')}</td><td>${esc(r.lvl||'')}${r.mult>1?' ×'+r.mult:''}</td>${KEYS.map((k,j)=>`<td>${cell(r[k],DEC[j])}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr><th></th><th>${T('المجموع','Total')}</th><th></th><th></th><th></th>${tt.map((x,j)=>`<th>${cell(x,DEC[j])}</th>`).join('')}</tr></tfoot></table>`;
  const sb=st.length?`<h3>${T('ملخص حديد التسليح حسب القطر','Rebar summary by diameter')}</h3><table class='sm' id='dxq_st'><thead><tr><th>${T('القطر (مم)','Diameter (mm)')}</th><th>${T('الطول (م)','Length (m)')}</th><th>${T('الوزن (كغ)','Weight (kg)')}</th><th>${T('عدد القضبان 12 م','12 m bars')}</th></tr></thead><tbody>${st.map(x=>`<tr><td>Ø${x.d}</td><td>${F(x.L,1)}</td><td>${F(x.W,1)}</td><td>${Math.ceil(x.L/12)}</td></tr>`).join('')}</tbody><tfoot><tr><th>${T('المجموع','Total')}</th><th>${F(sum(st,'L'),1)}</th><th>${F(sum(st,'W'),1)}</th><th>${st.reduce((a,x)=>a+Math.ceil(x.L/12),0)}</th></tr></tfoot></table>`:'';
  const bf=multi?`<h3>${T('الملخص حسب الملف / الطابق','Summary by file / level')}</h3><table class='sm' id='dxq_bf'><thead><tr><th>${T('الملف','File')}</th><th>${T('الطابق','Level')}</th><th>×</th>${head().slice(5).map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${out.byFile.map(b=>`<tr><td>${esc(b.fn)}</td><td>${esc(b.lvl)}</td><td>${b.mult}</td>${KEYS.map((k,j)=>`<td>${cell(b[k],DEC[j])}</td>`).join('')}</tr>`).join('')}</tbody></table>`:'';
  const qa=out.warn.length?`<div class='box' style='border-inline-start:6px solid #c0392b'><h3>${T('⚠ تنبيهات المراجعة','⚠ Review alerts')} (${out.warn.length})</h3><ul>${out.warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`:`<p class='nt'>✔ ${T('لا توجد تنبيهات مراجعة.','No review alerts.')}</p>`;
  const sd=out.stairs.length?`<h3>${T('تفاصيل الدرج (لكل شحط)','Stair details (per flight)')}</h3><table class='sm' id='dxq_sd'><thead><tr>${[P('الشحط','Flight'),P('القوائم','Risers'),P('النائمة (مم)','Tread (mm)'),P('القائمة (مم)','Riser (mm)'),P('العرض (م)','Width (m)'),P('الطول الأفقي (م)','Run (m)'),P('الطول المائل (م)','Inclined (m)'),P('خرسانة البلاطة المائلة (م³)','Waist (m³)'),P('خرسانة الدرجات (م³)','Steps (m³)'),P('المجموع (م³)','Total (m³)')].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${out.stairs.map(x=>`<tr><td>${esc(x.fn)} ${esc(x.lvl)} #${x.i+1}</td><td>${x.R}</td><td>${F(x.T*1000,0)}</td><td>${F(x.r*1000,0)}</td><td>${F(x.W,2)}</td><td>${F(x.Lh,2)}</td><td>${F(x.Lin,2)}</td><td>${F(x.waist,3)}</td><td>${F(x.steps,3)}</td><td>${F(x.V,3)}</td></tr>`).join('')}</tbody></table>`:'';
- return `<div class='box'><h3>${T('جدول الكميات','Quantity table')}</h3>${tb}${sb}${bf}${sd}</div>${qa}`}
+ const bt=blk.length?`<h3>${T('جدران بلوك من الـ3D (خارج مجموع الخرسانة)','Block walls from 3D (not in the concrete total)')}</h3>${NT('هذه الصفوف جدران معمارية (طبقة A-WALL مثلًا) كانت مرسومة فوق الجسور بنفس الطبقة؛ حجمها بلوك لا خرسانة، لذلك فُصلت عن جدول الكميات ومجاميعه.','These rows are architectural (block) walls, e.g. the A-WALL layer, drawn over the beams on the same plan layer; their volume is masonry, not concrete, so they are kept out of the quantity table and its totals.')}<table class='sm' id='dxq_blk'><thead><tr>${[P('الوصف','Description'),P('الملف','File'),P('الطابق','Level'),P('الطول (م)','Length (m)'),P('المساحة (م²)','Area (m²)'),P('الحجم (م³)','Volume (m³)')].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${blk.map(r=>`<tr><td>${esc(r.desc)}</td><td>${esc(r.fn||'')}</td><td>${esc(r.lvl||'')}${r.mult>1?' ×'+r.mult:''}</td><td>${cell(r.L,2)}</td><td>${cell(r.A,2)}</td><td>${cell(r.V,3)}</td></tr>`).join('')}</tbody><tfoot><tr><th>${T('المجموع','Total')}</th><th></th><th></th><th>${cell(sum(blk,'L'),2)}</th><th>${cell(sum(blk,'A'),2)}</th><th>${cell(sum(blk,'V'),3)}</th></tr></tfoot></table>`:'';
+ return `<div class='box'><h3>${T('جدول الكميات','Quantity table')}</h3>${tb}${sb}${bf}${sd}${bt}</div>${qa}`}
 function elHtml(out){
  const P0=PS();if(!out.els.length)return '';
  const rowsH=out.els.map(e=>{const key=ck(e.layer),p='files.'+e.fid+'.cfg.'+key+'.dp.'+e.idx;
@@ -10681,6 +10688,7 @@ function sheets(out){
  const rows=out.rows,n=rows.length,st=steel(rows),P0=PS(),m=matrix(rows);
  const tot=['',P('المجموع','Total'),'','',''].concat(sumRow(n,5,6));
  const sh=[{name:P('الكميات','Quantities'),head:1,freeze:1,rows:[head()].concat(m,[tot])}];
+ if((out.blk||[]).length){const k=out.blk.length;sh.push({name:P('جدران البلوك','Block walls'),head:1,freeze:1,rows:[head()].concat(matrix(out.blk),[['',P('المجموع','Total'),'','','','=SUM(F2:F'+(k+1)+')','=SUM(G2:G'+(k+1)+')','=SUM(H2:H'+(k+1)+')','','','']])})}
  if(out.els.length){const k=out.els.length;sh.push({name:P('العناصر','Elements'),head:1,freeze:1,rows:[[P('م','#'),P('الملف','File'),P('الطابق','Level'),P('الطبقة','Layer'),P('العنصر','Element'),P('الطول (م)','Length (m)'),P('العرض (مم)','Width (mm)'),P('العمق (م)','Depth (m)'),P('الحجم (م³)','Volume (m³)'),P('مصدر العمق','Depth source'),P('القوالب (م²)','Formwork (m²)')]].concat(out.els.map((e,i)=>[i+1,e.fn,e.lvl,e.layer,'#'+(e.idx+1),r2(e.L,3),r2(e.w*1000,1),r2(e.d,3),r2(e.V,4),e.src=='3d'?'3D':e.src=='usr'?P('يدوي','manual'):P('افتراضي','default'),r2(e.Fm,3)]),[['',P('المجموع','Total'),'','','','=SUM(F2:F'+(k+1)+')','','','=SUM(I2:I'+(k+1)+')','','=SUM(K2:K'+(k+1)+')']])})}
  if(out.stairs.length){const k=out.stairs.length;sh.push({name:P('الدرج','Stairs'),head:1,freeze:1,rows:[[P('الملف','File'),P('الطابق','Level'),P('الطبقة','Layer'),P('الشحط','Flight'),P('عدد الخطوط','Lines'),P('القوائم','Risers'),P('النوائم','Treads'),P('النائمة (مم)','Tread (mm)'),P('القائمة (مم)','Riser (mm)'),P('العرض (م)','Width (m)'),P('ارتفاع الشحط (م)','Flight height (m)'),P('الطول الأفقي (م)','Run (m)'),P('الطول المائل (م)','Inclined (m)'),P('سماكة البلاطة (م)','Waist (m)'),P('خرسانة البلاطة المائلة (م³)','Waist concrete (m³)'),P('خرسانة الدرجات (م³)','Steps concrete (m³)')]].concat(out.stairs.map(x=>[x.fn,x.lvl,x.layer,x.i+1,x.lines,x.R,x.tr,r2(x.T*1000,1),r2(x.r*1000,1),r2(x.W,3),r2(x.H,3),r2(x.Lh,3),r2(x.Lin,3),r2(x.tw,3),r2(x.waist,4),r2(x.steps,4)]),[[P('المجموع','Total'),'','','','','','','','','','','','','','=SUM(O2:O'+(k+1)+')','=SUM(P2:P'+(k+1)+')']])})}
  if(P0.ord.length>1||out.byFile.some(b=>b.mult>1)){sh.push({name:P('حسب الملف','By file'),head:1,freeze:1,rows:[[P('الملف','File'),P('الطابق','Level'),P('التكرار','Repeat')].concat(head().slice(5))].concat(out.byFile.map(b=>[b.fn,b.lvl,b.mult].concat(KEYS.map((k,j)=>r2(b[k],DEC[j])))))})}
@@ -10704,7 +10712,7 @@ function sheets(out){
  sh.push({name:P('المراجعة والفرضيات','Audit and assumptions'),head:1,freeze:1,rows:au});
  sh.push({name:P('معلومات','Info'),rows:[[P('المشروع','Project'),P0.pn],[P('التاريخ','Date'),new Date().toISOString().slice(0,10)],[P('عدد الملفات','Files'),P0.ord.length],[P('المصدر','Source'),'FABRUM']]});
  return sh}
-function csvStr(out){const rows=out.rows,m=[head()].concat(matrix(rows)),tt=totRow(rows),tot=['',P('المجموع','Total'),'','',''].concat(tt.map((x,j)=>r2(x,DEC[j])));m.push(tot);return '﻿'+m.map(r=>r.map(c=>{c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\r\n')}
+function csvStr(out){const rows=out.rows,m=[head()].concat(matrix(rows)),tt=totRow(rows),tot=['',P('المجموع','Total'),'','',''].concat(tt.map((x,j)=>r2(x,DEC[j])));m.push(tot);if((out.blk||[]).length){m.push([]);m.push(['',P('جدران بلوك من الـ3D (خارج مجموع الخرسانة)','Block walls from 3D (not in the concrete total)')]);const bm=matrix(out.blk);bm.forEach(x=>m.push(x));m.push(['',P('المجموع','Total'),'','','',r2(sum(out.blk,'L'),DEC[0]),r2(sum(out.blk,'A'),DEC[1]),r2(sum(out.blk,'V'),DEC[2])])}return '﻿'+m.map(r=>r.map(c=>{c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\r\n')}
 function prHtml(out){
  return `<h3>${esc(PS().pn||'')}</h3><p>${P('الملفات: ','Files: ')}${PS().ord.map(i=>esc(PS().files[i].fn)).join(' ، ')}</p>`+resHtml(out)}
 A6.dxq=function(op,i){
