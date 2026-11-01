@@ -9616,10 +9616,9 @@ const DES=(()=>{const PI=Math.PI,b1=fc=>fc<=28?.85:Math.max(.65,.85-.05*(fc-28)/
  const shear=(Vu,d,As,fc)=>{const ls=Math.min(1,Math.sqrt(2/(1+.004*d))),rho=As/(1000*d),Vc=.75*.66*ls*Math.cbrt(rho)*Math.sqrt(fc)*d;return{Vu,phiVc:Vc,ok:Vu<=Vc}};
  const tc=(As,d,fc,fy)=>{const a=As*fy/(.85*fc*1000);return a/b1(fc)/d<=.375};
  return{reqAs,asMin,pick,pickD,check,shear,tc}})();
-const DF=[N_('bm_td','قطر الحديد العلوي عند المسند Ø (0 = تلقائي)','Top bar Ø at the supports (0 = auto)',0,'mm','rf',v=>v.bm_dsg!=1&&v.bm_sup!=0),N_('bm_ts','تباعد الحديد العلوي (0 = تلقائي)','Top bar spacing (0 = auto)',0,'mm','rf',v=>v.bm_dsg!=1&&v.bm_sup!=0),
+const DF=[N_('bm_td','قطر الحديد العلوي عند المسند Ø (0 = تلقائي)','Top bar Ø at the supports (0 = auto)',0,'mm','rf',v=>v.bm_sup!=0),N_('bm_ts','تباعد الحديد العلوي (0 = تلقائي)','Top bar spacing (0 = auto)',0,'mm','rf',v=>v.bm_sup!=0),
  N_('bm_ll','الحمل الحي','Live load',3,'kN/m²','rf'),N_('bm_fl','تغطية وتشطيبات (حمل ميت إضافي)','Finishes (extra dead load)',1.5,'kN/m²','rf'),
- S_('bm_sup','ظروف الاستناد','Support condition',1,[[1,'مستمر جزئيًا مع الجسر/الجدار (حديد علوي)','Partly restrained (top bars at supports)'],[0,'مسند بسيط (بدون حديد علوي)','Simply supported (no top bars)']],'rf'),
- S_('bm_dsg','طريقة التسليح','Reinforcement method',0,[[0,'من المدخلات (مع فحص حسب ACI)','From the inputs (checked to ACI)'],[1,'تصميم تلقائي حسب ACI 318','Automatic design to ACI 318']],'rf')];
+ S_('bm_sup','ظروف الاستناد','Support condition',1,[[1,'مستمر جزئيًا مع الجسر/الجدار (حديد علوي)','Partly restrained (top bars at supports)'],[0,'مسند بسيط (بدون حديد علوي)','Simply supported (no top bars)']],'rf')];
 BM.DF=DF;
 /* top bars at a support: extension past the inflection point (0.092 L) + max(d,12 db), not less than ld */
 const topExt=(L,d,dbT,cap)=>{const Lt=Math.max(BM.ld(dbT),R(.0918*L+Math.max(d,12*dbT)));return Math.ceil(Math.min(Lt,cap)/25)*25};
@@ -9711,18 +9710,17 @@ BM.addOpts('hs',[BR]);
 const flightGeo=(nR,H,g,h,cv,d1)=>{const r=H/nR,th=Math.atan2(r,g),ct=Math.cos(th);return{r,th,thd:th/D2R,ct,Ls:R((nR-1)*Math.hypot(g,r)),run:(nR-1)*g,off:(cv+d1/2)/ct}};
 /* ============================ single flight, per metre width ============================ */
 reg('stair','سلم بشوط واحد (لكل متر عرض)','Single-flight stair (per metre width)',()=>{
- BM.curK='stair';const O=BM.opts(),W=BM.warn=[],H=gv('zH',3000),g=gv('zg',280),nR=Math.max(2,R(gv('m_nR',18))),h=gv('m_h',150),cv=gv('zcv',20),br=gv('bm_br',250),fc=gv('zfc',25),fy=gv('zfy',420),auto=gv('bm_dsg',0)==1,ll=gv('bm_ll',3),fin=gv('bm_fl',1.5),sup=gv('bm_sup',1)==1;
+ BM.curK='stair';const O=BM.opts(),W=BM.warn=[],H=gv('zH',3000),g=gv('zg',280),nR=Math.max(2,R(gv('m_nR',18))),h=gv('m_h',150),cv=gv('zcv',20),br=gv('bm_br',250),fc=gv('zfc',25),fy=gv('zfy',420),ll=gv('bm_ll',3),fin=gv('bm_fl',1.5),sup=gv('bm_sup',1)==1;
  let d1=gv('m_d1',12),s1=gv('m_s1',150),d2=gv('m_d2',10),s2=gv('m_s2',250);
  const G=flightGeo(nR,H,g,h,cv,d1),stock=O.stock;
  if(G.r<100||G.r>200)W.push([`ارتفاع القائمة ${G.r.toFixed(0)} مم خارج المدى المعتاد 100-200 مم.`,`Riser ${G.r.toFixed(0)} mm is outside the usual 100-200 mm range.`]);
  /* ---- design (ACI 318, one-way slab per metre width, horizontal span) ---- */
  const run=G.run,L=Math.min(run+h,run+br),sw=25*(h/1000/G.ct+G.r/2000),Dd=sw+fin,wu=1.2*Dd+1.6*ll,Mu=wu*(L/1000)*(L/1000)/8,Mn=sup?Mu/3:0;
- let pm,pd;if(auto){pm=DES.pick(Mu,h,cv,fc,fy,[10,12,14,16,18,20]);d1=pm.db;s1=pm.s;pd=DES.pickD(h,fy,[8,10,12]);d2=pd.db;s2=pd.s}
- else{pm=DES.check(Mu,h,cv,fc,fy,d1,s1);pd=DES.check(0,h,cv,fc,fy,d2,s2);pd.Asp=1000*Math.PI*d2*d2/4/s2;pd.am=DES.asMin(h,fy);pd.smax=Math.min(5*h,450)}
+let pm,pd;{pm=DES.check(Mu,h,cv,fc,fy,d1,s1);pd=DES.check(0,h,cv,fc,fy,d2,s2);pd.Asp=1000*Math.PI*d2*d2/4/s2;pd.am=DES.asMin(h,fy);pd.smax=Math.min(5*h,450)}
  const dEff=h-cv-d1/2,Asp=1000*Math.PI*d1*d1/4/s1,Vu=wu*(L/2000-dEff/1000),sh=DES.shear(Vu,dEff,Asp,fc);
  if(!isFinite(pm.rq||pm.Ar))W.push(['السماكة لا تكفي لتحمّل العزم؛ زِد سماكة البلاطة.','Thickness is not enough for the moment; increase the slab thickness.']);
- if(!auto&&!pm.ok)W.push([`⚠ الحديد الرئيسي المدخل غير كافٍ: As المجهز ${R(pm.Asp)} < المطلوب ${R(Math.max(pm.rq,pm.am))} مم²/م (أو التباعد أكبر من ${pm.smax} مم).`,`⚠ The entered main steel is not enough: As provided ${R(pm.Asp)} < required ${R(Math.max(pm.rq,pm.am))} mm2/m (or spacing above ${pm.smax} mm).`]);
- if(!auto&&pd.Asp<pd.am*.99)W.push([`⚠ حديد التوزيع المدخل أقل من الحد الأدنى ${R(pd.am)} مم²/م (ACI 24.4.3.2).`,`⚠ The entered distribution steel is below the minimum ${R(pd.am)} mm2/m (ACI 24.4.3.2).`]);
+ if(!pm.ok)W.push([`⚠ الحديد الرئيسي المدخل غير كافٍ: As المجهز ${R(pm.Asp)} < المطلوب ${R(Math.max(pm.rq,pm.am))} مم²/م (أو التباعد أكبر من ${pm.smax} مم).`,`⚠ The entered main steel is not enough: As provided ${R(pm.Asp)} < required ${R(Math.max(pm.rq,pm.am))} mm2/m (or spacing above ${pm.smax} mm).`]);
+ if(pd.Asp<pd.am*.99)W.push([`⚠ حديد التوزيع المدخل أقل من الحد الأدنى ${R(pd.am)} مم²/م (ACI 24.4.3.2).`,`⚠ The entered distribution steel is below the minimum ${R(pd.am)} mm2/m (ACI 24.4.3.2).`]);
  if(!DES.tc(Asp,dEff,fc,fy))W.push(['المقطع غير متحكَّم بالشد (c/d > 0.375)؛ زِد السماكة.','Section is not tension-controlled (c/d > 0.375); increase the thickness.']);
  if(!sh.ok)W.push([`⚠ القص غير كافٍ: Vu = ${sh.Vu.toFixed(1)} > φVc = ${sh.phiVc.toFixed(1)} كن/م؛ زِد السماكة.`,`⚠ Shear is not enough: Vu = ${sh.Vu.toFixed(1)} > φVc = ${sh.phiVc.toFixed(1)} kN/m; increase the thickness.`]);
  const hmin=L/20*(.4+fy/700);if(h<hmin)W.push([`السماكة ${h} مم أقل من L/20 = ${R(hmin)} مم (ACI 7.3.1.1)؛ يلزم فحص الهطول.`,`Thickness ${h} mm is below L/20 = ${R(hmin)} mm (ACI 7.3.1.1); a deflection check is required.`]);
@@ -9730,7 +9728,7 @@ reg('stair','سلم بشوط واحد (لكل متر عرض)','Single-flight sta
  const X=[KEY(BM.mk({mat:'BB',dir:'X',n:cnt(1000,s1),db:d1,legs:[[ext,0],[G.Ls,G.thd],[ext,0]],desc:['الحديد الرئيسي السفلي (يتبع ميل البلاطة)','Bottom main bars (follow the waist slope)']}),'M'),
   KEY(BM.mk({mat:'BT',dir:'Y',n:cnt1(G.Ls,s2),db:d2,legs:[[1000,0]],desc:['حديد التوزيع','Distribution bars']}),'D')];
  let top=null;
- if(sup){const tdI=R(gv('bm_td',0)),tsI=R(gv('bm_ts',0)),pt=(!auto&&tdI>0&&tsI>0)?{db:tdI,s:tsI,d:h-cv-tdI/2}:DES.pick(Mn,h,cv,fc,fy,[10,12,14,16]),dbT=pt.db,c=cv+dbT/2,Lt=topExt(L,pt.d,dbT,.4*L),hk=Math.max(0,Math.min(12*dbT,h-2*cv-dbT)),emb=Math.max(0,br-cv),jump=R(G.r-c/G.ct+c),nT=cnt(1000,pt.s);
+ if(sup){const tdI=R(gv('bm_td',0)),tsI=R(gv('bm_ts',0)),pt=(tdI>0&&tsI>0)?{db:tdI,s:tsI,d:h-cv-tdI/2}:DES.pick(Mn,h,cv,fc,fy,[10,12,14,16]),dbT=pt.db,c=cv+dbT/2,Lt=topExt(L,pt.d,dbT,.4*L),hk=Math.max(0,Math.min(12*dbT,h-2*cv-dbT)),emb=Math.max(0,br-cv),jump=R(G.r-c/G.ct+c),nT=cnt(1000,pt.s);
   const lg=a=>a.filter(q=>q[0]>0);
   X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nT,db:dbT,legs:lg([[hk,90],[emb,0],[jump,90],[Lt,G.thd]]),desc:['حديد علوي عند المسند السفلي','Top bars at the lower support']}),'TL'));
   X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nT,db:dbT,legs:lg([[Lt,G.thd],[emb,0],[hk,270]]),desc:['حديد علوي عند المسند العلوي','Top bars at the upper support']}),'TU'));
@@ -9759,23 +9757,22 @@ reg('stair','سلم بشوط واحد (لكل متر عرض)','Single-flight sta
    CALL(C,F,[['M',ys[ys.length-1],cv+d2+d1/2,-C.pm(14)],['D',w*.2,cv+d2/2,-C.pm(20)]],w+C.pm(14),5)};
   return[{h:64,views:[{name:['مقطع طولي في الشوط','LONGITUDINAL SECTION THROUGH THE FLIGHT'],w:xe+2*br,h:H+h*1.5,x0:-br,y0:-h*1.5,px:[22,62],py:[34,14],min:mn,draw:lsec}]},
    {h:22,views:[{name:['مقطع عرضي في البلاطة (عرض 1 م)','SLAB CROSS SECTION (1 m WIDE)'],w:w,h:h,x0:0,y0:0,px:[22,62],py:14,draw:cs}]}]});
-BM.addOpts('stair',[BR].concat(DF));{const f=window.SM.SPEC.stair.f;['m_d1','m_s1','m_d2','m_s2'].forEach(id=>{const q=f.find(x=>x.id==id);if(q){const o=q.vis;q.vis=v=>v.bm_dsg!=1&&(o?o(v):true)}})}
+BM.addOpts('stair',[BR].concat(DF));
 /* ============================ two flights + landing ============================ */
 reg('sx','سلم بشوطين وبسطة','Two-flight stair with landing',()=>{
- BM.curK='sx';const O=BM.opts(),W=BM.warn=[],H=gv('sxH',3000),g=gv('sxg',280),nR=Math.max(4,2*Math.round(gv('m_nR',18)/2)),Wf=gv('sxW',1200),b=gv('sxb',250),Ll=gv('m_Ll',2500),h=gv('m_h',130),cv=gv('sxcv',20),fc=gv('sxfc',25),fy=gv('sxfy',420),stock=O.stock,auto=gv('bm_dsg',0)==1,ll=gv('bm_ll',3),fin=gv('bm_fl',1.5),sup=gv('bm_sup',1)==1;
+ BM.curK='sx';const O=BM.opts(),W=BM.warn=[],H=gv('sxH',3000),g=gv('sxg',280),nR=Math.max(4,2*Math.round(gv('m_nR',18)/2)),Wf=gv('sxW',1200),b=gv('sxb',250),Ll=gv('m_Ll',2500),h=gv('m_h',130),cv=gv('sxcv',20),fc=gv('sxfc',25),fy=gv('sxfy',420),stock=O.stock,ll=gv('bm_ll',3),fin=gv('bm_fl',1.5),sup=gv('bm_sup',1)==1;
  let d1=gv('m_d1',10),s1=gv('m_s1',250),dD=gv('m_dD',8),sD=gv('m_sD',200),dl=gv('m_dl',10),sl=gv('m_sl',325);
  const nF=nR/2,G=flightGeo(nF,H/2,g,h,cv,d1),ext=Math.max(0,Math.min(150,b-cv)),Wl=2*Wf,run=G.run;
  /* ---- design: flight strip + landing slab (per metre width), ACI 318 ---- */
  const Lf=Math.min(run+h,run+(b+Ll)/2),swF=25*(h/1000/G.ct+G.r/2000),wuF=1.2*(swF+fin)+1.6*ll,MuF=wuF*(Lf/1000)*(Lf/1000)/8,Rup=wuF*Lf/2000;
  const Ld=Math.min(Wl+h,Wl+b),swL=25*h/1000,wuL=1.2*(swL+fin)+1.6*ll+Rup/(Ll/1000),MuL=wuL*(Ld/1000)*(Ld/1000)/8;
  let pF,pL,pdd;
- if(auto){pF=DES.pick(MuF,h,cv,fc,fy,[10,12,14,16,18,20]);d1=pF.db;s1=pF.s;pL=DES.pick(MuL,h,cv,fc,fy,[10,12,14,16,18,20]);dl=pL.db;sl=pL.s;pdd=DES.pickD(h,fy,[8,10,12]);dD=pdd.db;sD=pdd.s}
- else{pF=DES.check(MuF,h,cv,fc,fy,d1,s1);pL=DES.check(MuL,h,cv,fc,fy,dl,sl);pdd=DES.check(0,h,cv,fc,fy,dD,sD);pdd.Asp=1000*Math.PI*dD*dD/4/sD;pdd.am=DES.asMin(h,fy)}
+{pF=DES.check(MuF,h,cv,fc,fy,d1,s1);pL=DES.check(MuL,h,cv,fc,fy,dl,sl);pdd=DES.check(0,h,cv,fc,fy,dD,sD);pdd.Asp=1000*Math.PI*dD*dD/4/sD;pdd.am=DES.asMin(h,fy)}
  const AsF=1000*Math.PI*d1*d1/4/s1,AsL=1000*Math.PI*dl*dl/4/sl,dF=h-cv-d1/2,dL=h-cv-dl/2,shF=DES.shear(wuF*(Lf/2000-dF/1000),dF,AsF,fc),shL=DES.shear(wuL*(Ld/2000-dL/1000),dL,AsL,fc);
  if(!isFinite(pF.rq||pF.Ar)||!isFinite(pL.rq||pL.Ar))W.push(['السماكة لا تكفي لتحمّل العزم؛ زِد سماكة البلاطة.','Thickness is not enough for the moment; increase the slab thickness.']);
- if(!auto&&!pF.ok)W.push([`⚠ حديد الشوط الرئيسي المدخل غير كافٍ: المجهز ${R(pF.Asp)} < المطلوب ${R(Math.max(pF.rq,pF.am))} مم²/م.`,`⚠ The entered flight steel is not enough: provided ${R(pF.Asp)} < required ${R(Math.max(pF.rq,pF.am))} mm2/m.`]);
- if(!auto&&!pL.ok)W.push([`⚠ حديد البسطة الرئيسي المدخل غير كافٍ: المجهز ${R(pL.Asp)} < المطلوب ${R(Math.max(pL.rq,pL.am))} مم²/م.`,`⚠ The entered landing steel is not enough: provided ${R(pL.Asp)} < required ${R(Math.max(pL.rq,pL.am))} mm2/m.`]);
- if(!auto&&pdd.Asp<pdd.am*.99)W.push([`⚠ حديد التوزيع المدخل أقل من الحد الأدنى ${R(pdd.am)} مم²/م (ACI 24.4.3.2).`,`⚠ The entered distribution steel is below the minimum ${R(pdd.am)} mm2/m (ACI 24.4.3.2).`]);
+ if(!pF.ok)W.push([`⚠ حديد الشوط الرئيسي المدخل غير كافٍ: المجهز ${R(pF.Asp)} < المطلوب ${R(Math.max(pF.rq,pF.am))} مم²/م.`,`⚠ The entered flight steel is not enough: provided ${R(pF.Asp)} < required ${R(Math.max(pF.rq,pF.am))} mm2/m.`]);
+ if(!pL.ok)W.push([`⚠ حديد البسطة الرئيسي المدخل غير كافٍ: المجهز ${R(pL.Asp)} < المطلوب ${R(Math.max(pL.rq,pL.am))} مم²/م.`,`⚠ The entered landing steel is not enough: provided ${R(pL.Asp)} < required ${R(Math.max(pL.rq,pL.am))} mm2/m.`]);
+ if(pdd.Asp<pdd.am*.99)W.push([`⚠ حديد التوزيع المدخل أقل من الحد الأدنى ${R(pdd.am)} مم²/م (ACI 24.4.3.2).`,`⚠ The entered distribution steel is below the minimum ${R(pdd.am)} mm2/m (ACI 24.4.3.2).`]);
  if(!DES.tc(AsF,dF,fc,fy)||!DES.tc(AsL,dL,fc,fy))W.push(['المقطع غير متحكَّم بالشد (c/d > 0.375)؛ زِد السماكة.','Section is not tension-controlled (c/d > 0.375); increase the thickness.']);
  if(!shF.ok||!shL.ok)W.push([`⚠ القص غير كافٍ: الشوط ${shF.Vu.toFixed(1)}/${shF.phiVc.toFixed(1)}، البسطة ${shL.Vu.toFixed(1)}/${shL.phiVc.toFixed(1)} كن/م؛ زِد السماكة.`,`⚠ Shear is not enough: flight ${shF.Vu.toFixed(1)}/${shF.phiVc.toFixed(1)}, landing ${shL.Vu.toFixed(1)}/${shL.phiVc.toFixed(1)} kN/m; increase the thickness.`]);
  const hmin=Math.max(Lf,Ld)/20*(.4+fy/700);if(h<hmin)W.push([`السماكة ${h} مم أقل من L/20 = ${R(hmin)} مم (ACI 7.3.1.1)؛ يلزم فحص الهطول.`,`Thickness ${h} mm is below L/20 = ${R(hmin)} mm (ACI 7.3.1.1); a deflection check is required.`]);
@@ -9784,7 +9781,7 @@ reg('sx','سلم بشوطين وبسطة','Two-flight stair with landing',()=>{
   KEY(BM.mk({mat:'BB',dir:'Y',n:cnt1(Ll-2*cv,sl),db:dl,legs:[[Wl+2*ext,0]],desc:['رئيسي البسطة (بين الجسرين الجانبيين)','Landing main bars (between side beams)']}),'L'),
   KEY(BM.mk({mat:'BT',dir:'X',n:cnt1(Wl-2*cv,sD),db:dD,legs:[[Ll-2*cv,0]],desc:['توزيع البسطة','Landing distribution bars']}),'LD')];
  let top=null;
- if(sup){const tdI=R(gv('bm_td',0)),tsI=R(gv('bm_ts',0)),pt=(!auto&&tdI>0&&tsI>0)?{db:tdI,s:tsI,d:h-cv-tdI/2}:DES.pick(MuF/3,h,cv,fc,fy,[10,12,14,16]),dbT=pt.db,c=cv+dbT/2,Lt=topExt(Lf,pt.d,dbT,.4*Lf),hk=Math.max(0,Math.min(12*dbT,h-2*cv-dbT)),emb=Math.max(0,b-cv),jump=R(G.r-c/G.ct+c),nT=2*cnt(Wf,pt.s),embL=Math.max(0,Math.min(Lt,Ll-2*cv)),lg=a=>a.filter(q=>q[0]>0);
+ if(sup){const tdI=R(gv('bm_td',0)),tsI=R(gv('bm_ts',0)),pt=(tdI>0&&tsI>0)?{db:tdI,s:tsI,d:h-cv-tdI/2}:DES.pick(MuF/3,h,cv,fc,fy,[10,12,14,16]),dbT=pt.db,c=cv+dbT/2,Lt=topExt(Lf,pt.d,dbT,.4*Lf),hk=Math.max(0,Math.min(12*dbT,h-2*cv-dbT)),emb=Math.max(0,b-cv),jump=R(G.r-c/G.ct+c),nT=2*cnt(Wf,pt.s),embL=Math.max(0,Math.min(Lt,Ll-2*cv)),lg=a=>a.filter(q=>q[0]>0);
   const ptl=DES.pick(MuL/3,h,cv,fc,fy,[10,12,14,16]),dbL=ptl.db,LtL=topExt(Ld,ptl.d,dbL,.4*Ld),hkL=Math.max(0,Math.min(12*dbL,h-2*cv-dbL)),embB=Math.max(0,b-cv),nL=2*cnt1(Ll-2*cv,ptl.s);
   X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nT,db:dbT,legs:lg([[hk,90],[emb,0],[jump,90],[Lt,G.thd]]),desc:['حديد علوي عند مسند الشوط السفلي','Top bars at the flight lower support']}),'TL'));
   X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nT,db:dbT,legs:lg([[Lt,G.thd],[embL,0]]),desc:['حديد علوي عند التقاء الشوط بالبسطة','Top bars at the flight-landing junction']}),'TU'));
@@ -9816,7 +9813,7 @@ reg('sx','سلم بشوطين وبسطة','Two-flight stair with landing',()=>{
    CALL(C,F,[['F',xs[xs.length-1],run*.35,run*.3],['L',Wl*.8,run+Ll*.5,run+Ll*.55]].concat(F.top?[['LT',F.top.LtL*.5,run+Ll*.3,run+Ll*.8]]:[]),Wl+C.pm(24),5)};
   return[{h:44,views:[{name:['مقطع طولي في الشوط والبسطة','LONGITUDINAL SECTION THROUGH FLIGHT AND LANDING'],w:xe+Ll+b,h:Hh+Math.max(350,h*2.5)+h,x0:-b,y0:-Math.max(350,h*2.5)-h*.5,px:[22,62],py:[38,14],min:mn,draw:lsec}]},
    {h:44,views:[{name:['المسقط','PLAN'],w:Wl,h:run+Ll,x0:0,y0:0,px:[22,62],py:14,draw:plan}]}]});
-BM.addOpts('sx',DF);{const f=window.SM.SPEC.sx.f;['m_d1','m_s1','m_dD','m_sD','m_dl','m_sl'].forEach(id=>{const q=f.find(x=>x.id==id);if(q){const o=q.vis;q.vis=v=>v.bm_dsg!=1&&(o?o(v):true)}})}
+BM.addOpts('sx',DF);
 BM.wrapAll();
 })();
 </script>
