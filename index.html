@@ -10017,7 +10017,14 @@ function nestAll(pg,ls){Object.keys(pg).forEach(l=>{const A=pg[l];if(!ls[l]||A.l
  A.forEach((a,i)=>{let d=0;for(let j=0;j<A.length;j++){if(i==j)continue;const b=A[j];if(b.a>a.a*1.0000001&&pip(a.cx,a.cy,b.p))d++}a.dp=d;if(d%2){od+=a.a;no++}else ev+=a.a});
  ls[l].nst={ev:ev,od:od,no:no}})}
 /* closed triangle/quad meshes: volume by the divergence theorem after making face orientation consistent */
+/* Each polyface / MESH entity is solved on its own first, so solids that merely touch (stacked columns, beam on a column) are not fused into one.
+   An entity that is not a closed solid by itself (a solid split over several entities) is pooled with the others and merged by shared vertices, as before. */
 function mesh3d(FS){
+ if(!FS.some(f=>f.e))return mesh3dCore(FS);
+ const by=new Map(),rest=[];FS.forEach(f=>{if(f.e){let a=by.get(f.e);if(!a)by.set(f.e,a=[]);a.push(f)}else rest.push(f)});
+ const out=[];by.forEach(fs=>{const r=mesh3dCore(fs);if(r.length&&r.every(x=>x[6]===0&&x[4]>0))r.forEach(x=>out.push(x));else fs.forEach(f=>rest.push(f))});
+ return rest.length?out.concat(mesh3dCore(rest)):out}
+function mesh3dCore(FS){
  const key=p=>Math.round(p[0]*1e4)+','+Math.round(p[1]*1e4)+','+Math.round(p[2]*1e4);
  const vid=new Map(),V=[];const vi=p=>{const k=key(p);let i=vid.get(k);if(i===undefined){i=V.length;vid.set(k,i);V.push(p)}return i};
  const fs=[];FS.forEach(f=>{const o=[];f.forEach(p=>{const i=vi(p);if(!o.length||o[o.length-1]!==i)o.push(i)});if(o.length>1&&o[0]===o[o.length-1])o.pop();if(o.length>=3)fs.push(o)});
@@ -10083,7 +10090,7 @@ function parseDXF(txt){
  for(let i=0;i+1<pr.length&&i<4000;i++){if(pr[i][0]=='9'&&pr[i][1].trim()=='$INSUNITS'&&pr[i+1][0]=='70'){hu=INSU[parseInt(pr[i+1][1])]||'';break}if(pr[i][0]=='2'&&pr[i][1].trim()=='ENTITIES')break}
  while(p<pr.length&&!(pr[p][0]=='2'&&pr[p][1].trim()=='ENTITIES'))p++;if(p>=pr.length)p=0;
  for(let i=0;i<p;i++){if(pr[i][0]=='0'&&pr[i][1].trim()=='LAYER'){let nm='',lt='';for(let j=i+1;j<p&&pr[j][0]!='0';j++){if(pr[j][0]=='2')nm=pr[j][1].trim();else if(pr[j][0]=='6')lt=pr[j][1].trim()}if(nm)LT[nm]=lt}}
- const addF=(l,pts)=>{if(pts.length>=3){(fc[l]||(fc[l]=[])).push(pts);pts.forEach(q=>{bb(q[0],q[1]);zr(l,q[2],q[2])});st.ents++;if(st.ents<150000)pth(l,'M'+pts.map(q=>f2(q[0])+' '+f2(q[1])).join('L')+'Z')}};
+ let EID=0;const addF=(l,pts,e)=>{if(pts.length>=3){if(e)pts.e=e;(fc[l]||(fc[l]=[])).push(pts);pts.forEach(q=>{bb(q[0],q[1]);zr(l,q[2],q[2])});st.ents++;if(st.ents<150000)pth(l,'M'+pts.map(q=>f2(q[0])+' '+f2(q[1])).join('L')+'Z')}};
  /* poly: pts [{x,y,b}] ; z elevation ; thk thickness (0 = none) ; prism: allow extrusion solid */
  function poly(l,pts,cl,z,thk,prism){
   const n=pts.length;if(n<2)return;
@@ -10122,8 +10129,8 @@ function parseDXF(txt){
    else if(cur.flag&16)cur.vs.push([gn('10'),gn('20'),gn('30')]);
    else if(!(vf&16))cur.pts.push({x:gn('10'),y:gn('20'),b:gn('42'),z:gn('30')})}
   else if(ty=='SEQEND'&&cur){
-   if(cur.flag&64){cur.fs.forEach(ix=>{const f=ix.map(i=>cur.vs[i-1]).filter(Boolean);if(f.length>=3)addF(cur.l,f)})}
-   else if(cur.flag&16){const M=cur.M,N=cur.N,cM=cur.flag&1,cN=cur.flag&32;if(M*N==cur.vs.length&&M>1&&N>1){for(let i=0;i<(cM?M:M-1);i++)for(let j=0;j<(cN?N:N-1);j++){const i2=(i+1)%M,j2=(j+1)%N;addF(cur.l,[cur.vs[i*N+j],cur.vs[i*N+j2],cur.vs[i2*N+j2],cur.vs[i2*N+j]])}}else st.meshbad++}
+   if(cur.flag&64){const eid=++EID;cur.fs.forEach(ix=>{const f=ix.map(i=>cur.vs[i-1]).filter(Boolean);if(f.length>=3)addF(cur.l,f,eid)})}
+   else if(cur.flag&16){const M=cur.M,N=cur.N,cM=cur.flag&1,cN=cur.flag&32,eid=++EID;if(M*N==cur.vs.length&&M>1&&N>1){for(let i=0;i<(cM?M:M-1);i++)for(let j=0;j<(cN?N:N-1);j++){const i2=(i+1)%M,j2=(j+1)%N;addF(cur.l,[cur.vs[i*N+j],cur.vs[i*N+j2],cur.vs[i2*N+j2],cur.vs[i2*N+j]],eid)}}else st.meshbad++}
    else{const zs=cur.pts.map(v=>v.z),zz=cur.z+(zs.length?Math.min(...zs):0);poly(cur.l,cur.pts,cur.cl,zz,cur.thk,cur.thk!=0&&cur.up);if(zs.some(x=>Math.abs(x-zs[0])>1e-9))st.tilt++;st.ents++}
    cur=null}
   else if(ty=='3DFACE'){const c1=[gn('10'),gn('20'),gn('30')],c2=[gn('11'),gn('21'),gn('31')],c3=[gn('12'),gn('22'),gn('32')],c4=[gn('13'),gn('23'),gn('33')];const same=c4[0]==c3[0]&&c4[1]==c3[1]&&c4[2]==c3[2];addF(l,same?[c1,c2,c3]:[c1,c2,c3,c4])}
@@ -10135,7 +10142,7 @@ function parseDXF(txt){
     else if(mode==3&&c=='90'){fl.push(parseInt(at[i][1]));if(fl.length==fs)mode=4}}
    let ok=nv>0&&vs.length==nv&&fs>0&&fl.length==fs;const faces=[];
    if(ok){let k=0;while(k<fl.length){const n=fl[k++];if(n<3||k+n>fl.length){ok=false;break}const f=[];for(let j=0;j<n;j++){const ix=fl[k+j];if(ix<0||ix>=nv){ok=false;break}f.push(vs[ix])}if(!ok)break;faces.push(f);k+=n}}
-   if(ok)faces.forEach(f=>addF(l,f));else st.meshbad++}
+   if(ok){const eid=++EID;faces.forEach(f=>addF(l,f,eid))}else st.meshbad++}
   else if(ty=='CIRCLE'){const cx=gn('10'),cy=gn('20'),r=Math.abs(gn('40')),z=gn('30'),th=gn('39');if(r>0){const k=l+'|C|'+Math.round(cx*1e4)+','+Math.round(cy*1e4)+','+Math.round(r*1e4)+'|'+Math.round(z*1e3);if(seen.has(k)){lay(l).dup++;st.dup++}else{seen.add(k);const o=lay(l);o.n++;o.ncir++;o.len+=2*Math.PI*r;o.area+=Math.PI*r*r;
     (pg[l]||(pg[l]=[])).push({p:Array.from({length:24},(_,i)=>[cx+r*Math.cos(i*Math.PI/12),cy+r*Math.sin(i*Math.PI/12)]),a:Math.PI*r*r,cx:cx,cy:cy,bw:2*r,bh:2*r,pl:2*Math.PI*r,circ:1});
     if(th&&extUp(g))pri.push([cx,cy,Math.min(z,z+th),Math.max(z,z+th),Math.PI*r*r*Math.abs(th),Math.PI*r*r,0,cx-r,cy-r,cx+r,cy+r,2*Math.PI*r*r+2*Math.PI*r*Math.abs(th),'p',l]);if(z||th)zr(l,z,z+th);
@@ -10231,11 +10238,11 @@ function guessCfg(n,o){
  if(S().role=='3d')return has3&&!Object.values(PS().files).some(x=>x.role!='3d'&&x.inc!==false)?{m:'mesh'}:{m:'ignore'};
  if(/wall|lift|elevator|core|جدار|حائط|مصعد/i.test(n)&&o.nc>0&&o.nst&&o.nst.od>0)return{m:'col',h:3,k:1,nest:true};
  if(/stair|درج|سلم/i.test(n)&&!/landing|rest|بسطة|ساحة|opening|فتحة/i.test(n)&&o.len>0&&!o.nc)return{m:'stair',sh:3,tw:150,en:true,k:1};
- if(/column|col\b|عمود|اعمدة|أعمدة|foot|foundation|fndn|قاعدة|قواعد|اساس|أساس|pad\b|pile|خازوق|خوازيق/i.test(n)&&o.nc+o.ncir+(o.nl||0)>0)return{m:'col',h:/foot|foundation|fndn|قاعدة|قواعد|اساس|أساس|pad\b/i.test(n)?.6:3,k:1,lp:(o.nl||0)>0};
- if(/beam|جسر|كمر|حزام|tie\b|lintel|wall|جدار|حائط|lift|elevator|مصعد|core|strip|شريطي/i.test(n)&&o.tw&&o.tw.l>0&&o.tw.l*2>=0.5*o.len){const bm=/beam|جسر|كمر|حزام|tie\b|lintel/i.test(n);const dr=bm?'':Object.keys(S().ls).find(x=>/door|باب|ابواب|أبواب/i.test(x)&&(S().ls[x].nc>0||Object.keys(S().ls[x].ins).length))||'',wn=bm?'':Object.keys(S().ls).find(x=>/window|شباك|شبابيك|نافذة|نوافذ/i.test(x)&&(S().ls[x].nc>0||Object.keys(S().ls[x].ins).length))||'';return{m:'twin',h:bm?.5:/strip|شريطي/i.test(n)?.5:3,k:1,el:bm,mw:bm?400:0,ol:dr,o2:wn}}
+ if(/column|col\b|عمود|اعمدة|أعمدة|foot|ftg|foundation|fndn|قاعدة|قواعد|اساس|أساس|pad\b|pile|خازوق|خوازيق/i.test(n)&&o.nc+o.ncir+(o.nl||0)>0)return{m:'col',h:/foot|ftg|foundation|fndn|قاعدة|قواعد|اساس|أساس|pad\b/i.test(n)?.6:3,k:1,lp:(o.nl||0)>0};
+ if(/beam|bm\b|bms\b|جسر|جسور|كمر|حزام|ميدة|ميدات|tie\b|lintel|wall|جدار|حائط|lift|elevator|مصعد|core|strip|شريطي/i.test(n)&&o.tw&&o.tw.l>0&&o.tw.l*2>=0.5*o.len){const bm=/beam|bm\b|bms\b|جسر|جسور|كمر|حزام|ميدة|ميدات|tie\b|lintel/i.test(n);const dr=bm?'':Object.keys(S().ls).find(x=>/door|باب|ابواب|أبواب/i.test(x)&&(S().ls[x].nc>0||Object.keys(S().ls[x].ins).length))||'',wn=bm?'':Object.keys(S().ls).find(x=>/window|شباك|شبابيك|نافذة|نوافذ/i.test(x)&&(S().ls[x].nc>0||Object.keys(S().ls[x].ins).length))||'';return{m:'twin',h:bm?.5:/strip|شريطي/i.test(n)?.5:3,k:1,el:bm,mw:bm?400:0,ol:dr,o2:wn}}
  if(/rebar|reinf|steel|حديد|تسليح/i.test(n))return{m:'rebar',d:12,k:1};
  if(/wall|جدار|حائط|بلوك|brick|block/i.test(n)&&o.len>0)return{m:'wall',h:3,t:200,k:1};
- if(/slab|floor|roof|landing|سقف|بلاطة|ارضية|أرضية|صبة|بسطة/i.test(n)&&o.nc>0){const hostP=(DQ&&DQ.pg&&DQ.pg[n])||[],op=Object.keys(S().ls).filter(x=>x!=n&&OPN.test(x)&&S().ls[x].nc>0&&DQ&&DQ.pg&&(DQ.pg[x]||[]).some(q=>hostP.some(h=>pip(q.cx,q.cy,h.p))));return{m:'vol',t:150,k:1,ol:op[0]||'',ol2:op[1]||''}}
+ if(/slab|slb|floor|roof|landing|سقف|اسقف|أسقف|بلاط|ارضية|أرضية|صبة|بسطة/i.test(n)&&o.nc>0){const hostP=(DQ&&DQ.pg&&DQ.pg[n])||[],op=Object.keys(S().ls).filter(x=>x!=n&&OPN.test(x)&&S().ls[x].nc>0&&DQ&&DQ.pg&&(DQ.pg[x]||[]).some(q=>hostP.some(h=>pip(q.cx,q.cy,h.p))));return{m:'vol',t:150,k:1,ol:op[0]||'',ol2:op[1]||''}}
  if(o.nc+o.ncir>0&&o.len>0&&Object.keys(o.ins).length==0)return{m:'col',h:3,k:1};
  if(Object.keys(o.ins).length||o.ncir>0)return{m:'count',k:1};
  if(o.len>0)return{m:'len',k:1};
@@ -10374,8 +10381,8 @@ function alignCur(f){const s=S();
 const L3N=()=>{const a={};C3C.forEach(c=>a[c.l]=1);return Object.keys(a)};
 function lay3(n,c){if(c.h3l)return[c.h3l];const L=L3N(),o=[],ex=L.filter(l=>l.toLowerCase()==n.toLowerCase());if(ex.length)return ex;const o2=[],add=re=>L.forEach(l=>{if(re.test(l)&&o.indexOf(l)<0)o.push(l)});
  if(/col|عمود|اعمدة|أعمدة/i.test(n))add(/col/i);if(/foot|found|fndn|ftg|قاعد|قواعد|اساس|أساس/i.test(n))add(/fndn|found|foot|ftg/i);
- if(/beam|جسر|كمر|حزام|tie\b|lintel/i.test(n))add(/beam/i);if(/hord|هورد/i.test(n))add(/flor|slab/i);if(/wall|جدار|حائط|lift|core|مصعد/i.test(n))add(/wall/i);
- if(/slab|floor|flor|roof|سقف|بلاط|صبة|ارضية|أرضية|landing|بسطة/i.test(n))add(/flor|slab|roof/i);return o}
+ if(/beam|bm\b|bms\b|جسر|جسور|كمر|حزام|ميدة|ميدات|tie\b|lintel/i.test(n))add(/beam|framing|girder/i);if(/hord|هورد/i.test(n))add(/flor|slab/i);if(/wall|جدار|حائط|lift|core|مصعد/i.test(n))add(/wall/i);
+ if(/slab|slb|floor|flor|roof|سقف|اسقف|أسقف|بلاط|صبة|ارضية|أرضية|landing|بسطة/i.test(n))add(/flor|floor|slab|roof/i);return o}
 function levels3(){const Z=[];C3C.forEach(c=>{if(c.ar<=12&&/col|fndn|found|foot/i.test(c.l)){Z.push(c.z0,c.z1)}});Z.sort((a,b)=>a-b);const cl=[];Z.forEach(z=>{const q=cl[cl.length-1];if(q&&z-q.m<=0.2){q.m=(q.m*q.n+z)/(q.n+1);q.n++}else cl.push({m:z,n:1})});
  return cl.filter(q=>q.n>=3).map(q=>q.m)}
 function bands3(){const lv=levels3(),b=[];for(let i=1;i<lv.length;i++)if(lv[i]-lv[i-1]>=0.4)b.push([lv[i-1],lv[i]]);return b}
@@ -10433,7 +10440,7 @@ function computeFile(){
   const lf0=C3C.length&&c.h3!==false&&c.m!='stair'?lay3(n,c):[],use3=!!(C3C.length&&c.m!='stair'&&(c.h3===true||c.h3===1||(c.h3===undefined&&lf0.length))),lf=use3?lf0:null,bnd=use3&&!isNum(zb)&&!isNum(zt)?(SB?{b:SB[0],t:SB[1],m:0,n:0,man:1}:(NECK&&c.m=='col'&&/col|عمود|اعمدة|أعمدة/i.test(n)&&!/foot|found|fndn|قاعد|اساس|أساس/i.test(n)?{b:NECK[0],t:NECK[1],m:0,n:0,man:2}:(bandOf(n,c,f,al,lf,REF)||(c.m=='len'&&REF?{b:REF.b,t:REF.t,m:0,n:0,man:3}:null)))):null,bdr=bnd?[bnd.b,bnd.t]:null;if(use3&&bnd)(S().bdi||(S().bdi={}))[n]=bnd;
   const pgs=(DQ.pg[n]||[]).concat(lpx(n,c));
   {const ncl=pgs.filter(q=>q.cl).length;if(ncl)warn.push(P('الطبقة «'+n+'»: '+ncl+' شكلًا مرسومًا بخطوط ناقصة ضلع (مفتوح) أُغلق تلقائيًا؛ راجع الرسم.','Layer “'+n+'”: '+ncl+' shapes drawn with a missing side were closed automatically; check the drawing.'))}
-  const lfb=use3&&c.m=='col'&&lf.length&&!c.h3l?L3N().filter(l=>!/beam|wall|flor|slab|stair|strs|fndn|found|foot/i.test(l)&&lf.indexOf(l)<0):[];
+  const lfb=use3&&c.m=='col'&&lf.length&&!c.h3l?L3N().filter(l=>!/beam|framing|wall|flor|floor|slab|stair|strs|fndn|found|foot/i.test(l)&&lf.indexOf(l)<0):[];
   const M=(q)=>{if(!use3)return null;const x=q.cx*f+al.ox,y=q.cy*f+al.oy;let m=h3(x,y,zb,zt,lf,bdr);if(!m&&lfb.length)m=h3(x,y,zb,zt,lfb,bdr);return m};
   if(c.m=='len'){
    const lb=use3&&c.lb===true&&/beam|جسر|كمر|حزام|hord|هورد/i.test(n)&&lf&&lf.some(l=>/beam/i.test(l));
@@ -10514,8 +10521,8 @@ function computeFile(){
   const lays=layNames().filter(n=>cfgOf(n).m!='ignore'),
    hasSl=lays.some(n=>{const c=cfgOf(n);return c.m=='vol'||(c.h3!==false&&lay3(n,c).some(l=>/fndn|found|foot/i.test(l)))}),
    hasSt=lays.some(n=>cfgOf(n).m=='stair'),hasVol=lays.some(n=>cfgOf(n).m=='vol'),
-   GR=[{k:'sl',re:/flor|slab|roof/i,skip:hasSl,ar:'السقف / البلاطة',en:'Slab/roof',fm:1,cnt:'قطعة',cne:'pieces'},
-    {k:'gs',re:/flor|slab/i,skip:!hasSl||hasVol,ar:'بلاطة الأرضية فوق رقاب الأعمدة',en:'Ground slab above column necks',fm:1,cnt:'قطعة',cne:'pieces',zt:c=>c.z1<=0.1&&c.z1>=-0.3},{k:'st',re:/stair|strs/i,skip:hasSt,ar:'الدرج',en:'Stairs',fm:0,cnt:'درجة/بسطة',cne:'flights/landings'},
+   GR=[{k:'sl',re:/flor|floor|slab|roof/i,skip:hasSl,ar:'السقف / البلاطة',en:'Slab/roof',fm:1,cnt:'قطعة',cne:'pieces'},
+    {k:'gs',re:/flor|floor|slab/i,skip:!hasSl||hasVol,ar:'بلاطة الأرضية فوق رقاب الأعمدة',en:'Ground slab above column necks',fm:1,cnt:'قطعة',cne:'pieces',zt:c=>c.z1<=0.1&&c.z1>=-0.3},{k:'st',re:/stair|strs/i,skip:hasSt,ar:'الدرج',en:'Stairs',fm:0,cnt:'درجة/بسطة',cne:'flights/landings'},
     {k:'ln',re:/fndn|found|foot/i,skip:!hasSl,ar:'صبة النظافة (خرسانة عادية) تحت القواعد',en:'Lean concrete (blinding) under footings',fm:0,cnt:'قطعة',cne:'pieces',zt:c=>c.z1-c.z0<=0.15&&c.ta>0.2}];
   let bd=SB?{b:SB[0],t:SB[1]}:null;
   if(!bd&&!isNum(zb)&&!isNum(zt)){const bi=s.bdi||{};const k=Object.keys(bi).filter(n=>bi[n]&&layNames().indexOf(n)>=0).sort((a,b)=>(cfgOf(b).m=='col'?1:0)-(cfgOf(a).m=='col'?1:0)||bi[b].m-bi[a].m)[0];if(k)bd={b:bi[k].b,t:bi[k].t}}
