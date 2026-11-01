@@ -1552,8 +1552,8 @@ const X6={
  sheetName(n,used){let s=String(n||'').replace(/[\[\]:*?\/\\]/g,' ').replace(/\s+/g,' ').trim().slice(0,28)||'Sheet';let b=s,i=2;while(used.has(s.toLowerCase())){s=b.slice(0,26)+' '+i++}used.add(s.toLowerCase());return s},
  xlsx(sheets,rtl){const used=new Set(),names=sheets.map(s=>X6.sheetName(s.name,used));
   const ws=sheets.map(sh=>{const rows=sh.rows,w=[];rows.forEach(r=>r.forEach((c,j)=>{w[j]=Math.min(50,Math.max(w[j]||8,String(c).length*1.2+2))}));
-   const sd=rows.map((r,i)=>`<row r="${i+1}">${r.map((c,j)=>{const ref=X6.col(j)+(i+1),hd=sh.head&&i==0,n=hd?null:X6.num(c),s=hd?1:2;if(String(c)==='')return `<c r="${ref}" s="${s}"/>`;return n!==null?`<c r="${ref}" s="${s}"><v>${n}</v></c>`:`<c r="${ref}" t="inlineStr" s="${s}"><is><t xml:space="preserve">${X6.esc(c)}</t></is></c>`}).join('')}</row>`).join('');
-   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"${rtl?' rightToLeft="1"':''}/></sheetViews><cols>${w.map((x,j)=>`<col min="${j+1}" max="${j+1}" width="${x.toFixed(1)}" customWidth="1"/>`).join('')}</cols><sheetData>${sd}</sheetData></worksheet>`});
+   const sd=rows.map((r,i)=>`<row r="${i+1}">${r.map((c,j)=>{const ref=X6.col(j)+(i+1),hd=sh.head&&i==0,n=hd?null:X6.num(c),s=hd?1:2;if(!hd&&typeof c=='string'&&/^=[A-Z]+\(/.test(c))return `<c r="${ref}" s="${s}"><f>${X6.esc(c.slice(1))}</f></c>`;if(String(c)==='')return `<c r="${ref}" s="${s}"/>`;return n!==null?`<c r="${ref}" s="${s}"><v>${n}</v></c>`:`<c r="${ref}" t="inlineStr" s="${s}"><is><t xml:space="preserve">${X6.esc(c)}</t></is></c>`}).join('')}</row>`).join('');
+   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"${rtl?' rightToLeft="1"':''}>${sh.freeze?'<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>':''}</sheetView></sheetViews><cols>${w.map((x,j)=>`<col min="${j+1}" max="${j+1}" width="${x.toFixed(1)}" customWidth="1"/>`).join('')}</cols><sheetData>${sd}</sheetData></worksheet>`});
   const f=[{name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${ws.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`},
    {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
    {name:'xl/workbook.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${names.map((n,i)=>`<sheet name="${X6.esc(n).replace(/"/g,'&quot;')}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('')}</sheets></workbook>`},
@@ -5742,7 +5742,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 /* ---------- PG wrapper ---------- */
 const _PG=PG;PG=function(p,v){if(p=='dsg')return hub(v);if(p=='ver')return verifyPage();return _PG.apply(this,arguments)};
 /* ---------- quantities hub ---------- */
-const ZHUB=[['qty','تقدير الكميات السريع','Quick quantity estimate','خرسانة وحديد وقوالب من أبعاد العناصر','Concrete, steel and formwork from element dimensions'],['site:qreg','سجل الكميات المفتوح','Open quantities register','أي مواد وأعمال وعمالة ومعدات ونقل','Any materials, works, labour, equipment and transport'],['site:qty2','الكميات المتقدمة','Advanced quantities','مبنى متعدد الطوابق وتفاصيل الحديد وأسعار الموردين','Multi-storey building, steel details and supplier prices'],['site:boq','جدول الكميات BOQ','Bill of quantities (BOQ)','بنود وأسعار وتحليل سعر الوحدة','Items, prices and unit-price analysis'],['site:masonry','كميات البلوك والطابوق','Block and brick quantities','عدد الوحدات والمونة للجدار','Number of units and mortar for a wall'],['site:plaster','كميات اللياسة (اللطاشة)','Plaster quantities','مساحة وإسمنت ورمل','Area, cement and sand'],['site:tiles','كميات البلاط والسيراميك','Tiles and ceramic quantities','بلاط ولاصق وجروت وفرشة ووزرة','Tiles, adhesive, grout, bedding and skirting'],['site:paint','كميات الدهانات','Paint quantities','دهان وبرايمر ومعجون وعدد العلب','Paint, primer, putty and container count'],['site:soil','الأعمال الترابية','Earthworks','حفر وردم ونقل ودك وقلابات','Excavation, backfill, haulage, compaction and trucks'],['site:earth','حفر وردم من القراءات','Cut and fill from readings','حجم الحفر والردم من مناسيب الشبكة','Cut and fill volumes from grid levels'],['site:mixmc','كميات الخلطة حسب رطوبة الركام','Mix quantities by aggregate moisture','تصحيح الماء والركام بالموقع','Correct water and aggregate on site'],['site:roof','عزل الأسطح: مائي وحراري','Roof insulation: waterproofing and thermal','أغشية وبرايمر وميول وألواح عزل ومعامل U','Sheets, primer, slope screed, boards and U-value'],['site:wet','عزل الحمامات والخزانات والأسس','Bathroom, tank and foundation insulation','مواد وكميات وخطوات التنفيذ','Materials, quantities and execution steps'],['site:elqty','كميات الكهرباء','Electrical quantities','دوائر ولوحة وأسلاك ومواسير وعلب','Circuits, board, cables, conduits and boxes'],['site:plumb','كميات السباكة والصرف','Plumbing and drainage quantities','مواسير وأقطار صرف وغرف تفتيش','Pipes, drain sizes and manholes'],['site:waste','تقليل هدر الحديد','Steel waste reduction','ترتيب القص على قضبان المصنع','Cutting plan on factory bars'],['tab:rebar','أقطار الحديد ومساحته','Bar diameters and areas','مساحة الحديد لكل متر','Steel area per metre']];
+const ZHUB=[['site:dxq','استخراج الكميات من مخطط الأوتوكاد','Quantities from an AutoCAD drawing','ارفع ملف DXF واحصل على جدول كميات مرتب','Upload a DXF file and get an organised quantity table'],['qty','تقدير الكميات السريع','Quick quantity estimate','خرسانة وحديد وقوالب من أبعاد العناصر','Concrete, steel and formwork from element dimensions'],['site:qreg','سجل الكميات المفتوح','Open quantities register','أي مواد وأعمال وعمالة ومعدات ونقل','Any materials, works, labour, equipment and transport'],['site:qty2','الكميات المتقدمة','Advanced quantities','مبنى متعدد الطوابق وتفاصيل الحديد وأسعار الموردين','Multi-storey building, steel details and supplier prices'],['site:boq','جدول الكميات BOQ','Bill of quantities (BOQ)','بنود وأسعار وتحليل سعر الوحدة','Items, prices and unit-price analysis'],['site:masonry','كميات البلوك والطابوق','Block and brick quantities','عدد الوحدات والمونة للجدار','Number of units and mortar for a wall'],['site:plaster','كميات اللياسة (اللطاشة)','Plaster quantities','مساحة وإسمنت ورمل','Area, cement and sand'],['site:tiles','كميات البلاط والسيراميك','Tiles and ceramic quantities','بلاط ولاصق وجروت وفرشة ووزرة','Tiles, adhesive, grout, bedding and skirting'],['site:paint','كميات الدهانات','Paint quantities','دهان وبرايمر ومعجون وعدد العلب','Paint, primer, putty and container count'],['site:soil','الأعمال الترابية','Earthworks','حفر وردم ونقل ودك وقلابات','Excavation, backfill, haulage, compaction and trucks'],['site:earth','حفر وردم من القراءات','Cut and fill from readings','حجم الحفر والردم من مناسيب الشبكة','Cut and fill volumes from grid levels'],['site:mixmc','كميات الخلطة حسب رطوبة الركام','Mix quantities by aggregate moisture','تصحيح الماء والركام بالموقع','Correct water and aggregate on site'],['site:roof','عزل الأسطح: مائي وحراري','Roof insulation: waterproofing and thermal','أغشية وبرايمر وميول وألواح عزل ومعامل U','Sheets, primer, slope screed, boards and U-value'],['site:wet','عزل الحمامات والخزانات والأسس','Bathroom, tank and foundation insulation','مواد وكميات وخطوات التنفيذ','Materials, quantities and execution steps'],['site:elqty','كميات الكهرباء','Electrical quantities','دوائر ولوحة وأسلاك ومواسير وعلب','Circuits, board, cables, conduits and boxes'],['site:plumb','كميات السباكة والصرف','Plumbing and drainage quantities','مواسير وأقطار صرف وغرف تفتيش','Pipes, drain sizes and manholes'],['site:waste','تقليل هدر الحديد','Steel waste reduction','ترتيب القص على قضبان المصنع','Cutting plan on factory bars'],['tab:rebar','أقطار الحديد ومساحته','Bar diameters and areas','مساحة الحديد لكل متر','Steel area per metre']];
 function zhubPage(){return `<h2>${zb('الكميات والتكلفة: كل الأدوات','Quantities and cost: all tools')}</h2><p class='nt'>${zb('اختر الأداة التي تناسب عملك. تشمل الخرسانة والحديد والبلوك واللياسة والبلاط والدهانات والأعمال الترابية وجداول الكميات والأسعار.','Pick the tool that fits your work. It covers concrete, steel, blocks, plaster, tiles, paint, earthworks, bills of quantities and prices.')}</p><div class='cards'>${ZHUB.map(c=>`<button class='card' data-a='${c[0]}'><b>${zb(c[1],c[2])}</b><span>${zb(c[3],c[4])}</span></button>`).join('')}</div>`}
 {const _PGq=PG;PG=function(p,v){if(p=='qhub')return zhubPage();return _PGq.apply(this,arguments)}}
 
@@ -5770,7 +5770,7 @@ const MS=[
  ['🌀',['الملوية والمواد','Spiral and materials'],[['map','الملوية'],['list','القائمة'],['tree','شجرة المستويات'],['path','جولة التعلّم (مسار المبتدئ)'],['mwshow','▶ عرض الملوية (فيديو)'],['site:mats','قائمة المواد المرقّمة','materials brick block stone ceramic marble pipes sanitary electrical doors windows glass paint gypsum']],'topics'],
  ['🧮',['التصميم الإنشائي','Structural design'],[['dsg','التصميم: اختر العنصر والحالة','design beam slab column footing wall stair'],['site:takedown','تجميع الأحمال على الأعمدة'],['site:contbeam','معاملات الجسور المستمرة (ACI)'],['site:wind','حمل الريح المبسط'],['site:seismic','القوة الزلزالية المكافئة (مبسطة)'],['site:shearw','جدار القص: التحقق من القص'],['site:tank','خزان ماء مستطيل'],['site:retwall','جدار ساند كابولي: الثبات'],['site:prestress','الخرسانة سابقة الإجهاد: فحص الإجهادات']]],
  ['📐',['مخططات إنشائية','Structural drawings'],[['smd','مخططات إنشائية: اختر العنصر وصدّر الشوب درونك','shop drawing dxf pdf png svg مخطط شوب']]],
- ['📦',['الكميات والتكلفة','Quantities and cost'],[['qhub','كل أدوات الكميات (فهرس)','quantities index all tools كميات فهرس'],['qty','تقدير الكميات السريع'],['site:qreg','سجل الكميات المفتوح'],['site:qty2','الكميات المتقدمة'],['site:boq','جدول الكميات BOQ وتحليل الأسعار'],['site:masonry','كميات البلوك والطابوق'],['site:plaster','كميات اللياسة (اللطاشة)','plaster lyasa latasha cement sand render لياسة لطاشة محارة'],['site:tiles','كميات البلاط والسيراميك','tiles ceramic porcelain grout adhesive skirting بلاط سيراميك كاشي'],['site:paint','كميات الدهانات','paint primer putty دهان دهانات صبغ'],['site:soil','الأعمال الترابية: حفر وردم ونقل ودك','earthwork excavation backfill haul compaction swell shrink trucks حفر ردم نقل دك تربة'],['site:waste','تقليل هدر الحديد']]],
+ ['📦',['الكميات والتكلفة','Quantities and cost'],[['qhub','كل أدوات الكميات (فهرس)','quantities index all tools كميات فهرس'],['qty','تقدير الكميات السريع'],['site:qreg','سجل الكميات المفتوح'],['site:dxq','استخراج الكميات من مخطط الأوتوكاد'],['site:qty2','الكميات المتقدمة'],['site:boq','جدول الكميات BOQ وتحليل الأسعار'],['site:masonry','كميات البلوك والطابوق'],['site:plaster','كميات اللياسة (اللطاشة)','plaster lyasa latasha cement sand render لياسة لطاشة محارة'],['site:tiles','كميات البلاط والسيراميك','tiles ceramic porcelain grout adhesive skirting بلاط سيراميك كاشي'],['site:paint','كميات الدهانات','paint primer putty دهان دهانات صبغ'],['site:soil','الأعمال الترابية: حفر وردم ونقل ودك','earthwork excavation backfill haul compaction swell shrink trucks حفر ردم نقل دك تربة'],['site:waste','تقليل هدر الحديد']]],
  ['📊',['الجداول والمراجع','Tables and references'],[['tab:rebar','أقطار الحديد'],['tab:loads','الأحمال'],['tab:cover','الأغطية'],['tab:thick','السماكات الدنيا'],['tab:dev','أطوال التماسك'],['study:sheet','ورقة ملخص المعادلات'],['study:gloss','قاموس إنجليزي-عربي'],['learn:refs','المراجع والمصادر'],['ver','أمثلة التحقق: يدويًا مقابل الموقع','verification examples hand calculation check']]],
  ['🧪',['المواد والخلطات','Materials and mixes'],[['site:mix','تصميم الخلطة (ACI 211.1)'],['site:mixmc','تصحيح رطوبة الركام وكميات الخلطة'],['site:hot','الصب في الجو الحار'],['site:tests','فحص المواد: منخلي ووزن نوعي ورطوبة وحديد ومكعبات'],['site:cube','قبول نتائج المكعبات'],['site:sulfate','الكبريتات وفئات التعرض'],['site:insul','العزل الحراري: معامل U'],['site:carbon','البصمة الكربونية للمواد']]],
  ['🏗️',['تنفيذ الموقع','Site works'],[['site:pour','قوائم فحص الصب'],['site:daily','التقرير اليومي للموقع'],['site:sched','الجدول الزمني وGantt'],['site:safety','قوائم السلامة: السقالات والحفريات'],['site:bimdraw','دليل المخططات الإنشائية والـBIM']]],
@@ -9988,6 +9988,217 @@ reg('pl','بايلات (وغطاء)','Piles with cap',()=>{
   const Bv=[{h:N>1?120:273,views:[{name:['مقطع البايل','PILE SECTION'],w:D,h:D,x0:-D/2,y0:-D/2,px:[22,52],py:[14,16],minD:BM.pullNeedN?BM.pullNeedN(F.bars,180,188):0,draw:sec}].concat(N>1?[{name:['مقطع الغطاء','CAP SECTION'],w:capX,h:hcap+350+Math.min(500,D),x0:-capX/2,y0:-Math.min(500,D),px:[22,52],py:[14,16],draw:csec}]:[])}].concat(N>1?[{h:130,views:[{name:['مسقط الغطاء','CAP PLAN'],w:capX,h:capY,x0:-capX/2,y0:-capY/2,px:[22,52],py:[14,16],draw:plan}]}]:[]);
   return{A,B:Bv}});
 BM.wrapAll();
+})();
+</script>
+<script>/*dxq44*/
+(()=>{
+const T=(a,e)=>window.B37(a,e),EN=()=>window.LANG=='en',P=(a,e)=>EN()?e:a;
+const F=(x,d)=>(+x).toLocaleString('en-US',{maximumFractionDigits:d==null?2:d});
+const N0=x=>{const v=+x;return isFinite(v)?v:0};
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NT=(a,e)=>`<p class='nt'>${T(a,e)}</p>`;
+const MS=window.MS37,G=window.G6;
+const UF={mm:.001,cm:.01,m:1,in:.0254,ft:.3048};
+const INSU={1:'in',2:'ft',4:'mm',5:'cm',6:'m'};
+const MODES=[['ignore','تجاهل','Ignore'],['len','طول (م.ط)','Length'],['area','مساحة الأشكال المغلقة','Area of closed shapes'],['vol','حجم = مساحة × سماكة','Volume = area × thickness'],['wall','طول × ارتفاع × سماكة (جدار، جسر، سياج)','Length × height × thickness (wall, beam, fence)'],['rebar','حديد تسليح حسب الطول','Rebar by length'],['count','عدد (كتل ودوائر)','Count (blocks and circles)']];
+const DIAS=[6,8,10,12,14,16,18,20,22,25,28,32];
+const PAL=['#1f77b4','#d62728','#2ca02c','#9467bd','#ff7f0e','#17becf','#8c564b','#e377c2','#bcbd22','#7f7f7f','#0b6e4f','#b8860b'];
+D6('dxq',{pn:'',fn:'',u:'auto',hu:'',ext:null,ls:{},cfg:{},foc:''});
+/* in-memory geometry (not saved) */
+let DQ=null;
+/* ---------------- DXF parsing ---------------- */
+function parseDXF(txt){
+ const L=txt.split(/\r?\n/),pr=[];for(let k=0;k+1<L.length;k+=2)pr.push([L[k].trim(),L[k+1]]);
+ const ls={},paths={},st={ents:0,skip:0,appr:0};let hu='';
+ let mnx=1e30,mny=1e30,mxx=-1e30,mxy=-1e30;
+ const bb=(x,y)=>{if(x<mnx)mnx=x;if(x>mxx)mxx=x;if(y<mny)mny=y;if(y>mxy)mxy=y};
+ const lay=n=>ls[n]||(ls[n]={n:0,len:0,area:0,nc:0,no:0,ncir:0,narc:0,ins:{},ntx:0,pa:0});
+ const pth=(n,s)=>{paths[n]=(paths[n]||'')+s};
+ const f2=v=>(Math.round(v*1e4)/1e4);
+ let p=0;
+ /* header: INSUNITS */
+ for(let i=0;i+1<pr.length&&i<4000;i++){if(pr[i][0]=='9'&&pr[i][1].trim()=='$INSUNITS'&&pr[i+1][0]=='70'){hu=INSU[parseInt(pr[i+1][1])]||'';break}if(pr[i][0]=='2'&&pr[i][1].trim()=='ENTITIES')break}
+ while(p<pr.length&&!(pr[p][0]=='2'&&pr[p][1].trim()=='ENTITIES'))p++;if(p>=pr.length)p=0;
+ /* poly metrics: pts [{x,y,b}] */
+ function poly(l,pts,cl){
+  const n=pts.length;if(n<2)return;
+  const tol=1e-6*Math.max(1,Math.abs(pts[0].x)+Math.abs(pts[0].y));
+  if(!cl&&n>=4&&Math.abs(pts[0].x-pts[n-1].x)<tol&&Math.abs(pts[0].y-pts[n-1].y)<tol){pts=pts.slice(0,n-1);cl=true}
+  const m=pts.length,segs=cl?m:m-1;let len=0,S=0,SA=0,d='M'+f2(pts[0].x)+' '+f2(pts[0].y);
+  pts.forEach(q=>bb(q.x,q.y));
+  for(let i=0;i<segs;i++){const a=pts[i],b=pts[(i+1)%m],c=Math.hypot(b.x-a.x,b.y-a.y),bu=a.b||0;
+   S+=a.x*b.y-b.x*a.y;
+   if(bu&&c>0){const th=4*Math.atan(bu),at=Math.abs(th),r=c/(2*Math.sin(at/2));len+=r*at;SA+=Math.sign(bu)*r*r/2*(at-Math.sin(at));d+='A'+f2(r)+' '+f2(r)+' 0 '+(at>Math.PI?1:0)+' '+(bu>0?1:0)+' '+f2(b.x)+' '+f2(b.y)}
+   else{len+=c;d+='L'+f2(b.x)+' '+f2(b.y)}}
+  const o=lay(l);o.n++;o.len+=len;if(cl){o.nc++;o.area+=Math.abs(S/2+SA)}else o.no++;
+  pth(l,d+(cl?'Z':''))}
+ let cur=null;
+ while(p<pr.length){
+  if(pr[p][0]!='0'){p++;continue}
+  const ty=pr[p][1].trim();let q=p+1;const at=[];while(q<pr.length&&pr[q][0]!='0'){at.push(pr[q]);q++}p=q;
+  if(ty=='ENDSEC'&&cur==null&&st.ents>0)break;
+  if(ty=='EOF')break;
+  const g=c=>{const r=at.find(a=>a[0]==c);return r?r[1].trim():''},gn=c=>parseFloat(g(c))||0,l=g('8')||'0';
+  if(ty=='LINE'){poly(l,[{x:gn('10'),y:gn('20')},{x:gn('11'),y:gn('21')}],false);st.ents++}
+  else if(ty=='LWPOLYLINE'){const pts=[];let v=null;at.forEach(a=>{if(a[0]=='10'){v={x:parseFloat(a[1])||0,y:0,b:0};pts.push(v)}else if(a[0]=='20'&&v)v.y=parseFloat(a[1])||0;else if(a[0]=='42'&&v)v.b=parseFloat(a[1])||0});poly(l,pts,(parseInt(g('70'))||0)&1);st.ents++}
+  else if(ty=='POLYLINE'){cur={l:l,pts:[],cl:(parseInt(g('70'))||0)&1,mesh:(parseInt(g('70'))||0)&(16|64)}}
+  else if(ty=='VERTEX'&&cur){if(!((parseInt(g('70'))||0)&16))cur.pts.push({x:gn('10'),y:gn('20'),b:gn('42')})}
+  else if(ty=='SEQEND'&&cur){if(!cur.mesh){poly(cur.l,cur.pts,cur.cl);st.ents++}else st.skip++;cur=null}
+  else if(ty=='CIRCLE'){const cx=gn('10'),cy=gn('20'),r=Math.abs(gn('40'));if(r>0){const o=lay(l);o.n++;o.ncir++;o.len+=2*Math.PI*r;o.area+=Math.PI*r*r;bb(cx-r,cy-r);bb(cx+r,cy+r);pth(l,'M'+f2(cx+r)+' '+f2(cy)+'A'+f2(r)+' '+f2(r)+' 0 1 1 '+f2(cx-r)+' '+f2(cy)+'A'+f2(r)+' '+f2(r)+' 0 1 1 '+f2(cx+r)+' '+f2(cy)+'Z');st.ents++}}
+  else if(ty=='ARC'){const cx=gn('10'),cy=gn('20'),r=Math.abs(gn('40'));let a0=gn('50'),a1=gn('51');if(a1<=a0)a1+=360;if(r>0){const o=lay(l);o.n++;o.narc++;o.len+=r*(a1-a0)*Math.PI/180;const A=a0*Math.PI/180,B=a1*Math.PI/180;bb(cx-r,cy-r);bb(cx+r,cy+r);pth(l,'M'+f2(cx+r*Math.cos(A))+' '+f2(cy+r*Math.sin(A))+'A'+f2(r)+' '+f2(r)+' 0 '+((a1-a0)>180?1:0)+' 1 '+f2(cx+r*Math.cos(B))+' '+f2(cy+r*Math.sin(B)));st.ents++}}
+  else if(ty=='SPLINE'){const pts=[];let v=null;at.forEach(a=>{if(a[0]=='10'){v={x:parseFloat(a[1])||0,y:0};pts.push(v)}else if(a[0]=='20'&&v)v.y=parseFloat(a[1])||0});if(pts.length>1){poly(l,pts,false);st.appr++;st.ents++}}
+  else if(ty=='INSERT'){const nm=g('2')||'?',o=lay(l);o.ins[nm]=(o.ins[nm]||0)+1;o.n++;const x=gn('10'),y=gn('20');bb(x,y);pth(l,'M'+f2(x)+' '+f2(y)+'m-0.00001 0h0.00002');st.ents++}
+  else if(ty=='TEXT'||ty=='MTEXT'){lay(l).ntx++}
+  else if(!/^(DIMENSION|HATCH|POINT|ATTRIB|ATTDEF|SOLID|3DFACE|VIEWPORT|LEADER|IMAGE|MLEADER|ELLIPSE|WIPEOUT|REGION|TRACE)$/.test(ty))st.skip++;
+  if(st.ents>400000)break}
+ return{ls:ls,paths:paths,st:st,hu:hu,ext:mnx<mxx||mny<mxy?[mnx,mny,mxx,mxy]:null}}
+/* ---------------- helpers ---------------- */
+const S=()=>S6.dxq;
+function unitKey(){const s=S();if(s.u!='auto')return s.u;if(s.hu)return s.hu;const e=s.ext;if(!e)return 'm';const w=Math.max(e[2]-e[0],e[3]-e[1]);return w>3000?'mm':w>300?'cm':'m'}
+const fac=()=>UF[unitKey()]||1;
+const uname=k=>({mm:P('مم','mm'),cm:P('سم','cm'),m:P('م','m'),in:P('إنش','in'),ft:P('قدم','ft')}[k]);
+function guessCfg(n,o){
+ if(/dim|text|txt|hatch|defpoint|grid|axis|axes|title|note|anno|ملاحظ|نص|أبعاد|ابعاد|محور|view|frame|border|sheet/i.test(n))return{m:'ignore'};
+ if(/rebar|reinf|steel|حديد|تسليح/i.test(n))return{m:'rebar',d:12,k:1};
+ if(/wall|جدار|حائط|بلوك|brick|block/i.test(n)&&o.len>0)return{m:'wall',h:3,t:200,k:1};
+ if(/slab|floor|roof|سقف|بلاطة|ارضية|أرضية|صبة/i.test(n)&&o.nc>0)return{m:'vol',t:150,k:1};
+ if(o.nc+o.ncir>0&&o.len>0&&Object.keys(o.ins).length==0)return{m:'area',k:1};
+ if(Object.keys(o.ins).length||o.ncir>0)return{m:'count',k:1};
+ if(o.len>0)return{m:'len',k:1};
+ return{m:'ignore'}}
+const ck=n=>n.replace(/\./g,'_');
+function cfgOf(n){const s=S(),key=ck(n);if(!s.cfg[key])s.cfg[key]=guessCfg(n,s.ls[n]||{ins:{}});const c=s.cfg[key];if(c.k===undefined||c.k==='')c.k=1;return c}
+const layNames=()=>Object.keys(S().ls).sort((a,b)=>S().ls[b].len-S().ls[a].len);
+const colOf=n=>{const a=Object.keys(S().ls).sort();return PAL[Math.max(0,a.indexOf(n))%PAL.length]};
+/* compute quantity rows */
+function compute(){
+ const s=S(),f=fac(),rows=[];
+ layNames().forEach(n=>{const o=s.ls[n],c=cfgOf(n);if(c.m=='ignore')return;
+  const k=N0(c.k)||1,Lm=o.len*f,Am=o.area*f*f,ds=c.desc||n;
+  const R=(desc,x)=>rows.push(Object.assign({desc:desc,layer:n,mode:c.m,L:0,A:0,V:0,N:0,W:0,d:0},x));
+  if(c.m=='len'){if(Lm>0)R(ds,{L:Lm*k})}
+  else if(c.m=='area'){if(Am>0)R(ds,{A:Am*k})}
+  else if(c.m=='vol'){if(Am>0)R(ds,{A:Am*k,V:Am*k*N0(c.t)/1000})}
+  else if(c.m=='wall'){if(Lm>0)R(ds,{L:Lm*k,A:Lm*N0(c.h)*k,V:Lm*N0(c.h)*N0(c.t)/1000*k})}
+  else if(c.m=='rebar'){if(Lm>0){const d=N0(c.d)||12,len=Lm*k;R(ds+' Ø'+d,{L:len,W:len*d*d/162.2,d:d})}}
+  else if(c.m=='count'){Object.keys(o.ins).sort().forEach(b=>R(ds==n?n+' / '+b:ds+' / '+b,{N:o.ins[b]*k}));if(o.ncir)R((ds==n?n:ds)+' / '+P('دوائر','circles'),{N:o.ncir*k})}
+ });
+ return rows}
+const sum=(rows,k)=>rows.reduce((a,r)=>a+r[k],0);
+function steel(rows){const m={};rows.filter(r=>r.W>0).forEach(r=>{const x=m[r.d]||(m[r.d]={d:r.d,L:0,W:0});x.L+=r.L;x.W+=r.W});return Object.values(m).sort((a,b)=>a.d-b.d)}
+const r2=(x,d)=>x?+(+x).toFixed(d==null?3:d):'';
+/* ---------------- page ---------------- */
+function head(){return[P('م','#'),P('الوصف','Description'),P('الطبقة','Layer'),P('الطول (م)','Length (m)'),P('المساحة (م²)','Area (m²)'),P('الحجم (م³)','Volume (m³)'),P('العدد','Count'),P('الوزن (كغ)','Weight (kg)')]}
+function matrix(rows){return rows.map((r,i)=>[i+1,r.desc,r.layer,r2(r.L),r2(r.A),r2(r.V),r2(r.N,0),r2(r.W,1)])}
+function resHtml(){
+ const s=S();if(!Object.keys(s.ls).length)return '';
+ const rows=compute(),st=steel(rows);
+ if(!rows.length)return `<div class='box'><h3>${T('جدول الكميات','Quantity table')}</h3>${NT('اختر نوع الحساب لطبقة واحدة على الأقل.','Choose a quantity type for at least one layer.')}</div>`;
+ const cell=(x,d)=>x?F(x,d):'';
+ const tb=`<table class='sm' id='dxq_tbl'><thead><tr>${head().map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.desc)}</td><td>${esc(r.layer)}</td><td>${cell(r.L,2)}</td><td>${cell(r.A,2)}</td><td>${cell(r.V,3)}</td><td>${cell(r.N,0)}</td><td>${cell(r.W,1)}</td></tr>`).join('')}</tbody><tfoot><tr><th></th><th>${T('المجموع','Total')}</th><th></th><th>${cell(sum(rows,'L'),2)}</th><th>${cell(sum(rows,'A'),2)}</th><th>${cell(sum(rows,'V'),3)}</th><th>${cell(sum(rows,'N'),0)}</th><th>${cell(sum(rows,'W'),1)}</th></tr></tfoot></table>`;
+ const sb=st.length?`<h3>${T('ملخص حديد التسليح حسب القطر','Rebar summary by diameter')}</h3><table class='sm' id='dxq_st'><thead><tr><th>${T('القطر (مم)','Diameter (mm)')}</th><th>${T('الطول (م)','Length (m)')}</th><th>${T('الوزن (كغ)','Weight (kg)')}</th><th>${T('عدد القضبان 12 م','12 m bars')}</th></tr></thead><tbody>${st.map(x=>`<tr><td>Ø${x.d}</td><td>${F(x.L,1)}</td><td>${F(x.W,1)}</td><td>${Math.ceil(x.L/12)}</td></tr>`).join('')}</tbody><tfoot><tr><th>${T('المجموع','Total')}</th><th>${F(sum(st,'L'),1)}</th><th>${F(sum(st,'W'),1)}</th><th>${st.reduce((a,x)=>a+Math.ceil(x.L/12),0)}</th></tr></tfoot></table>`:'';
+ return `<div class='box'><h3>${T('جدول الكميات','Quantity table')}</h3>${tb}${sb}</div>`}
+function layerRows(){
+ const s=S();return layNames().map((n,i)=>{const o=s.ls[n],c=cfgOf(n),f=fac(),p='cfg.'+ck(n)+'.';
+  const info=[];if(o.len)info.push(T('طول ','L ')+F(o.len*f,1)+T(' م',' m'));if(o.nc+o.ncir)info.push(T('مغلق ','closed ')+(o.nc+o.ncir)+' · '+F(o.area*f*f,1)+T(' م²',' m²'));const ni=Object.values(o.ins).reduce((a,b)=>a+b,0);if(ni)info.push(T('كتل ','blocks ')+ni);if(o.ntx)info.push(T('نصوص ','texts ')+o.ntx);
+  const num=(k,lab,w)=>`<label class='dqp'>${lab}<input type='number' step='any' style='width:${w||80}px' data-t='n' data-s6='dxq|${p}${k}' value='${esc(c[k]==null?'':c[k])}'></label>`;
+  let par='';
+  if(c.m=='vol')par=num('t',T('السماكة (مم)','Thickness (mm)'))+num('k',T('معامل ×','Factor ×'),60);
+  else if(c.m=='wall')par=num('h',T('الارتفاع (م)','Height (m)'))+num('t',T('السماكة (مم)','Thickness (mm)'))+num('k',T('معامل ×','Factor ×'),60);
+  else if(c.m=='rebar')par=`<label class='dqp'>${T('القطر','Diameter')}<select data-s6='dxq|${p}d' data-t='n'>${DIAS.map(d=>`<option value='${d}'${+c.d==d?' selected':''}>Ø${d}</option>`).join('')}</select></label>`+num('k',T('معامل × (طبقات/عدد)','Factor × (layers/count)'),60);
+  else if(c.m!='ignore')par=num('k',T('معامل ×','Factor ×'),60);
+  return `<tr><td><button type='button' class='dqn' data-a6='dxq|foc|${i}' style='border-inline-start:6px solid ${colOf(n)}'>${esc(n)}</button><br><small>${info.join(' · ')}</small></td><td><select data-s6='dxq|${p}m' data-re='1'>${MODES.map(m=>`<option value='${m[0]}'${c.m==m[0]?' selected':''}>${P(m[1],m[2])}</option>`).join('')}</select></td><td>${par}</td><td><input type='text' data-s6='dxq|${p}desc' placeholder='${esc(n)}' value='${esc(c.desc||'')}'></td></tr>`}).join('')}
+SITE.dxq=function(){
+ const s=S(),has=Object.keys(s.ls).length,k=unitKey(),e=s.ext,f=fac();
+ const dims=e?F((e[2]-e[0])*f,1)+' × '+F((e[3]-e[1])*f,1)+T(' م',' m'):'';
+ return `<div class='gp dxq'><h2>${T('استخراج الكميات من مخطط الأوتوكاد (DXF)','Quantities from an AutoCAD drawing (DXF)')}</h2>
+ ${NT('ارفع مخطط الأوتوكاد بصيغة DXF، فيقرأ الموقع الطبقات ويحسب الأطوال والمساحات والأحجام وأوزان الحديد والأعداد، ويعطيك جدول كميات مرتبًا جاهزًا للتصدير. لملفات DWG: في الأوتوكاد اختر «حفظ باسم» ثم DXF (يفضّل ASCII).','Upload an AutoCAD drawing as DXF. The site reads the layers and computes lengths, areas, volumes, rebar weights and counts, and gives an organised quantity table ready to export. For DWG files: in AutoCAD use Save As, then DXF (ASCII preferred).')}
+ <div class='gr2'><label>${T('اسم المشروع','Project name')}<input type='text' data-s6='dxq|pn' value='${esc(s.pn)}'></label>
+ <label class='dqup'>${T('📥 اضغط هنا لرفع مخطط DXF','📥 Tap here to upload a DXF')}<input type='file' accept='.dxf,.DXF,application/dxf,image/vnd.dxf,application/octet-stream,text/plain' data-dxqimp='1' style='position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer'></label>
+ <label>${T('وحدة الرسم','Drawing unit')}<select data-s6='dxq|u' data-re='1'>${[['auto','تلقائي','Automatic'],['mm','مليمتر','Millimetres'],['cm','سنتيمتر','Centimetres'],['m','متر','Metres'],['in','إنش','Inches'],['ft','قدم','Feet']].map(o=>`<option value='${o[0]}'${s.u==o[0]?' selected':''}>${P(o[1],o[2])}</option>`).join('')}</select></label></div>
+ ${has?`<p class='nt'>${T('الملف: ','File: ')}<b>${esc(s.fn)}</b> · ${T('الوحدة المعتمدة: ','Unit used: ')}<b>${uname(k)}</b>${s.u=='auto'?(s.hu?T(' (من الملف)',' (from file)'):T(' (حسب حجم الرسم)',' (from drawing size)')):''} · ${T('أبعاد المخطط: ','Drawing size: ')}<b>${dims}</b> — ${T('إذا بدت الأبعاد غير منطقية غيّر الوحدة.','if the size looks wrong, change the unit.')}</p>`:NT('لم يُرفع مخطط بعد. يمكنك تجربة الأداة بملف DXF من الأوتوكاد أو من ملفات «تصدير DXF» في موقعنا.','No drawing uploaded yet. You can try it with any AutoCAD DXF, or one exported from this site.')}
+ ${has?`<div class='box'><h3>${T('معاينة المخطط','Drawing preview')}</h3><div class='dqbtn'><button type='button' data-a6='dxq|zi'>＋</button><button type='button' data-a6='dxq|zo'>－</button><button type='button' data-a6='dxq|fit'>${T('ملء الشاشة','Fit')}</button></div><div id='dxq_cv' style='border:1px solid #9aa;border-radius:8px;background:#fff;overflow:hidden'><svg id='dxq_svg' xmlns='http://www.w3.org/2000/svg' direction='ltr' style='display:block;width:100%!important;height:min(48vh,440px)!important;min-width:0!important;touch-action:none;cursor:grab'></svg></div><p class='nt' id='dxq_nogeo'></p>
+ <h3>${T('الطبقات وطريقة حساب كل طبقة','Layers and how each is measured')}</h3>${NT('اضغط اسم الطبقة لإبرازها بالمعاينة. اختر لكل طبقة نوع الحساب، والطبقات التي لا تحتاجها اتركها «تجاهل».','Click a layer name to highlight it in the preview. Choose the calculation for each layer; leave the ones you do not need on Ignore.')}
+ <table class='sm'><thead><tr><th>${T('الطبقة','Layer')}</th><th>${T('نوع الحساب','Calculation')}</th><th>${T('المعاملات','Parameters')}</th><th>${T('الوصف في الجدول','Description in table')}</th></tr></thead><tbody>${layerRows()}</tbody></table></div>
+ <div id='dxq_res'>${resHtml()}</div>
+ <div class='xb'><button type='button' data-a6='dxq|xlsx'>📊 ${T('تصدير Excel','Export Excel')}</button><button type='button' data-a6='dxq|pdf'>📄 ${T('طباعة / PDF','Print / PDF')}</button><button type='button' data-a6='dxq|csv'>⬇ CSV</button><button type='button' data-a6='dxq|qreg'>➡ ${T('أرسل إلى سجل الكميات','Send to quantity register')}</button><p class='nt'>${T('ملف Excel يحتوي جدول الكميات (بمجاميع بمعادلات حية)، وملخص الحديد حسب القطر، وإحصاء الطبقات.','The Excel file has the quantity table (with live total formulas), the rebar summary by diameter and the layer statistics.')}</p></div>
+ ${NT('تنبيه: يُحسب كل شكل مغلق بمفرده (الأشكال المتداخلة لا تُطرح من بعضها)، والكتل (Block) تُعدّ بالاسم ولا تُفكك. تأكد من فصل العناصر على طبقات واضحة، وراجع الكميات قبل الاعتماد.','Note: every closed shape is measured on its own (nested shapes are not subtracted) and blocks are counted by name, not exploded. Keep elements on clear layers and review the quantities before relying on them.')}`:''}</div>`};
+/* ---------------- preview ---------------- */
+function paintPreview(){
+ const svg=$('dxq_svg');if(!svg)return;const s=S();
+ const ng=$('dxq_nogeo');
+ if(!DQ){svg.innerHTML='';if(ng)ng.textContent=P('المعاينة تحتاج إعادة رفع الملف (الجداول محفوظة).','The preview needs the file to be uploaded again (the tables are saved).');return}
+ if(ng)ng.textContent='';
+ if(!DQ.vb)fit();
+ const sty=n=>{const c=cfgOf(n),ig=c.m=='ignore',dim=s.foc&&s.foc!=n,on=!ig&&!dim;return{stroke:on?colOf(n):'#b8b8b8',w:s.foc==n?2.4:on?1.3:.8,op:dim?.25:ig?.55:1}};
+ if(svg.querySelector('path')){svg.querySelectorAll('path').forEach(el=>{const n=el.getAttribute('data-n'),y=sty(n);el.setAttribute('stroke',y.stroke);el.setAttribute('stroke-width',y.w);el.setAttribute('opacity',y.op)});setVB();return}
+ let h='<g transform="scale(1,-1)" fill="none" stroke-linejoin="round" stroke-linecap="round">';
+ Object.keys(DQ.paths).forEach(n=>{const y=sty(n);
+  h+=`<path data-n="${esc(n)}" d="${DQ.paths[n]}" stroke="${y.stroke}" stroke-width="${y.w}" opacity="${y.op}" vector-effect="non-scaling-stroke"/>`});
+ svg.innerHTML=h+'</g>';setVB()}
+function fit(){const e=S().ext||[0,0,10,10],w=Math.max(1e-6,e[2]-e[0]),hh=Math.max(1e-6,e[3]-e[1]);DQ.vb={x:e[0]-w*.04,y:-(e[3]+hh*.04),w:w*1.08,h:hh*1.08}}
+function setVB(){const svg=$('dxq_svg');if(!svg||!DQ||!DQ.vb)return;const v=DQ.vb;
+ const r=svg.getBoundingClientRect();if(r.width>0&&r.height>0){const ar=r.width/r.height;if(v.w/v.h<ar){const nw=v.h*ar;v.x-=(nw-v.w)/2;v.w=nw}else{const nh=v.w/ar;v.y-=(nh-v.h)/2;v.h=nh}}
+ svg.setAttribute('viewBox',`${v.x} ${v.y} ${v.w} ${v.h}`)}
+function zoom(k,cx,cy){const v=DQ&&DQ.vb;if(!v)return;const px=cx==null?v.x+v.w/2:cx,py=cy==null?v.y+v.h/2:cy;v.x=px-(px-v.x)*k;v.y=py-(py-v.y)*k;v.w*=k;v.h*=k;setVB()}
+function bindSvg(){const svg=$('dxq_svg');if(!svg||svg._b)return;svg._b=1;let dr=null;
+ svg.addEventListener('wheel',e=>{if(!DQ||!DQ.vb)return;e.preventDefault();const r=svg.getBoundingClientRect(),v=DQ.vb;zoom(e.deltaY>0?1.2:1/1.2,v.x+(e.clientX-r.left)/r.width*v.w,v.y+(e.clientY-r.top)/r.height*v.h)},{passive:false});
+ svg.addEventListener('pointerdown',e=>{if(!DQ||!DQ.vb)return;dr={x:e.clientX,y:e.clientY};try{svg.setPointerCapture(e.pointerId)}catch(x){}svg.style.cursor='grabbing'});
+ svg.addEventListener('pointermove',e=>{if(!dr||!DQ||!DQ.vb)return;const r=svg.getBoundingClientRect(),v=DQ.vb;v.x-=(e.clientX-dr.x)/r.width*v.w;v.y-=(e.clientY-dr.y)/r.height*v.h;dr={x:e.clientX,y:e.clientY};setVB()});
+ const up=()=>{dr=null;svg.style.cursor='grab'};svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up)}
+R6.dxq=function(){
+ const r=$('dxq_res');if(r)r.innerHTML=resHtml();
+ paintPreview();bindSvg()};
+/* ---------------- exports ---------------- */
+function title(){return (S().pn?S().pn+' — ':'')+P('كميات من مخطط DXF','Quantities from DXF')}
+function fname(ext){const b=(S().pn||'DXF').replace(/[\\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim().slice(0,40);return 'FABRUM '+b+' '+P('كميات','quantities')+' '+new Date().toISOString().slice(0,10)+'.'+ext}
+function sheets(rows){
+ const n=rows.length,st=steel(rows),s=S(),f=fac(),m=matrix(rows);
+ const tot=['',P('المجموع','Total'),'']; ['D','E','F','G','H'].forEach(c=>tot.push(n?'=SUM('+c+'2:'+c+(n+1)+')':''));
+ const sh=[{name:P('الكميات','Quantities'),head:1,freeze:1,rows:[head()].concat(m,[tot])}];
+ if(st.length){const k=st.length,t2=[P('المجموع','Total'),'=SUM(B2:B'+(k+1)+')','=SUM(C2:C'+(k+1)+')','=SUM(D2:D'+(k+1)+')'];
+  sh.push({name:P('ملخص الحديد','Rebar summary'),head:1,freeze:1,rows:[[P('القطر (مم)','Diameter (mm)'),P('الطول (م)','Length (m)'),P('الوزن (كغ)','Weight (kg)'),P('عدد القضبان 12 م','12 m bars')]].concat(st.map((x,i)=>['Ø'+x.d,r2(x.L,2),r2(x.W,1),'=ROUNDUP(B'+(i+2)+'/12,0)']),[t2])})}
+ sh.push({name:P('الطبقات','Layers'),head:1,freeze:1,rows:[[P('الطبقة','Layer'),P('نوع الحساب','Calculation'),P('الطول الكلي (م)','Total length (m)'),P('مساحة المغلق (م²)','Closed area (m²)'),P('أشكال مغلقة','Closed shapes'),P('كتل','Blocks'),P('نصوص','Texts')]].concat(layNames().map(nm=>{const o=s.ls[nm],c=cfgOf(nm),md=MODES.find(x=>x[0]==c.m);return[nm,P(md[1],md[2]),r2(o.len*f,2),r2(o.area*f*f,2),o.nc+o.ncir,Object.values(o.ins).reduce((a,b)=>a+b,0),o.ntx]}))});
+ sh.push({name:P('معلومات','Info'),rows:[[P('المشروع','Project'),s.pn],[P('التاريخ','Date'),new Date().toISOString().slice(0,10)],[P('ملف المخطط','Drawing file'),s.fn],[P('وحدة الرسم','Drawing unit'),uname(unitKey())],[P('المصدر','Source'),'FABRUM']]});
+ return sh}
+function csvStr(rows){const m=[head()].concat(matrix(rows)),tot=['',P('المجموع','Total'),'',r2(sum(rows,'L')),r2(sum(rows,'A')),r2(sum(rows,'V')),r2(sum(rows,'N'),0),r2(sum(rows,'W'),1)];m.push(tot);return '﻿'+m.map(r=>r.map(c=>{c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\r\n')}
+function prHtml(rows){
+ const h=resHtml();return `<h3>${esc(S().pn||'')}</h3><p>${P('ملف المخطط: ','Drawing: ')}${esc(S().fn)} · ${P('وحدة الرسم: ','Drawing unit: ')}${uname(unitKey())}</p>`+h}
+A6.dxq=function(op,i){
+ const s=S();
+ if(op=='foc'){const n=layNames()[i];s.foc=s.foc==n?'':n;paintPreview();return}
+ if(op=='zi'){zoom(1/1.4);return}
+ if(op=='zo'){zoom(1.4);return}
+ if(op=='fit'){if(DQ){fit();setVB()}return}
+ const rows=compute();
+ if(!rows.length){toast6(P('لا توجد كميات: اختر نوع الحساب لطبقة واحدة على الأقل.','No quantities: choose a calculation for at least one layer.'));return}
+ if(op=='xlsx'){const data=X6.xlsx(sheets(rows),EN()?false:true);xSave(fname('xlsx'),data,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').then(ok=>{if(ok)toast6(P('تم تجهيز ملف Excel','Excel file ready'))});return}
+ if(op=='csv'){xSave(fname('csv'),csvStr(rows),'text/csv;charset=utf-8').then(ok=>{if(ok)toast6(P('تم تجهيز الملف','File ready'))});return}
+ if(op=='pdf'){prt6(title(),prHtml(rows));return}
+ if(op=='qreg'){const Q=S6.qreg;if(!Q){return}
+  rows.forEach(r=>{let u='m',q=r.L;if(r.mode=='area'){u='m2';q=r.A}else if(r.mode=='vol'){u='m3';q=r.V}else if(r.mode=='wall'){if(r.V>0){u='m3';q=r.V}else{u='m2';q=r.A}}else if(r.mode=='rebar'){u='kg';q=r.W}else if(r.mode=='count'){u='no';q=r.N}
+   Q.rows.push({c:u=='kg'?'حديد':u=='m3'?'خرسانة':'أعمال من مخطط',d:r.desc,loc:r.layer,L:'',B:'',H:'',n:'',u:u,q:+(+q).toFixed(3),w:'',p:'',nt:s.fn||'DXF'})});
+  sv6();toast6(P('أُضيفت '+rows.length+' بنود إلى سجل الكميات','Added '+rows.length+' items to the quantity register'));act('site:qreg');return}
+};
+/* ---------------- file import ---------------- */
+document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.dxqimp)return;const f=t.files&&t.files[0];if(!f)return;
+ if(f.size>60e6){toast6(P('الملف كبير جدًا (أكثر من 60 ميغابايت)','The file is too large (over 60 MB)'));t.value='';return}
+ if(!/\.dxf$/i.test(f.name)&&!/\.dwg$/i.test(f.name)){toast6(P('الملف ليس DXF. احفظ المخطط من الأوتوكاد بصيغة DXF.','This is not a DXF file. Save the drawing from AutoCAD as DXF.'));t.value='';return}
+ if(/\.dwg$/i.test(f.name)){toast6(P('ملف DWG غير مدعوم. من الأوتوكاد: حفظ باسم ← DXF.','DWG is not supported. In AutoCAD: Save As → DXF.'));t.value='';return}
+ const rd=new FileReader();rd.onload=()=>{const txt=String(rd.result);
+  if(/^AutoCAD Binary DXF/.test(txt)){toast6(P('ملف DXF ثنائي غير مدعوم؛ احفظه بصيغة ASCII','Binary DXF is not supported; save it as ASCII DXF'));return}
+  let r;try{r=parseDXF(txt)}catch(x){toast6(P('تعذر قراءة الملف','Could not read the file'));return}
+  if(!r.st.ents){toast6(P('لم يُعثر على عناصر هندسية. إن كانت كل العناصر داخل كتل (Block) فكّكها بالأمر EXPLODE ثم احفظ الملف.','No geometry found. If everything is inside blocks, run EXPLODE in AutoCAD and save again.'));return}
+  const s=S();s.fn=f.name;s.hu=r.hu;s.ext=r.ext;s.ls=r.ls;s.cfg={};s.foc='';if(!s.pn)s.pn=f.name.replace(/\.dxf$/i,'');
+  DQ={paths:r.paths,vb:null};sv6();rr6();
+  toast6(P('تم قراءة '+Object.keys(r.ls).length+' طبقة و'+r.st.ents+' عنصر.'+(r.st.appr?' (المنحنيات SPLINE تقريبية)':'')+(r.st.skip?' ('+r.st.skip+' عنصر غير مدعوم)':''),Object.keys(r.ls).length+' layers and '+r.st.ents+' entities read.'+(r.st.appr?' (SPLINE curves are approximate)':'')+(r.st.skip?' ('+r.st.skip+' unsupported entities)':'')))};
+ rd.readAsText(f);t.value=''});
+/* ---------------- style ---------------- */
+{const st=document.createElement('style');st.textContent=`.dxq .dqup{position:relative;display:flex;align-items:center;justify-content:center;gap:6px;min-height:52px;padding:10px 14px;border:2px dashed var(--acc,#2a7ab0);border-radius:14px;font-weight:800;cursor:pointer;text-align:center}.dxq .dqup input{min-width:0!important}.dxq .dqp{display:inline-flex;align-items:center;gap:4px;margin:2px 8px 2px 0;font-size:13px;white-space:nowrap}.dxq .dqp input,.dxq .dqp select{min-width:0}.dxq .dqn{background:none;border:1px solid #cbb;border-radius:8px!important;padding:3px 8px;font-weight:700;text-align:start;cursor:pointer}.dxq .dqbtn{margin:4px 0}.dxq .dqbtn button{min-width:44px;margin-inline-end:6px}.dxq tfoot th{background:#f3ecd9;font-weight:800}`;document.head.appendChild(st)}
+/* ---------------- menu and guide ---------------- */
+{const sec=MS.find(x=>x[2]&&x[2].some(y=>y[0]=='site:qreg'));if(sec&&!sec[2].some(y=>y[0]=='site:dxq')){const i=sec[2].findIndex(y=>y[0]=='site:qreg');sec[2].splice(i+1,0,['site:dxq','استخراج الكميات من مخطط الأوتوكاد DXF','quantities takeoff from autocad dxf drawing layers length area volume rebar count استخراج كميات مخطط اوتوكاد جدول كميات'])}}
+G['site:dxq']=[['ارفع مخطط الأوتوكاد بصيغة DXF، فيقرأ الموقع الطبقات ويستخرج الأطوال والمساحات والأحجام والحديد والأعداد بجدول مرتب.','Upload an AutoCAD drawing as DXF; the site reads the layers and extracts lengths, areas, volumes, rebar and counts into an organised table.'],[['من الأوتوكاد احفظ المخطط بصيغة DXF، ثم ارفعه هنا.','In AutoCAD save the drawing as DXF, then upload it here.'],['تأكد من وحدة الرسم (متر/سم/مم) من الأبعاد المعروضة.','Check the drawing unit (m/cm/mm) from the displayed size.'],['لكل طبقة اختر نوع الحساب: طول، مساحة، حجم، جدار، حديد أو عدد.','For each layer choose the calculation: length, area, volume, wall, rebar or count.'],['راجع جدول الكميات وصدّره Excel أو PDF.','Review the quantity table and export it to Excel or PDF.']],['جدول كميات بمجاميع، وملخص حديد حسب القطر، وملف Excel جاهز للتعديل.','A quantity table with totals, a rebar summary by diameter and an editable Excel file.']];
+try{mkMenu()}catch(e){}
 })();
 </script>
 <script id="ui1js">(function(){
