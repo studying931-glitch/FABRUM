@@ -5284,7 +5284,7 @@ cx:{cxb:['G','mm',200,1500],cxh:['G','mm',200,1500],cxL:['G','mm',1000,12000],cx
 fr:{frc1:['G','mm',200,1500],frc2:['G','mm',200,1500],frA:['G','x',1,3],frq:['M','FA',50,600],frfc:['M','fc',20,60],frfy:['M','fy'],frP:['L','F',50,50000],frM:['L','FM',0,10000],frPu:['L','F',50,70000],frMu:['L','FM',0,14000],frcv:['R','cv',50,120]},
 fs:{fwt:['G','mm',100,600],fwK:['G','sel'],fwq:['M','FA',50,600],fwfc:['M','fc',20,60],fwfy:['M','fy'],fwP:['L','FL',20,3000],fwPu:['L','FL',20,4200],fwcv:['R','cv',50,120]},
 hs:{hsL:['G','mm',1500,8000],hss:['G','sel'],hsb:['G','mm',80,300],hsx:['G','mm',200,750],hsh:['G','mm',150,500],hst:['G','mm',40,120],hsD:['L','FA',0,15],hsW:['L','FA',0,15],hsg:['M','FV',3,15],hsfc:['M','fc',20,60],hsfy:['M','fy'],hscv:['R','cv',15,50]},
-rf:{rtl1:['G','mm',3000,12000],rtl2:['G','mm',3000,12000],rtcc:['G','mm',300,1500],rtP:['L','F',100,60000],rtPu:['L','F',100,80000],rtM:['L','FM',0,8000],rtq:['M','FA',30,400],rtfc:['M','fc',20,60],rtfy:['M','fy'],rtcv:['R','cv',50,120]},
+rf:{rtl1:['G','mm',3000,50000],rtl2:['G','mm',3000,50000],rtcc:['G','mm',300,1500],rtP:['L','F',100,60000],rtPu:['L','F',100,80000],rtM:['L','FM',0,8000],rtq:['M','FA',30,400],rtfc:['M','fc',20,60],rtfy:['M','fy'],rtcv:['R','cv',50,120]},
 sx:{sxH:['G','mm',2000,5000],sxg:['G','mm',220,350],sxW:['G','mm',800,2500],sxb:['G','mm',100,500],sxs:['G','sel'],sxD:['L','FA',0,10],sxV:['L','FA',0.5,12],sxfc:['M','fc',20,60],sxfy:['M','fy'],sxcv:['R','cv',15,60]},
 rx:{rxH:['G','mm',1000,10000],rxdf:['G','mm',0,3000],rxk:['G','mm',0,1000],rxpp:['M','sel'],rxg:['M','FV',14,22],rxp:['M','deg',15,45],rxs:['M','deg',0,35],rxa:['M','FA',50,800],rxm:['M','x',0.2,0.8],rxfc:['M','fc',20,60],rxfy:['M','fy'],rxq:['L','FA',0,60],rxcs:['R','cv',25,100],rxcb:['R','cv',50,120]},
 tx:{txT:['G','sel'],txH:['G','mm',1000,8000],txL:['G','mm',1000,50000],txB:['G','mm',1000,50000],txt:['G','mm',150,800],txfs:['M','x',100,200],txq:['M','FA',50,600],txfc:['M','fc',20,60],txfy:['M','fy'],txcv:['R','cv',25,100]},
@@ -6522,7 +6522,7 @@ SD.build=function(k){const def=SD.defs[k];if(!def)return null;let sp;try{sp=def(
  const S=new Sheet(),DR={x:22,y:12,w:200,h:273},CAP=8,gap=6;let y=DR.y+DR.h;const pl=[],over=[];
  const wsum=sp.rows.reduce((a,r)=>a+r.h,0),avh=DR.h-gap*(sp.rows.length-1);sp.rows.forEach(row=>{row.h=row.h/wsum*avh;});
  sp.rows.forEach(row=>{const ws=row.views.map(v=>(v.share||1)*v.w),tot=ws.reduce((a,b)=>a+b,0),av=DR.w-gap*(row.views.length-1);let x=DR.x;
-  row.views.forEach((v,i)=>{const sw=av*ws[i]/tot,px=v.px===undefined?14:v.px,pl_=Array.isArray(px)?px[0]:px,pr_=Array.isArray(px)?px[1]:px,py=v.py===undefined?14:v.py,sA=nice(Math.max(v.w/Math.max(sw-pl_-pr_,10),v.h/Math.max(row.h-CAP-2*py,10),SD.dtl?Math.min(v.min||0,5):(v.min||0))),s=SD.force?SD.force:sA;if(SD.force&&sA>SD.force)over.push(v.name[1]+' (1:'+sA+')');pl.push({v,x,y:y-row.h,sw,rh:row.h,s,sA,px:pl_,pr:pr_,py});x+=sw+gap});y-=row.h+gap});
+  row.views.forEach((v,i)=>{const sw=av*ws[i]/tot,px=v.px===undefined?14:v.px,pl_=Array.isArray(px)?px[0]:px,pr_=Array.isArray(px)?px[1]:px,pyv=v.py===undefined?14:v.py,pyT=Array.isArray(pyv)?pyv[0]:pyv,py=Array.isArray(pyv)?(pyv[0]+pyv[1])/2:pyv,sA=nice(Math.max(v.w/Math.max(sw-pl_-pr_,10),v.h/Math.max(row.h-CAP-2*py,10),SD.dtl?(v.minD||Math.min(v.min||0,5)):(v.min||0))),s=SD.force?SD.force:sA;if(SD.force&&sA>SD.force)over.push(v.name[1]+' (1:'+sA+')');pl.push({v,x,y:y-row.h,sw,rh:row.h,s,sA,px:pl_,pr:pr_,py,pyT});x+=sw+gap});y-=row.h+gap});
  /* true size: every view is drawn at the sheet scale N (1:1 in model space), so any measured distance equals the printed dimension */
  if(!SD.enl){const Nu=SD.force?SD.force:Math.max.apply(null,pl.map(q=>q.s).concat([1]));pl.forEach(q=>{q.s=Nu})}
  /* pack rows to their real height and spread the leftover as gaps */
@@ -6531,7 +6531,7 @@ SD.build=function(k){const def=SD.defs[k];if(!def)return null;let sp;try{sp=def(
   rr.forEach(r=>{r.ps.forEach(q=>{q.y=yy-r.nh;q.rh=r.nh});yy-=r.nh+g})}
  S.N=Math.max.apply(null,pl.map(p=>p.s).concat([1]));const N=S.N;S.title=sp.title;S.det=!!SD.dtl;S.k=k;S.sp=sp;S.over=over;S.meta=SD.meta?Object.assign({},SD.meta):null;
  /* views */
- pl.forEach(p=>{const kk=N/p.s,pw=p.v.w/p.s,x0=p.v.x0||0,y0=p.v.y0||0,ox=(p.x+p.px+(p.sw-p.px-p.pr-pw)/2)*N-x0*kk,oy=(p.y+p.rh-CAP-p.py)*N-p.v.h*kk-y0*kk;const C=new Ctx(S,ox,oy,kk);
+ pl.forEach(p=>{const kk=N/p.s,pw=p.v.w/p.s,x0=p.v.x0||0,y0=p.v.y0||0,ox=(p.x+p.px+(p.sw-p.px-p.pr-pw)/2)*N-x0*kk,oy=(p.y+p.rh-CAP-p.pyT)*N-p.v.h*kk-y0*kk;const C=new Ctx(S,ox,oy,kk);
   S.views.push({name:p.v.name,sA:p.sA,x0:p.x*N,x1:(p.x+p.sw)*N,y0:p.y*N,y1:(p.y+p.rh)*N});const cx=new Ctx(S,0,0,1);cx.tx('TEXT',(p.x+p.sw/2)*N,(p.y+p.rh-4)*N,p.v.name[0]+'   1:'+p.s,p.v.name[1]+'   SCALE 1:'+p.s,{h:3.5,a:'c',b:1});
   p.v.draw(C,p.s)});
  S.nv=S.e.length;SD.frame(S,sp,N);return S};
@@ -6560,7 +6560,7 @@ SD.frame=function(S,sp,N){const C=new Ctx(S,0,0,1),f=(l,x1,y1,x2,y2)=>C.ln(l,x1*
   const v=(x,d)=>(x===undefined||x===null||String(x).trim()==='')?(d||'-'):String(x);
   t(X0+3,Y(0),'التاريخ: '+v(m.date),'DATE: '+v(m.date),{h:2.5});t(xr,Y(0),'رقم اللوحة: '+v(m.dn)+(S.det?'-D':''),'DWG NO.: '+v(m.dn)+(S.det?'-D':''),{h:2.5});
   t(X0+3,Y(1),'المصمم: '+v(m.des)+'   المراجع: '+v(m.chk),'DESIGNED: '+v(m.des)+'   CHECKED: '+v(m.chk),{h:2.4});t(xr,Y(1),'اللوحة '+m.i+' من '+m.n+(S.det?' (تفاصيل)':''),'SHEET '+m.i+' OF '+m.n+(S.det?' (DETAILS)':''),{h:2.5});
-  const ti=Lg(sp.title);t(X0+3,Y(2),ti[0],ti[1],{b:1,h:3});t(xr,Y(2),'المقياس 1:'+N+(m.paper=='A4'?' (A3؛ A4 = 71%)':' (A3)'),'SCALE 1:'+N+(m.paper=='A4'?' (A3 LAYOUT; A4 = 71%)':' (A3)'),{h:2.3});
+  const ti=Lg(sp.title);t(X0+3,Y(2),ti[0],ti[1],{b:1,h:3});t(xr,Y(2),'المقياس 1:'+N+(window.PAPLBL?PAPLBL(m.paper,0):' (A3)'),'SCALE 1:'+N+(window.PAPLBL?PAPLBL(m.paper,1):' (A3)'),{h:2.3});
   t(X0+3,Y(3),'المشروع: '+v(m.pj),'PROJECT: '+v(m.pj),{h:2.5});t(xr,Y(3),'العنصر: '+v(m.el)+(m.cnt>1?'  ×'+m.cnt:''),'ELEMENT: '+v(m.el)+(m.cnt>1?'  x'+m.cnt:''),{h:2.5});
   t(X0+3,Y(4),'للتعليم، ويراجعه مهندس مختص','FOR LEARNING - REVIEW BY A LICENSED ENGINEER',{h:2.2});t(xr,Y(4),'الأبعاد بالملّيمتر','DIMENSIONS IN mm',{h:2.3});
   t(X0+3,Y(5)-.5,'FABRUM — تصميم الخرسانة المسلحة (ACI 318)','FABRUM - RC DESIGN (ACI 318)',{b:1,h:3.5});if(m.mat)t(xr,Y(5)-.5,'المواد: '+m.mat,'MATERIALS: '+m.mat,{h:2.3});
@@ -7354,7 +7354,7 @@ function page(){setTimeout(init,30);
  <div id='smmeta'></div><div id='smlist'></div><div id='smform'></div><div id='smprev'></div><div id='smexp'></div></div>`}
 function metaHTML(){const m=S.meta,f=(k,ar,e,ph,w)=>`<label><span>${B37(ar,e)}</span><input type='text' data-smm='${k}' maxlength='${w||60}' value='${E(m[k]||'')}' placeholder='${E(ph||'')}'></label>`;
  return `<details class='smbox' open><summary>${B37('بيانات المشروع (تُحفظ تلقائيًا وتظهر في إطار كل لوحة)','Project data (saved automatically; printed in every title block)')}</summary><div class='grid g37grid'>${f('pj','اسم المشروع','Project name')}${f('dn','بادئة رقم اللوحة','Drawing-number prefix','S-',10)}<label><span>${B37('رقم اللوحة الأولى','First sheet number')}</span><input type='number' data-smm='n0' min='1' step='1' value='${+m.n0||1}'></label>${f('des','المصمم','Designed by')}${f('chk','المراجع','Checked by')}${f('date','التاريخ (فارغ = تاريخ اليوم)','Date (empty = today)','',20)}
- <label><span>${B37('حجم الورق','Paper size')}</span><select data-smm='paper'><option value='A3'${m.paper=='A3'?' selected':''}>A3</option><option value='A4'${m.paper=='A4'?' selected':''}>A4 (${L2('تصغير 71% عن A3','71% reduction from A3')})</option></select></label></div>
+ <label><span>${B37('حجم الورق','Paper size')}</span><select data-smm='paper'><option value='A3'${m.paper=='A3'?' selected':''}>A3</option><option value='A2'${m.paper=='A2'?' selected':''}>A2 (${L2('تكبير 141% عن A3','141% enlargement of A3')})</option><option value='A1'${m.paper=='A1'?' selected':''}>A1 (${L2('تكبير 200% عن A3','200% enlargement of A3')})</option><option value='A0'${m.paper=='A0'?' selected':''}>A0 (${L2('تكبير 283% عن A3','283% enlargement of A3')})</option><option value='A4'${m.paper=='A4'?' selected':''}>A4 (${L2('تصغير 71% عن A3','71% reduction from A3')})</option></select></label></div>
  <p class='nt'>${B37('للـDXF: اكتب اسم المشروع والعناصر بحروف إنجليزية، فنص DXF بالإنجليزية فقط (الحروف العربية لا تظهر فيه).','For DXF: write the project and element names in English letters; DXF text is English only (Arabic letters are dropped).')}</p></details>`}
 function listHTML(){const opts=SM.ORDER.map(k=>`<option value='${k}'>${E(L2(SPEC[k].ar,SPEC[k].en))}</option>`).join('');
  let h=`<h3 class='smh'>${B37('عناصر الملف','Elements in this file')} <small>(${S.list.length})</small></h3>`;
@@ -7398,7 +7398,7 @@ function preview(){clearTimeout(pvT);pvT=setTimeout(doPreview,120)}
 function doPreview(){const box=$('smprev');if(!box)return;const e=cur();if(!e){box.innerHTML='';return}
  const vm=viewMode(),r=compute(S.sel,0,vm=='big');let h='';
  if(r.err||!r.svg){h=`<p class='bad'>${B37('تعذّر إنشاء اللوحة من هذه القيم. راجع الأرقام (أبعاد وتسليح موجبة ومتناسقة).','Could not build the sheet from these values. Check the numbers (positive, consistent dimensions and reinforcement).')}</p>${warnHTML(r.warn||[])}`;box.innerHTML=h;return}
- h=`<h3 class='smh'>${B37('المعاينة الحية','Live preview')} <small>${B37('المقياس','Scale')} 1:${r.N}${S.meta.paper=='A4'?' ('+L2('A3 ثم تُطبع A4','A3 layout printed on A4')+')':''}</small></h3>${warnHTML(r.warn)}${viewBar(r.S,vm)}<div class='smsvg'>${previewSVG(r.S)}</div>${scheduleHTML(r.o,e.cnt)}`;
+ h=`<h3 class='smh'>${B37('المعاينة الحية','Live preview')} <small>${B37('المقياس','Scale')} 1:${r.N}${(window.PAPLBL&&S.meta.paper!='A3')?' ('+L2('A3 ثم تُطبع '+S.meta.paper,'A3 layout printed on '+S.meta.paper)+')':''}</small></h3>${warnHTML(r.warn)}${viewBar(r.S,vm)}<div class='smsvg'>${previewSVG(r.S)}</div>${r.S2?`<h3 class='smh'>${B37('لوحة التفاصيل (مقاطع مكبّرة)','Details sheet (enlarged sections)')}</h3><div class='smsvg'>${svgFor(r.S2).replace('<svg ',`<svg style='width:${Math.round(PZ*100)}%;min-width:${Math.round(820*PZ)}px' `)}</div>`:''}${scheduleHTML(r.o,e.cnt)}`;
  box.innerHTML=h;const n=$('smtot');if(n)n.innerHTML=totals()}
 function viewBar(Sh,vm){const vs=Sh.views||[];if(PV>=vs.length)PV=-1;const on=c=>c?' on':'';
  return `<div class='smtb'><span class='smseg'><button type='button' data-sma='vw:big' class='${on(vm=='big').trim()}'>🔍 ${B37('مقاطع مكبّرة للوضوح','Enlarged details')}</button><button type='button' data-sma='vw:true' class='${on(vm=='true').trim()}'>📏 ${B37('حجم حقيقي 1:1','True size 1:1')}</button></span><span class='smseg'><button type='button' data-sma='zm:-' aria-label='-'>−</button><b>${Math.round(PZ*100)}%</b><button type='button' data-sma='zm:+' aria-label='+'>＋</button><button type='button' data-sma='zm:0' aria-label='reset'>⟲</button></span></div>
@@ -7503,7 +7503,7 @@ async function doExport(kind,btn){if(!S.list.length)return;const enc=new TextEnc
  if(kind=='pdf'){const r=all(SC,EN,SP);if(!r)return;printAll(r);return}
  }catch(x){console.log('SMexp',x);toast6(L2('تعذّر التصدير في هذا المتصفح','Export failed in this browser'))}}
 function printAll(r){let box=$('smpr');if(!box){box=document.createElement('div');box.id='smpr';document.body.appendChild(box)}
- const A4=S.meta.paper=='A4',w=A4?297:420,h=A4?210:297;
+ const PZ_={A4:[297,210],A3:[420,297],A2:[594,420],A1:[841,594],A0:[1189,841]}[S.meta.paper]||[420,297],w=PZ_[0],h=PZ_[1];
  box.innerHTML=r.map(x=>`<div class='smpg'>${svgFor(x.S,{w:'100%',h:'100%'})}</div>`).join('');
  let st_=$('smprs');if(st_)st_.remove();st_=document.createElement('style');st_.id='smprs';
  st_.textContent=`#smpr{display:none}@media print{body.sp > *:not(#smpr):not(style):not(script){display:none!important}body.sp #smpr{display:block!important}@page{size:${w}mm ${h}mm;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important}.smpg{width:${w}mm;height:${h}mm;overflow:hidden;page-break-after:always;break-after:page;background:#fff}.smpg:last-child{page-break-after:auto;break-after:auto}.smpg svg{width:${w}mm;height:${h}mm;display:block}}`;
@@ -8395,6 +8395,1438 @@ document.addEventListener('change',e=>{const t=e.target;if(!t||!t.dataset||!t.da
 {const sx=MS.find(s=>s[0]=='🚰');if(sx&&!sx[2].some(x=>x[0]=='site:swplan'))sx[2].unshift(['site:swplan','مخطط الصرف الصحي للدار: رسم تلقائي ويدوي وDXF','house drainage layout plan auto routing dxf fixtures pipes cleanout vent مخطط صرف صحي دار بيت أنابيب'])}
 G['site:swplan']=[['ارسم مخطط الدار أو استورد DXF، ضع الأجهزة الصحية ونقطة الخروج، فيرسم الموقع الأنابيب ويحسب الأقطار والأعماق والكميات.','Draw the house plan or import a DXF, place the fixtures and the outlet, and the site routes the pipes and computes diameters, depths and quantities.'],[['استورد DXF أو ارسم الجدران بأداة «جدار» أو حمّل الدار التجريبية.','Import a DXF, draw the walls with the Wall tool, or load the sample house.'],['اختر نوع الجهاز واضغط مكانه، وضع نقطة الخروج OUT.','Choose a fixture type and click its place; set the OUT point.'],['اترك الوضع تلقائيًا أو ارسم أنابيبك بنفسك (وضع مختلط أو يدوي).','Leave it automatic, or draw your own pipes (mixed or manual mode).'],['راجع التحذيرات والجداول وعدّل الافتراضات ثم صدّر DXF.','Review the warnings and tables, edit the assumptions, then export DXF.']],['تحصل على مخطط أنابيب مع الأقطار ونقاط التنظيف والتهوية وكميات وملف DXF.','Get a pipe layout with diameters, cleanouts, venting, quantities and a DXF file.']];
 try{mkMenu()}catch(e){}
+})();
+</script>
+<script>/*bar40*/
+/* FABRUM bar model: every bar has a real shape (legs), a code, a true-size pull-out drawing and a schedule row.
+   Code = ELEMENT-MAT-DIR-nØd-L(mm).  MAT: BB bottom mat/bottom bars, BT bottom mat/top bars, TB top mat/bottom bars, TT top mat/top bars,
+   DB dowels (starter bars), ST ties/stirrups, UB edge U-bars, CB chair bars.  L = sum of the leg lengths measured on the bar axis (sharp corners). */
+(()=>{
+if(!window.SD||!window.SM||!window.QT37)return;
+const SD=window.SD,R=Math.round,BM=window.BM={};
+const PI=Math.PI,cos=a=>Math.cos(a*PI/180),sin=a=>Math.sin(a*PI/180);
+const DEF={el:'',hook:'up',stock:12000,nd:8,dd:16,ccv:40,dt:8,ntie:2,cvTop:50,ext:12,topOn:0,topD:12,topS:200,uOn:1,uS:200,chOn:1};
+BM.DEF=DEF;BM.O=Object.assign({},DEF);
+try{Object.assign(BM.O,JSON.parse(localStorage.getItem('fab_bmo')||'{}'))}catch(e){}
+BM.save=()=>{try{localStorage.setItem('fab_bmo',JSON.stringify(BM.O))}catch(e){}};
+Object.assign(SD.LAY,{
+ BB:{c:1,col:'#c0392b',w:.4},BBH:{c:1,col:'#c0392b',w:.3,lt:'DASHED'},BT:{c:6,col:'#a8327d',w:.4},TB:{c:4,col:'#0a8a9a',w:.4},TT:{c:30,col:'#d9822b',w:.4},
+ DB:{c:200,col:'#6a3fb5',w:.45},ST:{c:3,col:'#1e8e3e',w:.3},UB:{c:94,col:'#2c7a4b',w:.4},CB:{c:42,col:'#8a6d3b',w:.4}});
+const LY=m=>SD.LAY[m]?m:'REBAR';
+const T=(a,e)=>window.B37?window.B37(a,e):a;
+const MATN={BB:['الفرش السفلي - الحديد السفلي','Bottom mat - bottom bars'],BT:['الفرش السفلي - الحديد العلوي','Bottom mat - top bars'],TB:['الفرش العلوي - الحديد السفلي','Top mat - bottom bars'],TT:['الفرش العلوي - الحديد العلوي','Top mat - top bars'],
+ DB:['أسياخ صاعدة (مبذور العمود)','Column starter bars (dowels)'],ST:['كانات / أطواق','Ties / stirrups'],UB:['حديد محيطي U عند الحافة','Edge U-bars'],CB:['كراسي (تباعد بين الفرشتين)','Chair bars (mat spacers)']};
+BM.MATN=MATN;
+/* ---------- bar object ---------- */
+BM.mk=o=>{const legs=o.legs.map(l=>[R(l[0]),l[1]]);let x=0,y=0;const pts=[[0,0]];legs.forEach(l=>{x+=l[0]*cos(l[1]);y+=l[0]*sin(l[1]);pts.push([x,y])});
+ const L=legs.reduce((a,l)=>a+l[0],0),xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+ return Object.assign({n:1,dir:'',idx:0},o,{legs,pts,L,bb:{x0:Math.min.apply(null,xs),x1:Math.max.apply(null,xs),y0:Math.min.apply(null,ys),y1:Math.max.apply(null,ys)}})};
+BM.kg=b=>b.n*b.L/1000*b.db*b.db/162;
+BM.spec=b=>((b.mat=='ST'||b.mat=='SP')&&b.s)?(b.zones?`Ø${b.db}@${b.zones.map(z=>z[0]).join('/')}`:`Ø${b.db}@${b.s}`):`${b.n}Ø${b.db}`;
+BM.code=(b,el)=>`${el}-${b.mat}${b.idx>0?b.idx:''}-${b.dir?b.dir+'-':''}${BM.spec(b)}-${b.L}`;
+BM.TL={ftg:'F',fr:'F',fs:'F',cf:'CF',rf:'R',beam:'B',bx:'B',cb:'B',col:'C',cx:'C',cm:'C',slab:'S',hs:'S',gr:'S',tw:'S',stair:'ST',sx:'ST',rw:'RW',rx:'RW',tk:'TK',tx:'TK',sw:'W',pl:'P'};
+BM.elName=()=>{const e=(BM.O.el||'').trim();if(e)return e.replace(/\s+/g,'');const nm=String((window.S37&&S37.el)||'').trim();if(/^[A-Za-z][A-Za-z0-9_-]{0,11}$/.test(nm))return nm.toUpperCase();
+ const n=(nm.match(/(\d+)\s*$/)||[])[1]||(window.SD&&SD.meta&&SD.meta.i)||1;return (BM.TL[BM.curK]||'E')+String(n).padStart(2,'0')};
+/* number groups that share mat+dir but differ in shape/length */
+BM.finish=bars=>{const g={};bars.forEach(b=>{const k=b.mat+'|'+b.dir;(g[k]=g[k]||[]).push(b)});Object.keys(g).forEach(k=>{const a=g[k];if(a.length>1)a.forEach((b,i)=>b.idx=i+1);else a[0].idx=0});
+ const el=BM.elName();bars.forEach(b=>{b.code=BM.code(b,el)});return bars};
+/* split a hooked straight bar that is longer than the stock length; the longest leg is the run */
+BM.split=(b,stock,lap,warn)=>{if(b.L<=stock)return[b];const li=b.legs.reduce((m,l,i)=>l[0]>b.legs[m][0]?i:m,0),run=b.legs[li][0],hooks=b.L-run;
+ let p=2;while(run+hooks+(p-1)*lap+p>p*stock&&p<40)p++;
+ const tot=run+(p-1)*lap,base=Math.ceil(tot/p),runs=[];for(let i=0;i<p;i++)runs.push(base);
+ const pre=b.legs.slice(0,li),post=b.legs.slice(li+1),out=[];
+ for(let i=0;i<p;i++){const legs=[];if(i==0)pre.forEach(l=>legs.push(l.slice()));legs.push([runs[i],b.legs[li][1]]);if(i==p-1)post.forEach(l=>legs.push(l.slice()));
+  out.push(BM.mk(Object.assign({},b,{legs:legs,lapPiece:i+1,lapOf:p})))}
+ if(warn)warn.push([`السيخ ${b.mat} أطول من ${stock} مم فقُسّم إلى ${p} قطع بتراكب ${lap} مم.`,`Bar ${b.mat} exceeds ${stock} mm and was split into ${p} pieces with a ${lap} mm lap.`]);
+ /* merge identical pieces so the schedule stays short */
+ const m={};out.forEach(x=>{const k=x.L+'|'+x.legs.map(l=>l[0]+'/'+l[1]).join(',');if(m[k])m[k].n+=b.n;else{m[k]=x;x.n=b.n}});return Object.keys(m).map(k=>m[k])};
+/* ---------- drawing a bar at true size ---------- */
+BM.draw=(C,b,ox,oy,o)=>{o=o||{};const P=b.pts.map(p=>[ox+p[0],oy+p[1]]),c=P.reduce((a,p)=>[a[0]+p[0]/P.length,a[1]+p[1]/P.length],[0,0]);
+ C.pl(LY(b.mat),P,0,b.db);
+ /* dimension every leg */
+ b.legs.forEach((l,i)=>{const p=P[i],q=P[i+1],a=((l[1]%360)+360)%360,len=l[0];if(len<=0)return;
+  if(b.legs.length==1){const t=C.pm(1.6);[p[0],q[0]].forEach(x=>C.ln('DIMS',x,p[1]-t,x,p[1]+t));
+   if(b.mat=='SS'){const hz=Math.abs(q[0]-p[0])>=Math.abs(q[1]-p[1]),hh=Math.max(b.db*3,C.pm(1.4)),th=Math.max(b.db*.7,C.pm(.7));
+    if(hz){const xl=Math.min(p[0],q[0]),xr=Math.max(p[0],q[0]),y=p[1];C.rc('SS',xl,y-hh/2,th,hh,0,1);C.rc('SS',xr-th,y-hh/2,th,hh,0,1);C.dimH(xl,xr,y-hh/2,-(3.6),len)}
+    else{const yl=Math.min(p[1],q[1]),yh=Math.max(p[1],q[1]),x=p[0];C.rc('SS',x-hh/2,yl,hh,th,0,1);C.rc('SS',x-hh/2,yh-th,hh,th,0,1);C.dimV(x,yl,yh,-6,len)}}
+   return}
+  if(a==0||a==180){const y=p[1],below=y<=c[1]+1;C.dimH(Math.min(p[0],q[0]),Math.max(p[0],q[0]),y,below?-(b.legs.length==1?3.6:5):5,len)}
+  else if(a==90||a==270){const x=p[0],left=x<=c[0]+1;C.dimV(x,Math.min(p[1],q[1]),Math.max(p[1],q[1]),left?-6:6,len)}
+  else{const mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;C.tx('TEXT',mx,my-C.pm(3.4),String(len),String(len),{a:'c',h:2})}});
+ const topDim=b.legs.some((l,i)=>l[1]%180==0&&P[i][1]>c[1]+1);C.tx('TEXT',ox+(b.bb.x0+b.bb.x1)/2,oy+b.bb.y1+C.pm(topDim?10:(b.legs.length==1?3.4:5)),b.code,b.code,{a:'c',h:2.6,b:1})};
+/* a "view" for SD.build holding all bars (true size, packed in rows) */
+BM.pullView=(bars,N)=>{N=N||BM.nG||25;const it=bars.map(b=>({b,w:b.bb.x1-b.bb.x0,h:b.bb.y1-b.bb.y0}));
+ const lw=b=>Math.max(b.code.length*1.65*N,0);
+ it.forEach(i=>{i.cw=Math.max(i.w+24*N,lw(i.b)+6*N);i.ch=i.h+22*N});
+ const W0=Math.max.apply(null,it.map(i=>i.w).concat([1])),rowW=Math.max(W0+24*N,Math.max.apply(null,it.map(i=>i.cw)),60*N);
+ const rows=[];it.slice().sort((a,b)=>b.cw-a.cw).forEach(i=>{let r=rows.find(r=>r.w+i.cw<=rowW+1);if(!r){r={w:0,h:0,a:[]};rows.push(r)}i.x=r.w;r.w+=i.cw;r.h=Math.max(r.h,i.ch);r.a.push(i)});
+ let y=0;rows.forEach(r=>{r.y=y;y+=r.h});const H=y;
+ return{name:['سحب الأسياخ (بالقياس الحقيقي)','BAR PULL-OUT (TRUE LENGTH)'],w:rowW,h:H,x0:0,y0:0,px:10,py:10,min:Math.max(W0/150,1),
+  draw:C=>{rows.forEach(r=>r.a.forEach(i=>{const b=i.b;BM.draw(C,b,i.x+C.pm(13)-b.bb.x0,H-r.y-r.h+C.pm(13)-b.bb.y0)}))}}};
+/* ---------- schedule drawn in the sheet frame ---------- */
+const ofr=SD.frame;
+SD.frame=function(S,sp,N){if(!sp.bm||!(sp.bars&&sp.bars.length))return ofr(S,sp,N);const bars=sp.bars;sp.bars=null;let r;try{r=ofr(S,sp,N)}finally{sp.bars=bars}
+ const C=new SD.Ctx(S,0,0,1),f=(l,x1,y1,x2,y2)=>C.ln(l,x1*N,y1*N,x2*N,y2*N),t=(x,y,ar,en,o)=>C.tx('TEXT',x*N,y*N,ar,en,o);
+ const X0=230,W=180;let yy=287-8-4.4*(sp.notes||[]).length-3;
+ const rh=bars.length>9?4:(bars.length>8?4.4:5),cols=[[64,'الكود','CODE'],[9,'Ø','DIA'],[11,'العدد','NO.'],[17,'الطول مم','L mm'],[19,'الكلي م','TOTAL m'],[19,'الوزن كغم','kg'],[41,'الموقع','LOCATION']];
+ t(X0,yy-5,'جدول الحديد (الأكواد مطابقة للرسم)','BAR SCHEDULE (CODES MATCH THE DRAWING)',{b:1,h:3.2});yy-=8;let x=X0;f('TBL',X0,yy,X0+W,yy);
+ cols.forEach(c=>{t(x+c[0]/2,yy-3.6,c[1],c[2],{a:'c',h:2.1,b:1});x+=c[0]});yy-=rh;f('TBL',X0,yy,X0+W,yy);
+ bars.forEach(b=>{const v=[b.code,b.db,SD.fmtN(b.n),b.L,(b.n*b.L/1000).toFixed(2),BM.kg(b).toFixed(1)];let x=X0;
+  cols.forEach((c,i)=>{if(i<6)t(x+(i==0?2:c[0]/2),yy-3.6,String(v[i]),String(v[i]),{a:i==0?'l':'c',h:i==0?1.9:2.1});else{const m=b.desc||MATN[b.mat]||['',''];t(x+1.5,yy-3.6,(m[0]+(b.dir?' '+b.dir:'')),(m[1]+(b.dir?' '+b.dir:'')),{h:1.7})}x+=c[0]});yy-=rh;f('TBL',X0,yy,X0+W,yy)});
+ const tot=bars.reduce((a,b)=>a+BM.kg(b),0);t(X0+2,yy-3.6,'الإجمالي: '+tot.toFixed(1)+' كغم | الخرسانة '+(sp.vol||0).toFixed(3)+' م³','TOTAL: '+tot.toFixed(1)+' kg | CONCRETE '+(sp.vol||0).toFixed(3)+' m3',{h:2.2,b:1});
+ yy-=rh+3;BM.pullRegion(C,S,sp,bars,N,X0,W,yy,t,f);return r};
+
+BM.horiz=b=>{const w=b.bb.x1-b.bb.x0,h=b.bb.y1-b.bb.y0;if(h<=w*1.05)return b;return BM.mk(Object.assign({},b,{legs:b.legs.map(l=>[l[0],l[1]-90])}))};
+/* true-size pull-out region in the free part of the right column (below the schedule, above the title block) */
+BM.pullRegion=(C,S,sp,bars,N,X0,W,yTop,t,f)=>{const yBot=74,avH=yTop-yBot;if(avH<20)return;
+ const it=bars.map(b0=>{const b=BM.horiz(b0);return{b,pw:(b.bb.x1-b.bb.x0)/N,ph:(b.bb.y1-b.bb.y0)/N}});
+ it.forEach(i=>{const st=i.b.legs.length==1;i.cw=Math.max(i.pw+(st?9:22),i.b.code.length*1.75+3);i.ch=i.ph+(st?16:21)});
+ const rows=[];it.slice().sort((a,b)=>b.cw-a.cw).forEach(i=>{let r=rows.find(r=>r.w+i.cw<=W-2);if(!r){r={w:0,h:0,a:[]};rows.push(r)}i.x=r.w;r.w+=i.cw;r.h=Math.max(r.h,i.ch);r.a.push(i)});
+ const need=rows.reduce((a,r)=>a+r.h,0)+12;
+ f('TBL',X0,yTop,X0+W,yTop);t(X0+2,yTop-5,'سحب الأسياخ — بالقياس الحقيقي 1:'+N+' (الطول المرسوم = الطول بالكود)','BAR PULL-OUT - TRUE LENGTH 1:'+N+' (DRAWN LENGTH = CODE LENGTH)',{b:1,h:2.6});
+ let y=yTop-12;S.pullOver=need>avH||it.some(i=>i.cw>W-2);if(S.pullOver)t(X0+2,yBot+3,'! منطقة السحب لا تكفي: استعمل ورقة أكبر أو سيخًا تجاريًا أطول','! PULL-OUT AREA IS TOO SMALL: USE A LARGER SHEET OR LONGER STOCK BARS',{h:2.4,b:1});
+ rows.forEach(r=>{r.a.forEach(i=>{const b=i.b;BM.draw(C,b,(X0+i.x+(i.cw-i.pw)/2)*N-b.bb.x0,(y-r.h+8)*N-b.bb.y0)});y-=r.h});
+ f('TBL',X0,yTop,X0,Math.max(yBot,y));f('TBL',X0+W,yTop,X0+W,Math.max(yBot,y));f('TBL',X0,Math.max(yBot,y),X0+W,Math.max(yBot,y))};
+/* ---------- helpers for the foundations ---------- */
+const lay=SD.lay,fy_fc=k=>{const f=(DS[k]||{f:[]}).f.map(x=>x[0]),v=s=>{const i=f.find(x=>new RegExp(s+'$').test(x));return i?SD.inp(i):NaN};return{fc:v('fc'),fy:v('fy')}};
+const hookLegs=(len,db,h,yb,top,O)=>{ /* U-ends: up 90deg hook at both ends if allowed by the thickness */
+ const e=Math.max(0,Math.min(O.ext*db,h-O.cvTop-yb-(top?0:0)));return e};
+BM.lap=db=>R((SD.LAPF?SD.LAPF():40)*db);
+const dowelPos=(c1,c2,nd,ins)=>{const nn=SD.colN(nd,c1,c2),xs=lay(nn[0],ins,c1-ins),ys=lay(nn[1],ins,c2-ins),a=[];
+ xs.forEach(x=>{a.push([x,ins]);a.push([x,c2-ins])});ys.slice(1,-1).forEach(y=>{a.push([ins,y]);a.push([c1-ins,y])});return a};
+BM.warn=[];
+/* ===================== isolated footing (ftg square, fr rectangular) ===================== */
+BM.iso=function(k){BM.curK=k;const O=BM.opts(),W=BM.warn=[];let Lx,By,h,cv,c1,c2,dX,sX,dY,sY,xsB=null,ysB=null,orig=window.QTL;
+ if(!orig)return null;
+ if(k=='ftg'){const a=((window.LASTR&&LASTR.sum)||'').match(/أساس ([\d.]+)×([\d.]+) م، سماكة (\d+) مم، تسليح Ø(\d+)@(\d+)/);if(!a)return null;Lx=R(a[1]*1000);By=R(a[2]*1000);h=+a[3];dX=dY=+a[4];sX=sY=+a[5];cv=SD.inp('tcv');c1=c2=SD.inp('tc')}
+ else{const X=SD.dbg().fr;if(!X)return null;Lx=R(X.L*1000);By=R(X.B*1000);h=X.h;dX=X.pL.db;sX=X.pL.s;dY=X.pB.db;cv=SD.inp(SD.cvId('fr'));c1=X.c1;c2=X.c2;
+  const bandX=lay(X.nBand,Lx/2-By/2+cv+dY/2,Lx/2+By/2-cv-dY/2);let outX=[];if(X.nOut>0){const na=Math.ceil(X.nOut/2),nb=X.nOut-na,g=Lx/2-By/2;outX=lay(na+1,cv+dY/2,g-dY).slice(0,na).concat(lay(nb+1,Lx-g+dY,Lx-cv-dY/2).slice(1))}
+  xsB=bandX.concat(outX).sort((a,b)=>a-b)}
+ if(!(Lx>0&&By>0&&h>0&&cv>=0&&c1>0))return null;
+ const nY=Math.floor((By-2*cv)/sX)+1,y0=(By-(nY-1)*sX)/2,Ys=Array.from({length:nY},(_,i)=>y0+i*sX);
+ let Xs=xsB;if(!Xs){const sy=sY,nX=Math.floor((Lx-2*cv)/sy)+1,x0=(Lx-(nX-1)*sy)/2;Xs=Array.from({length:nX},(_,i)=>x0+i*sy);sY=sy}else sY=0;
+ const yBB=cv+dX/2,yBT=cv+dX+dY/2,hk=O.hook=='up';
+ /* BB: along X, lower layer.  BT: along Y, upper layer. */
+ const eBB=hk?Math.max(0,Math.min(O.ext*dX,h-O.cvTop-yBB-dX/2)):0,eBT=hk?Math.max(0,Math.min(O.ext*dY,h-O.cvTop-yBT-dY/2)):0;
+ if(hk&&(eBB<O.ext*dX-1||eBT<O.ext*dY-1))W.push(['سماكة الأساس لا تسمح بطول الخطاف الكامل (12Ø)؛ قُصّر الخطاف.','Footing depth does not allow the full 12Ø hook; the hook was shortened.']);
+ const mkU=(len,db,e,mat,dir,n,desc)=>BM.mk({mat,dir,n,db,desc,legs:hk&&e>0?[[e,270],[len-2*cv-db,0],[e,90]]:[[len-2*cv,0]]});
+ let bars=[];
+ bars=bars.concat(BM.split(mkU(Lx,dX,eBB,'BB','X',nY),O.stock,BM.lap(dX),W));
+ bars=bars.concat(BM.split(mkU(By,dY,eBT,'BT','Y',Xs.length),O.stock,BM.lap(dY),W));
+ /* column starter bars */
+ const dd=O.dd,nd=Math.max(4,O.nd|0),lap=BM.lap(dd),yb=cv+dX+dY+dd/2,emb=h-yb,foot=O.ext*dd,fm=fy_fc(k),ldc=(fm.fc>0&&fm.fy>0)?Math.max(.24*fm.fy*dd/Math.sqrt(fm.fc),.043*fm.fy*dd):0;
+ if(ldc&&emb<ldc)W.push([`طول تثبيت الأسياخ الصاعدة داخل الأساس ${R(emb)} مم أقل من ${R(ldc)} مم المطلوب (ACI 25.4.9).`,`Dowel embedment ${R(emb)} mm is below the required ${R(ldc)} mm (ACI 25.4.9).`]);
+ const ccv=O.ccv,dt=O.dt,ins=ccv+dt+dd/2,dp=dowelPos(c1,c2,nd,ins);
+ if(dp.length!=nd)W.push([`عدد الأسياخ ${nd} لا يتوزع بانتظام حول العمود؛ المرسوم ${dp.length}.`,`${nd} bars cannot be spread evenly around the column; ${dp.length} are drawn.`]);
+ const dbar=BM.mk({mat:'DB',dir:'',n:dp.length,db:dd,legs:[[lap+emb,270],[foot,0]],desc:MATN.DB});bars.push(dbar);
+ /* ties holding the dowels inside the footing */
+ let nt=Math.max(0,O.ntie|0),tie=null,tieZ=[];
+ if(nt>0){const w=c1-2*ccv-dt,hh=c2-2*ccv-dt,e=Math.max(6*dt,75),yLo=yb+dd/2+dt/2+30,yHi=h-O.cvTop-dt/2,sp=nt>1?Math.floor((yHi-yLo)/(nt-1)/5)*5:0;
+  for(let i=0;i<nt;i++)tieZ.push(nt>1?yHi-i*sp:yHi);
+  tie=BM.mk({mat:'ST',dir:'',n:nt,db:dt,s:sp||0,legs:[[e,135],[w,0],[hh,270],[w,180],[hh,90],[e,315]],desc:MATN.ST,note:'tie'})}
+ if(tie)bars.push(tie);
+ bars=BM.finish(bars);
+ return{k,Lx,By,h,cv,c1,c2,dX,sX,dY,sY,Ys,Xs,yBB,yBT,eBB,eBT,hk,bars,dp,dd,nd:dp.length,lap,emb,foot,yb,ccv,dt,ins,tieZ,tie,W,vol:orig.vol,stub:Math.max(420,lap+260)}};
+BM.isoSheet=function(F){const {Lx,By,h,cv,c1,c2,dX,dY,Ys,Xs,yBB,yBT,eBB,eBT,hk,bars,dp,dd,lap,yb,foot,ins,ccv,dt,tieZ,stub}=F;
+ const B=m=>bars.find(b=>b.mat==m),cb=m=>{const a=bars.filter(b=>b.mat==m);return a.length?a[0].code:''},cx0=Lx/2-c1/2,cy0=By/2-c2/2,codes=bars.reduce((o,b)=>{(o[b.mat]=o[b.mat]||[]).push(b.code);return o},{});
+ const txt=m=>(codes[m]||[]).join('  +  ');
+ const tl=m=>{const c=txt(m);return[c,c]};
+ const plan=C=>{C.rc('CONC',0,0,Lx,By);C.rc('OUTL',cx0,cy0,c1,c2);
+  Ys.forEach(y=>C.pl('BBH',[[cv,y],[Lx-cv,y]],0,dX));F.Xs.forEach(x=>C.pl('BT',[[x,cv],[x,By-cv]],0,dY));
+  dp.forEach(p=>C.ci('DB',cx0+p[0],cy0+p[1],dd/2,1));
+  if(F.tie)C.rc('ST',cx0+ccv+dt/2,cy0+ccv+dt/2,c1-2*ccv-dt,c2-2*ccv-dt,dt);
+  C.dimH(0,Lx,0,-9,Lx);C.dimV(0,0,By,-9,By);C.dimH(cx0,cx0+c1,By,6,c1);C.dimV(Lx,cy0,cy0+c2,8,c2);
+  if(Ys.length>1)C.dimV(Lx,Ys[0],Ys[1],16,R(Ys[1]-Ys[0]));if(F.Xs.length>1&&F.sY>0)C.dimH(F.Xs[0],F.Xs[1],By,14,R(F.Xs[1]-F.Xs[0]));
+  const tx=Lx+C.pm(22),A=[];
+  A.push({px:Lx*.88,py:Ys[Math.max(Ys.length-3,0)],ty:Ys[Math.max(Ys.length-3,0)],t:tl('BB')});
+  A.push({px:F.Xs[Math.floor(F.Xs.length*.8)],py:By-cv-dY,ty:By+C.pm(2),t:tl('BT')});
+  if(dp.length)A.push({px:cx0+dp[0][0],py:cy0+dp[0][1],ty:cy0-C.pm(4),t:tl('DB')});
+  if(F.tie)A.push({px:cx0+c1-ccv,py:cy0+c2/2,ty:By*.5,t:tl('ST')});
+  SD.callouts(C,A,tx,5)};
+ const sec=(len,cdim,cc,bbLayer,eLay,dLay,dxs,labelTop)=>C=>{ /* along a footing axis */
+  C.rc('CONC',0,0,len,h);const c0=len/2-cdim/2;C.pl('OUTL',[[c0,h],[c0,h+stub],[c0+cdim,h+stub],[c0+cdim,h]]);return c0};
+ const s11=C=>{C.rc('CONC',0,0,Lx,h);C.pl('OUTL',[[cx0,h],[cx0,h+stub],[cx0+c1,h+stub],[cx0+c1,h]]);
+  const xl=cv+dX/2,xr=Lx-cv-dX/2;C.pl('BB',hk&&eBB>0?[[xl,yBB+eBB],[xl,yBB],[xr,yBB],[xr,yBB+eBB]]:[[cv,yBB],[Lx-cv,yBB]],0,dX);
+  F.Xs.forEach(x=>C.ci('BT',x,yBT,dY/2,1));
+  const xs=[...new Set(dp.map(p=>p[0]))].sort((a,b)=>a-b),xa=[xs[0],xs[xs.length-1]];
+  xa.forEach((px,i)=>{const x=cx0+px,sg=i==0?-1:1;C.pl('DB',[[x,h+lap],[x,yb],[x+sg*foot,yb]],0,dd)});
+  tieZ.forEach(y=>C.ln('ST',cx0+ccv+dt/2,y,cx0+c1-ccv-dt/2,y,dt));
+  C.dimH(0,Lx,0,-9,Lx);C.dimV(0,0,h,-9,h);C.dimH(cx0,cx0+c1,h+stub,5,c1);C.dimV(cx0+c1,h,h+lap,8,lap);
+  if(hk&&eBB>0)C.dimV(Lx,yBB,yBB+eBB,8,eBB);
+  C.tx('TEXT',Lx*.18,h*.45,`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+  const A=[{px:xr,py:yBB+eBB*.6,ty:yBB+eBB*.6-C.pm(2),t:tl('BB')},{px:F.Xs[F.Xs.length-2]||F.Xs[0],py:yBT,ty:yBT+C.pm(4),t:tl('BT')},{px:cx0+c1-ins,py:h+lap*.55,ty:h+lap*.55,t:tl('DB')}];
+  if(F.tie)A.push({px:cx0+c1-ccv,py:tieZ[0],ty:tieZ[0]+C.pm(6),t:tl('ST')});
+  SD.callouts(C,A,Lx+C.pm(16),5)};
+ const s22=C=>{C.rc('CONC',0,0,By,h);C.pl('OUTL',[[cy0,h],[cy0,h+stub],[cy0+c2,h+stub],[cy0+c2,h]]);
+  const yl=cv+dY/2,yr=By-cv-dY/2;C.pl('BT',hk&&eBT>0?[[yl,yBT+eBT],[yl,yBT],[yr,yBT],[yr,yBT+eBT]]:[[cv,yBT],[By-cv,yBT]],0,dY);
+  Ys.forEach(y=>C.ci('BB',y,yBB,dX/2,1));
+  const ys=[...new Set(dp.map(p=>p[1]))].sort((a,b)=>a-b),ya=[ys[0],ys[ys.length-1]];
+  ya.forEach((py,i)=>{const x=cy0+py,sg=i==0?-1:1;C.pl('DB',[[x,h+lap],[x,yb]],0,dd)});
+  tieZ.forEach(y=>C.ln('ST',cy0+ccv+dt/2,y,cy0+c2-ccv-dt/2,y,dt));
+  C.dimH(0,By,0,-9,By);C.dimV(0,0,h,-9,h);C.dimH(cy0,cy0+c2,h+stub,5,c2);
+  const A=[{px:yr,py:yBT+eBT*.6,ty:yBT+eBT*.6+C.pm(3),t:tl('BT')},{px:Ys[Ys.length-2]||Ys[0],py:yBB,ty:yBB-C.pm(4),t:tl('BB')}];
+  SD.callouts(C,A,By+C.pm(16),5)};
+ const wmax=Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1]))/165;
+ return[
+  {h:44,views:[{name:['المسقط','PLAN'],w:Lx,h:By,x0:0,y0:0,px:[24,56],py:20,min:wmax,draw:plan}]},
+  {h:30,views:[{name:['المقطع 1-1 (على الاتجاه X)','SECTION 1-1 (ALONG X)'],w:Lx,h:h+stub,x0:0,y0:0,px:[24,56],py:13,draw:s11}]},
+  {h:26,views:[{name:['المقطع 2-2 (على الاتجاه Y)','SECTION 2-2 (ALONG Y)'],w:By,h:h+stub,x0:0,y0:0,px:[24,56],py:13,draw:s22}]},
+  ]};
+BM.footSheet=function(k){const F=BM.iso(k);if(!F)return null;
+ const rows=BM.isoSheet(F),sp=SD.base(k,[k=='ftg'?'أساس منفرد مربع':'أساس منفرد مستطيل',(k=='ftg'?'SQUARE':'RECTANGULAR')+' ISOLATED FOOTING - BARS, CODES AND PULL-OUT'],window.QTL,[]);
+ sp.rows=rows;sp.bm=true;sp.bars=F.bars;sp.vol=F.vol||0;
+ sp.notes=sp.notes.slice(0,4).concat([
+  ['الرمز = العنصر - الفرش - الاتجاه - العدد والقطر - الطول بالملم. BB وBT للفرش السفلي (حديد سفلي وعلوي)، TB وTT للفرش العلوي.','CODE: ELEMENT-MAT-DIR-NO. Ø DIA-LENGTH (mm).  BB/BT = BOTTOM MAT (BOTTOM/TOP BARS); TB/TT = TOP MAT.'],
+  ['الطول = مجموع أطوال أضلاع السيخ على محوره (زوايا نظرية)، والمسحوب مرسوم بنفس الأطوال.','LENGTH = SUM OF LEG LENGTHS ON THE BAR AXIS (THEORETICAL CORNERS); THE PULL-OUT IS DRAWN TO THE SAME LENGTHS.'],
+  [`الخطاف 90°${F.hk?' لأعلى بطول '+BM.O.ext+'Ø':' غير مستعمل'}؛ الأسياخ الصاعدة: خطاف 90° على الفرش السفلي، وتراكبها مع حديد العمود ${(SD.LAPF?SD.LAPF():40)}Ø.`,`${F.hk?'90° UP HOOKS '+BM.O.ext+'Ø; ':'NO END HOOKS; '}STARTER BARS HOOKED 90° ON THE BOTTOM MAT, LAPPED ${(SD.LAPF?SD.LAPF():40)}Ø WITH THE COLUMN BARS.`],
+  ['عدد الأسياخ الصاعدة وقطرها وكانات تثبيتها من خيارات الحديد.','STARTER BAR COUNT/DIAMETER COME FROM THE BAR OPTIONS (TYPICAL COLUMN BARS BY DEFAULT).']]);
+ F.W.forEach(w=>sp.notes.push(w));
+ return sp};
+
+/* ===================== common option reader ===================== */
+const gv=(id,d)=>{const v=SD.inp(id);return isFinite(v)?v:d};
+BM.opts=()=>{const O=BM.O;return Object.assign({},O,{nd:gv('bm_nd',O.nd),dd:gv('bm_dd',O.dd),hook:gv('bm_hk',O.hook=='up'?1:0)?'up':'none',ntie:gv('bm_nt',O.ntie),dt:gv('bm_dt',O.dt)})};
+BM.stub=(lap)=>Math.max(420,lap+260);
+const mkHook=(len,db,e,hk,up)=>hk&&e>0?(up?[[e,270],[len-2*0,0],[e,90]]:[[e,90],[len,0],[e,270]]):[[len,0]];
+/* ===================== strip footing (per metre) ===================== */
+BM.strip=function(){BM.curK='fs';const O=BM.opts(),W=BM.warn=[],X=SD.dbg().fs,orig=window.QTL;if(!X||!orig)return null;
+ const B=R(X.B*1000),h=X.h,tw=X.tw,dk=X.pk.db,sk=X.pk.s,dT=X.T.db,nT=X.nT,cv=SD.inp(SD.cvId('fs')),hk=O.hook=='up';
+ const yBB=cv+dk/2,yBT=cv+dk+dT/2,e=hk?Math.max(0,Math.min(O.ext*dk,h-O.cvTop-yBB-dk/2)):0,nBB=Math.ceil(1000/sk-1e-9);
+ let bars=[];
+ bars.push(BM.mk({mat:'BB',dir:'X',n:nBB,db:dk,s:sk,legs:hk&&e>0?[[e,270],[B-2*cv-dk,0],[e,90]]:[[B-2*cv,0]],desc:MATN.BB,perM:1}));
+ bars[0].s=0;
+ bars.push(BM.mk({mat:'BT',dir:'Y',n:nT,db:dT,legs:[[1000,0]],desc:MATN.BT,perM:1}));
+ const dd=gv('bm_wdd',12),sd=gv('bm_wsd',200),lap=BM.lap(dd),yb=cv+dk+dT+dd/2,emb=h-yb,foot=O.ext*dd,nd=Math.ceil(1000/sd-1e-9);
+ bars.push(BM.mk({mat:'DB',dir:'',n:nd,db:dd,legs:[[lap+emb,270],[foot,0]],desc:['أسياخ الجدار الصاعدة','Wall starter bars'],perM:1}));
+ bars=BM.finish(bars);
+ return{k:'fs',B,h,tw,dk,sk,dT,nT,cv,hk,e,yBB,yBT,dd,sd,lap,yb,emb,foot,bars,W,vol:orig.vol,wall:Math.max(500,lap+260)}};
+BM.stripSheet=function(F){const {B,h,tw,dk,sk,dT,nT,cv,hk,e,yBB,yBT,dd,sd,lap,yb,foot,bars,wall}=F,x0=(B-tw)/2,Lp=1200,code=m=>(bars.filter(b=>b.mat==m)[0]||{}).code||'',tl=m=>[code(m),code(m)];
+ const xT=lay(nT,cv+dT/2,B-cv-dT/2);
+ const sec=C=>{C.rc('CONC',0,0,B,h);C.pl('OUTL',[[x0,h],[x0,h+wall],[x0+tw,h+wall],[x0+tw,h]]);const xl=cv+dk/2,xr=B-cv-dk/2;
+  C.pl('BB',hk&&e>0?[[xl,yBB+e],[xl,yBB],[xr,yBB],[xr,yBB+e]]:[[cv,yBB],[B-cv,yBB]],0,dk);xT.forEach(x=>C.ci('BT',x,yBT,dT/2,1));
+  const xd=B/2;C.pl('DB',[[xd,h+lap],[xd,yb],[xd+foot,yb]],0,dd);
+  C.dimH(0,B,0,-9,B);C.dimV(0,0,h,-9,h);C.dimH(x0,x0+tw,h+wall,5,tw);C.dimV(x0+tw,h,h+lap,8,lap);if(hk&&e>0)C.dimV(B,yBB,yBB+e,8,e);C.tx('TEXT',B*.12,h*.55,`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+  SD.callouts(C,[{px:xr,py:yBB+e*.5,ty:yBB-C.pm(5),t:tl('BB')},{px:xT[xT.length-1],py:yBT,ty:yBT+C.pm(4),t:tl('BT')},{px:xd,py:h+lap*.6,ty:h+lap*.6,t:tl('DB')}],B+C.pm(16),5)};
+ const plan=C=>{C.rc('CONC',0,0,B,Lp);C.pl('OUTL',[[x0,0],[x0,Lp]]);C.pl('OUTL',[[x0+tw,0],[x0+tw,Lp]]);
+  for(let i=0;i<=Math.floor(Lp/sk);i++){const y=sk/2+i*sk;if(y<Lp-cv)C.pl('BBH',[[cv,y],[B-cv,y]],0,dk)}xT.forEach(x=>C.pl('BT',[[x,cv],[x,Lp-cv]],0,dT));
+  C.dimV(B,0,Lp,8,Lp);C.dimV(B,sk/2,sk/2+sk,16,sk);C.dimH(0,B,0,-9,B);
+  SD.callouts(C,[{px:B*.8,py:sk/2+sk*2,ty:sk/2+sk*2,t:tl('BB')},{px:xT[xT.length-1],py:Lp*.8,ty:Lp*.8,t:tl('BT')}],B+C.pm(24),5)};
+ const wmax=Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1]))/165;
+ return[{h:52,views:[{name:['المقطع العرضي','CROSS SECTION'],w:B,h:h+wall,x0:0,y0:0,px:[22,60],py:16,min:Math.max(wmax,8),draw:sec}]},
+  {h:48,views:[{name:['المسقط (مقطع بطول 1.2 م)','PLAN (1.2 m LENGTH SHOWN)'],w:B,h:Lp,x0:0,y0:0,px:[22,60],py:16,min:8,draw:plan}]}]};
+BM.stripSheet2=function(){const F=BM.strip();if(!F)return null;const sp=SD.base('fs',['أساس شريطي (لكل متر طولي)','STRIP FOOTING (PER METRE) - BARS, CODES AND PULL-OUT'],window.QTL,[]);
+ sp.rows=BM.stripSheet(F);sp.bm=true;sp.bars=F.bars;sp.vol=F.vol||0;sp.notes=sp.notes.slice(0,4).concat(BM.commonNotes(F,true));F.W.forEach(w=>sp.notes.push(w));return sp};
+BM.commonNotes=(F,perM)=>[
+ ['الرمز = العنصر - الفرش - الاتجاه - العدد والقطر - الطول بالملم. BB وBT للفرش السفلي (حديد سفلي وعلوي)، TB وTT للفرش العلوي.','CODE: ELEMENT-MAT-DIR-NO. Ø DIA-LENGTH (mm).  BB/BT = BOTTOM MAT (BOTTOM/TOP BARS); TB/TT = TOP MAT.'],
+ ['الطول = مجموع أطوال أضلاع السيخ على محوره (زوايا نظرية)، والمسحوب مرسوم بنفس الأطوال.','LENGTH = SUM OF LEG LENGTHS ON THE BAR AXIS (THEORETICAL CORNERS); THE PULL-OUT IS DRAWN TO THE SAME LENGTHS.'],
+ [`${F.hk?'الخطاف 90° بطول '+BM.O.ext+' قطر':'بلا خطاطيف'}؛ الأسياخ الصاعدة بخطاف 90° على الفرش السفلي وتراكبها ${(SD.LAPF?SD.LAPF():40)} قطر مع حديد العمود أو الجدار.`,`${F.hk?'90° HOOKS '+BM.O.ext+'Ø; ':'NO END HOOKS; '}STARTER BARS HOOKED 90° ON THE BOTTOM MAT, LAPPED ${(SD.LAPF?SD.LAPF():40)}Ø.`]].concat(perM?[['الكميات لكل متر طولي من الأساس.','QUANTITIES ARE PER METRE RUN OF FOOTING.']]:[]);
+
+/* ===================== combined footing (two columns) ===================== */
+BM.comb=function(){BM.curK='cf';const O=BM.opts(),W=BM.warn=[],o=window.QTL,OLD=QT37.OLD;if(!o)return null;
+ const g=OLD.sm(/أساس مشترك ([\d.]+)×([\d.]+) م، سماكة (\d+) مم/),pos=OLD.mr(/M موجب \(سفلي\) عند الأعمدة = .*→ (\d+)Ø(\d+)/),neg=OLD.mr(/M سالب \(علوي\) بين الأعمدة = .*→ (\d+)Ø(\d+)/),t1=OLD.mr(/حديد عرضي تحت العمود 1 = عرض ([\d.]+) م: .* = Ø(\d+)@(\d+)/),t2=OLD.mr(/حديد عرضي تحت العمود 2 = عرض ([\d.]+) م: .* = Ø(\d+)@(\d+)/);
+ if(!g||!pos||!neg||!t1||!t2)return null;
+ const Lx=R(g[0]*1000),By=R(g[1]*1000),h=g[2],cv=SD.inp('ucv'),a=SD.inp('ua'),S=SD.inp('uS'),c1=SD.inp('uc1'),c2=SD.inp('uc2'),dp=pos[1],dn=neg[1],xc=[a,a+S],tw=[t1,t2],wd=[R(t1[0]*1000),R(t2[0]*1000)],hk=O.hook=='up',cT=O.cvTop;
+ const Ys=lay(pos[0],cv+dp/2,By-cv-dp/2),Yn=lay(neg[0],cv+dn/2,By-cv-dn/2);
+ const xb=xc.map((x,i)=>Math.min(Math.max(x,wd[i]/2),Lx-wd[i]/2)),nT=i=>Math.floor(wd[i]/tw[i][2])+1,Xt=i=>Array.from({length:nT(i)},(_,k)=>xb[i]-(nT(i)-1)*tw[i][2]/2+k*tw[i][2]);
+ const yBB=cv+dp/2,e1=hk?Math.max(0,Math.min(O.ext*dp,h-cT-yBB-dp/2)):0,yTT=h-cT-dn/2,e2=hk?Math.max(0,Math.min(O.ext*dn,yTT-dn/2-cv-60)):0;
+ let bars=[];
+ bars=bars.concat(BM.split(BM.mk({mat:'BB',dir:'X',n:pos[0],db:dp,desc:MATN.BB,legs:hk&&e1>0?[[e1,270],[Lx-2*cv-dp,0],[e1,90]]:[[Lx-2*cv,0]]}),O.stock,BM.lap(dp),W));
+ bars=bars.concat(BM.split(BM.mk({mat:'TT',dir:'X',n:neg[0],db:dn,desc:MATN.TT,legs:hk&&e2>0?[[e2,90],[Lx-2*cv-dn,0],[e2,270]]:[[Lx-2*cv,0]]}),O.stock,BM.lap(dn),W));
+ const yBT=[0,1].map(i=>cv+dp+tw[i][1]/2);
+ [0,1].forEach(i=>{const d=tw[i][1],e=hk?Math.max(0,Math.min(O.ext*d,h-cT-yBT[i]-d/2)):0;bars.push(BM.mk({mat:'BT',dir:'Y',n:nT(i),db:d,s:tw[i][2],desc:MATN.BT,legs:hk&&e>0?[[e,270],[By-2*cv-d,0],[e,90]]:[[By-2*cv,0]],col:i+1}))});
+ /* starter bars for each column */
+ const dd=O.dd,nd=Math.max(4,O.nd|0),lap=BM.lap(dd);const cs=[c1,c2],dws=[];
+ [0,1].forEach(i=>{const yb=cv+dp+tw[i][1]+dd/2,emb=h-yb,foot=O.ext*dd,ins=O.ccv+O.dt+dd/2,dpos=dowelPos(cs[i],cs[i],nd,ins);
+  const b=BM.mk({mat:'DB',dir:'',n:dpos.length,db:dd,legs:[[lap+emb,270],[foot,0]],desc:MATN.DB,col:i+1});dws.push({b,yb,emb,foot,dpos,ins,c:cs[i],xc:xc[i]});bars.push(b);
+  const w=cs[i]-2*O.ccv-O.dt,hh=w,eT=Math.max(6*O.dt,75),yLo=yb+dd/2+O.dt/2+30,yHi=h-cT-O.dt/2,nt=Math.max(0,O.ntie|0),sp=nt>1?Math.floor((yHi-yLo)/(nt-1)/5)*5:0;
+  if(nt>0){const t=BM.mk({mat:'ST',dir:'',n:nt,db:O.dt,s:sp||0,legs:[[eT,135],[w,0],[hh,270],[w,180],[hh,90],[eT,315]],desc:MATN.ST,col:i+1});dws[i].tie=t;dws[i].tz=Array.from({length:nt},(_,k)=>nt>1?yHi-k*sp:yHi);bars.push(t)}});
+ /* merge identical column bars (same shape) */
+ const key=b=>b.mat+'|'+b.dir+'|'+b.db+'|'+b.legs.map(l=>l[0]+'/'+l[1]).join(',');const m={};bars=bars.filter(b=>{if(b.mat!='DB'&&b.mat!='ST')return true;const k=key(b);if(m[k]){m[k].n+=b.n;return false}m[k]=b;return true});
+ bars=BM.finish(bars);
+ return{k:'cf',Lx,By,h,cv,xc,c:cs,wd,tw,Ys,Yn,Xt,xb,dp,dn,yBB,yTT,e1,e2,yBT,hk,bars,dws,lap,dd,W,vol:o.vol,stub:BM.stub(lap),cT}};
+BM.combSheet=function(F){const {Lx,By,h,cv,xc,c,wd,tw,Ys,Yn,Xt,xb,dp,dn,yBB,yTT,e1,e2,yBT,hk,bars,dws,lap,dd,stub,cT}=F;
+ const cd=(m,col)=>{const a=bars.filter(b=>b.mat==m&&(!col||b.col==col));return a.length?a.map(x=>x.code).join('  +  '):''},tl=(m,col)=>[cd(m,col),cd(m,col)];
+ const cs=i=>dws[i].c,wmax=Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1]))/165;
+ const codeOf=b=>[b.code,b.code];
+ const plan=C=>{C.rc('CONC',0,0,Lx,By);dws.forEach((d,i)=>{C.rc('OUTL',xc[i]-d.c/2,By/2-d.c/2,d.c,d.c);C.ln('AXIS',xc[i],By/2-d.c/2-C.pm(4),xc[i],By/2+d.c/2+C.pm(4))});
+  Ys.forEach(y=>C.pl('BBH',[[cv,y],[Lx-cv,y]],0,dp));Yn.forEach(y=>C.pl('TT',[[cv,y+ (Yn.length>1?(Yn[1]-Yn[0])/2:0)],[Lx-cv,y+(Yn.length>1?(Yn[1]-Yn[0])/2:0)]],0,dn));
+  [0,1].forEach(i=>{Xt(i).forEach(x=>C.pl('BT',[[x,cv],[x,By-cv]],0,tw[i][1]));C.ln('AXIS',xb[i]-wd[i]/2,-C.pm(2),xb[i]-wd[i]/2,By+C.pm(2));C.ln('AXIS',xb[i]+wd[i]/2,-C.pm(2),xb[i]+wd[i]/2,By+C.pm(2))});
+  dws.forEach((d,i)=>d.dpos.forEach(p=>C.ci('DB',xc[i]-d.c/2+p[0],By/2-d.c/2+p[1],dd/2,1)));
+  C.dimH(0,Lx,0,-9,Lx);C.dimV(0,0,By,-9,By);C.dimH(0,xc[0],By,6,R(xc[0]));C.dimH(xc[0],xc[1],By,6,R(xc[1]-xc[0]));C.dimH(xc[1],Lx,By,6,R(Lx-xc[1]));
+  C.dimH(xb[0]-wd[0]/2,xb[0]+wd[0]/2,0,-17,wd[0]);C.dimH(xb[1]-wd[1]/2,xb[1]+wd[1]/2,0,-17,wd[1]);
+  const tx=Lx+C.pm(22),A=[{px:Lx*.8,py:Ys[Ys.length-1],ty:By+C.pm(2),t:tl('BB')},{px:Lx*.6,py:Yn[Yn.length-1]+(Yn.length>1?(Yn[1]-Yn[0])/2:0),ty:By*.75,t:tl('TT')},
+   {px:Xt(1)[Xt(1).length-1],py:By*.3,ty:By*.4,t:tl('BT',2)},{px:xc[0]+dws[0].c/2,py:By/2,ty:By*.2,t:tl('DB')}];
+  const bt1=bars.filter(b=>b.mat=='BT');if(bt1.length>1){A[2].t=[bt1[1].code,bt1[1].code];A.push({px:Xt(0)[0],py:By*.55,ty:By*.55,t:[bt1[0].code,bt1[0].code]})}
+  SD.callouts(C,A,tx,5)};
+ const s1=C=>{C.rc('CONC',0,0,Lx,h);dws.forEach((d,i)=>C.pl('OUTL',[[xc[i]-d.c/2,h],[xc[i]-d.c/2,h+stub],[xc[i]+d.c/2,h+stub],[xc[i]+d.c/2,h]]));
+  const xl=cv+dp/2,xr=Lx-cv-dp/2;C.pl('BB',hk&&e1>0?[[xl,yBB+e1],[xl,yBB],[xr,yBB],[xr,yBB+e1]]:[[cv,yBB],[Lx-cv,yBB]],0,dp);
+  C.pl('TT',hk&&e2>0?[[xl,yTT-e2],[xl,yTT],[xr,yTT],[xr,yTT-e2]]:[[cv,yTT],[Lx-cv,yTT]],0,dn);
+  [0,1].forEach(i=>Xt(i).forEach(x=>C.ci('BT',x,yBT[i],tw[i][1]/2,1)));
+  dws.forEach((d,i)=>{const xs=[...new Set(d.dpos.map(p=>p[0]))].sort((a,b)=>a-b),x0=xc[i]-d.c/2;[xs[0],xs[xs.length-1]].forEach((px,j)=>{const x=x0+px,sg=j==0?-1:1;C.pl('DB',[[x,h+lap],[x,d.yb],[x+sg*d.foot,d.yb]],0,dd)});
+   (d.tz||[]).forEach(y=>C.ln('ST',x0+BM.O.ccv+BM.O.dt/2,y,x0+d.c-BM.O.ccv-BM.O.dt/2,y,BM.opts().dt))});
+  C.dimH(0,Lx,0,-9,Lx);C.dimV(Lx,0,h,10,h);C.dimV(xc[1]+dws[1].c/2,h,h+lap,8,lap);C.tx('TEXT',Lx/2,h/2,`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+  SD.callouts(C,[{px:xl+(xr-xl)*.55,py:yBB,ty:yBB-C.pm(5),t:tl('BB')},{px:xl+(xr-xl)*.45,py:yTT,ty:yTT+C.pm(6),t:tl('TT')},{px:xc[1]+dws[1].c/2*.5,py:h+lap*.55,ty:h+lap*.55,t:tl('DB')}],Lx+C.pm(16),5)};
+ const s2=C=>{C.rc('CONC',0,0,By,h);C.pl('OUTL',[[By/2-c[0]/2,h],[By/2-c[0]/2,h+stub],[By/2+c[0]/2,h+stub],[By/2+c[0]/2,h]]);
+  const yl=cv+tw[0][1]/2,yr=By-cv-tw[0][1]/2,e=Math.max(0,bars.find(b=>b.mat=='BT').legs.length>1?bars.find(b=>b.mat=='BT').legs[0][0]:0);
+  C.pl('BT',e>0?[[yl,yBT[0]+e],[yl,yBT[0]],[yr,yBT[0]],[yr,yBT[0]+e]]:[[cv,yBT[0]],[By-cv,yBT[0]]],0,tw[0][1]);Ys.forEach(y=>C.ci('BB',y,yBB,dp/2,1));Yn.forEach(y=>C.ci('TT',y,yTT,dn/2,1));
+  C.dimH(0,By,0,-9,By);C.dimV(0,0,h,-9,h);C.dimH(By/2-c[0]/2,By/2+c[0]/2,h+stub,5,c[0]);
+  SD.callouts(C,[{px:yr,py:yBT[0]+e*.5,ty:yBT[0]+C.pm(5),t:tl('BT',1)},{px:Ys[Ys.length-2]||Ys[0],py:yBB,ty:yBB-C.pm(4),t:tl('BB')},{px:Yn[Math.max(0,Yn.length-2)],py:yTT,ty:yTT+C.pm(6),t:tl('TT')}],By+C.pm(16),5)};
+ return[{h:44,views:[{name:['المسقط','PLAN'],w:Lx,h:By,x0:0,y0:0,px:[34,60],py:24,min:wmax,draw:plan}]},
+  {h:30,views:[{name:['المقطع 1-1 (الطولي)','SECTION 1-1 (LONGITUDINAL)'],w:Lx,h:h+stub,x0:0,y0:0,px:[24,60],py:13,draw:s1}]},
+  {h:26,views:[{name:['المقطع 2-2 (العرضي عند العمود 1)','SECTION 2-2 (TRANSVERSE AT COLUMN 1)'],w:By,h:h+stub,x0:0,y0:0,px:[24,60],py:13,draw:s2}]}]};
+BM.O.ccvv=()=>BM.O.ccv+BM.O.dt/2;
+BM.combSheet2=function(){const F=BM.comb();if(!F)return null;const sp=SD.base('cf',['أساس مشترك لعمودين','COMBINED FOOTING - BARS, CODES AND PULL-OUT'],window.QTL,[]);
+ sp.rows=BM.combSheet(F);sp.bm=true;sp.bars=F.bars;sp.vol=F.vol||0;sp.notes=sp.notes.slice(0,4).concat(BM.commonNotes(F,false));
+ sp.notes.push(['الحديد العلوي TT يمر بين العمودين وينتهي بخطاف لأسفل ويسنده كراسي.','TOP BARS TT RUN BETWEEN THE COLUMNS WITH DOWN-HOOKS; THE TOP MAT IS SUPPORTED ON CHAIRS.']);F.W.forEach(w=>sp.notes.push(w));return sp};
+
+/* ===================== flat raft: interior panel, two mats, both directions ===================== */
+BM.raft=function(){BM.curK='rf';const O=BM.opts(),W=BM.warn=[],X=SD.dbg().rf,o=window.QTL;if(!X||!o)return null;
+ const l1=R(X.l1),l2=R(X.l2),c=X.c,h=X.h,PK=X.PK,cv=SD.inp(SD.cvId('rf')),cT=O.cvTop,both=gv('bm_both',1)==1;
+ const cwx=Math.min(R(X.cw*1000),R(l2*.99)),cwy=Math.min(R(X.cw*1000),R(l1*.99)),mwx=l2-cwx,mwy=l1-cwy;
+ /* PK: 0 bottom col strip, 1 bottom mid strip, 2 top col strip, 3 top mid strip */
+ const dBx=Math.max(PK[0].db,PK[1].db),dBy=both?dBx:0,dTx=Math.max(PK[2].db,PK[3].db),dTy=both?dTx:0;
+ const z={BB:cv+dBx/2,BT:cv+dBx+dBy/2,TT:h-cT-dTy/2,TB:h-cT-dTy-dTx/2};
+ const zones=(dir,span)=>dir=='X'?[{wd:cwx,c:true},{wd:mwx,c:false}]:[{wd:cwy,c:true},{wd:mwy,c:false}];
+ let bars=[];const lay_=[];
+ const add=(mat,dir,spec,cs,wdt,y0,y1,db)=>{const sp=spec.s,n=cs?Math.ceil(wdt/sp-1e-9):Math.max(1,Math.floor(wdt/sp+1e-9));const Lb=(dir=='X'?l1:l2)+BM.lap(spec.db);
+  const b=BM.mk({mat,dir,n,db:spec.db,s:sp,desc:MATN[mat],legs:[[Lb,0]],strip:cs?'col':'mid'});bars=bars.concat(BM.split(b,O.stock,BM.lap(spec.db),W));lay_.push({mat,dir,cs,sp,n,db:spec.db,wdt})};
+ add('BB','X',PK[0],true,cwx);add('BB','X',PK[1],false,mwx);add('TB','X',PK[2],true,cwx);add('TB','X',PK[3],false,mwx);
+ if(both){add('BT','Y',PK[0],true,cwy);add('BT','Y',PK[1],false,mwy);add('TT','Y',PK[2],true,cwy);add('TT','Y',PK[3],false,mwy)}
+ /* chairs between the mats */
+ if(gv('bm_ch',1)==1){const dch=Math.max(10,Math.min(16,dTx||12)),yTop=z.TB-(dTx/2)-dch/2,yBot=cv+dBx+dBy+dch/2,H=Math.max(40,R(yTop-yBot)),ft=150,Wc=300,n=Math.ceil(l1*l2/1e6);
+  bars.push(BM.mk({mat:'CB',dir:'',n,db:dch,desc:MATN.CB,legs:[[ft,0],[H,90],[Wc,0],[H,270],[ft,0]]}))}
+ /* edge U-bars: wrap the free edge at both l1 ends, legs run inward at the BB and TB levels */
+ let ub=null;if(gv('bm_ub',1)==1){const dU=PK[0].db,sU=PK[0].s,lg=BM.lap(dU),web=R(z.TB-z.BB),n=2*(Math.floor((l2-2*cv)/sU)+1);ub={dU,sU,lg,web,n};
+  bars.push(BM.mk({mat:'UB',dir:'',n,db:dU,s:sU,desc:MATN.UB,legs:[[lg,180],[web,270],[lg,0]]}))}
+ /* starters at the four columns */
+ const dd=O.dd,nd=Math.max(4,O.nd|0),lap=BM.lap(dd),ins=O.ccv+O.dt+dd/2,dpos=dowelPos(c,c,nd,ins),yb=cv+dBx+dBy+dd/2,emb=h-yb,foot=O.ext*dd;
+ if(ldcWarn(emb,dd,'rf',W)){}
+ bars.push(BM.mk({mat:'DB',dir:'',n:dpos.length*4,db:dd,legs:[[lap+emb,270],[foot,0]],desc:MATN.DB}));
+ const nt=Math.max(0,O.ntie|0);let tz=[];if(nt>0){const w=c-2*O.ccv-O.dt,e=Math.max(6*O.dt,75),yLo=yb+dd/2+O.dt/2+30,yHi=h-cT-O.dt/2,sp=nt>1?Math.floor((yHi-yLo)/(nt-1)/5)*5:0;tz=Array.from({length:nt},(_,k)=>nt>1?yHi-k*sp:yHi);
+  bars.push(BM.mk({mat:'ST',dir:'',n:nt*4,db:O.dt,s:sp||0,desc:MATN.ST,legs:[[e,135],[w,0],[w,270],[w,180],[w,90],[e,315]]}))}
+ bars=BM.finish(bars);
+ return{k:'rf',l1,l2,c,h,cv,cT,cwx,cwy,mwx,mwy,PK,z,dBx,dBy,dTx,dTy,both,lay_:lay_,bars,dpos,dd,lap,yb,foot,tz,ins,W,vol:o.vol,stub:BM.stub(lap),ub}};
+function ldcWarn(emb,dd,k,W){const fm=fy_fc(k),ldc=(fm.fc>0&&fm.fy>0)?Math.max(.24*fm.fy*dd/Math.sqrt(fm.fc),.043*fm.fy*dd):0;if(ldc&&emb<ldc){W.push([`طول تثبيت الأسياخ الصاعدة ${R(emb)} مم أقل من ${R(ldc)} مم المطلوب (ACI 25.4.9).`,`Dowel embedment ${R(emb)} mm is below the required ${R(ldc)} mm (ACI 25.4.9).`]);return true}return false}
+BM.raftSheet=function(F){const {l1,l2,c,h,cv,cwx,cwy,mwx,mwy,PK,z,dBx,dBy,dTx,dTy,both,lay_,bars,dpos,dd,lap,yb,foot,tz,ins,stub,ub}=F;
+ const cd=(mat,dir,strip)=>bars.filter(b=>b.mat==mat&&(dir==null||b.dir==dir)&&(!strip||b.strip==strip)).map(b=>b.code).join('  +  '),tl=(m,d,s)=>{const c=cd(m,d,s);return[c,c]};
+ const wmax=Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1]))/165;
+ /* strip boundaries: column strips are cw/2 on each edge, middle strip in the centre */
+ const posX=(mat)=>{const a=[];lay_.filter(l=>l.mat==mat&&l.dir=='X').forEach(l=>{if(l.cs){const w=cwx/2,n1=Math.ceil(l.n/2),n2=l.n-n1;for(let i=0;i<n1;i++)a.push([l.mat,l.db,(i+.5)*l.wdt/2/n1]);for(let i=0;i<n2;i++)a.push([l.mat,l.db,l2-(i+.5)*l.wdt/2/Math.max(n2,1)])}else for(let i=0;i<l.n;i++)a.push([l.mat,l.db,cwx/2+(i+.5)*l.sp])});return a};
+ const posY=(mat)=>{const a=[];lay_.filter(l=>l.mat==mat&&l.dir=='Y').forEach(l=>{if(l.cs){const n1=Math.ceil(l.n/2),n2=l.n-n1;for(let i=0;i<n1;i++)a.push([l.mat,l.db,(i+.5)*l.wdt/2/n1]);for(let i=0;i<n2;i++)a.push([l.mat,l.db,l1-(i+.5)*l.wdt/2/Math.max(n2,1)])}else for(let i=0;i<l.n;i++)a.push([l.mat,l.db,cwy/2+(i+.5)*l.sp])});return a};
+ const colsXY=[[0,0],[l1,0],[0,l2],[l1,l2]];const sU2=()=>ub?ub.sU/2:0;
+ const planM=(mx,my,lx,ly)=>C=>{C.rc('CONC',0,0,l1,l2);colsXY.forEach(p=>C.rc('OUTL',p[0]-c/2,p[1]-c/2,c,c));
+  C.ln('AXIS',0,cwx/2,l1,cwx/2);C.ln('AXIS',0,l2-cwx/2,l1,l2-cwx/2);
+  if(ub){const xe=cv+ub.dU/2,ys=[];for(let y=cv+sU2();y<=l2-cv+1e-6;y+=ub.sU)ys.push(y);ys.forEach(y=>{if(mx=='BB'||mx=='TB'){C.pl('UB',[[xe,y],[xe+ub.lg,y]],0,ub.dU);C.pl('UB',[[l1-xe,y],[l1-xe-ub.lg,y]],0,ub.dU)}})}
+  posX(mx).forEach(p=>C.pl(mx=='BB'?'BBH':mx,[[cv,p[2]],[l1-cv,p[2]]],0,p[1]));if(both)posY(my).forEach(p=>C.pl(my,[[p[2],cv],[p[2],l2-cv]],0,p[1]));
+  const lbl=(y,ar,en)=>C.tx('TEXT',l1/2,y,ar,en,{a:'c',h:2.4,b:1});lbl(cwx/4,'شريحة العمود','COLUMN STRIP');lbl(l2-cwx/4,'شريحة العمود','COLUMN STRIP');lbl(l2/2,'الشريحة الوسطى','MIDDLE STRIP');
+  C.dimH(0,l1,0,-9,l1);C.dimV(0,0,l2,-9,l2);C.dimV(l1,0,cwx/2,10,R(cwx/2));C.dimV(l1,cwx/2,l2-cwx/2,10,R(mwx));C.dimV(l1,l2-cwx/2,l2,10,R(cwx/2));
+  const L=[];[[mx,'X','col'],[mx,'X','mid'],[my,'Y','col'],[my,'Y','mid']].forEach(q=>{if(q[1]=='Y'&&!both)return;bars.filter(b=>b.mat==q[0]&&b.dir==q[1]&&b.strip==q[2]).forEach(b=>L.push([q[0]=='BB'?'BBH':q[0],b.code]))});if(ub)bars.filter(b=>b.mat=='UB').forEach(b=>L.push(['UB',b.code]));
+  L.forEach((a,i)=>{const y=-C.pm(17+3.7*i);C.ln(a[0],0,y+C.pm(.8),C.pm(9),y+C.pm(.8),a[0]=='BBH'?0:0);C.tx('TEXT',C.pm(11),y,a[1],a[1],{a:'l',h:2.3})})};
+ const s11=C=>{C.rc('CONC',0,0,l1,h);[0,l1].forEach(x=>C.pl('OUTL',[[x-c/2,h],[x-c/2,h+stub],[x+c/2,h+stub],[x+c/2,h]]));
+  C.pl('BB',[[cv,z.BB],[l1-cv,z.BB]],0,PK[0].db);C.pl('TB',[[cv,z.TB],[l1-cv,z.TB]],0,PK[2].db);
+  if(ub){const xe=cv+ub.dU/2;C.pl('UB',[[xe+ub.lg,z.TB],[xe,z.TB],[xe,z.BB],[xe+ub.lg,z.BB]],0,ub.dU);C.pl('UB',[[l1-xe-ub.lg,z.TB],[l1-xe,z.TB],[l1-xe,z.BB],[l1-xe-ub.lg,z.BB]],0,ub.dU);C.dimH(xe,xe+ub.lg,z.TB,5,ub.lg)}
+  const xs=lay(Math.max(2,Math.round(l1/PK[0].s)),PK[0].s,l1-PK[0].s);if(both){xs.forEach(x=>C.ci('BT',x,z.BT,PK[0].db/2,1));lay(xs.length,PK[2].s,l1-PK[2].s).forEach(x=>C.ci('TT',x,z.TT,PK[2].db/2,1))}
+  [0,l1].forEach((cx,i)=>{const sg=i==0?1:-1;[[0,sg],[1,-sg]].forEach(a=>{const x=cx+(a[1]>0?c/2-ins:-(c/2-ins));C.pl('DB',[[x,h+lap],[x,yb],[x+(x<cx?-foot:foot),yb]],0,dd)});tz.forEach(y=>C.ln('ST',cx-c/2+BM.O.ccv+BM.O.dt/2,y,cx+c/2-BM.O.ccv-BM.O.dt/2,y,BM.O.dt))});
+  C.dimH(0,l1,0,-14,l1);C.dimV(l1,0,h,10,h);C.dimV(l1+c/2,h,h+lap,8,lap);C.tx('TEXT',l1*.5,h/2,`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+  SD.callouts(C,[{px:l1*.6,py:z.BB,ty:z.BB-C.pm(5),t:tl('BB','X','col')},{px:l1*.3,py:z.BT,ty:z.BB-C.pm(10),t:tl('BT','Y','col')},{px:l1*.4,py:z.TB,ty:h+C.pm(6),t:tl('TB','X','col')},{px:l1*.75,py:z.TT,ty:h+C.pm(11),t:tl('TT','Y','col')},{px:l1+c/2*.5,py:h+lap*.5,ty:h+lap*.5,t:tl('DB')},ub?{px:l1-cv-ub.dU/2,py:(z.TB+z.BB)/2,ty:C.pm(0)+h*.5,t:tl('UB')}:{t:['']}].filter(a=>a.t[0]),l1+C.pm(14),5)};
+ const win=1000,s22=C=>{C.rc('CONC',0,0,l2,h);[0,l2].forEach(x=>C.pl('OUTL',[[x-c/2,h],[x-c/2,h+stub],[x+c/2,h+stub],[x+c/2,h]]));
+  posX('BB').forEach(p=>C.ci('BB',p[2],z.BB,p[1]/2,1));posX('TB').forEach(p=>C.ci('TB',p[2],z.TB,p[1]/2,1));
+  if(both){C.pl('BT',[[cv,z.BT],[l2-cv,z.BT]],0,PK[0].db);C.pl('TT',[[cv,z.TT],[l2-cv,z.TT]],0,PK[2].db)}
+  C.dimH(0,l2,0,-14,l2);C.dimV(l2,0,h,10,h);C.dimH(0,cwx/2,0,-8,R(cwx/2));
+  SD.callouts(C,[{px:cwx/4,py:z.BB,ty:z.BB-C.pm(5),t:tl('BB','X','col')},{px:l2*.5,py:z.BB,ty:z.BB-C.pm(10),t:tl('BB','X','mid')},{px:cwx/4,py:z.TB,ty:h+C.pm(6),t:tl('TB','X','col')},{px:l2*.5,py:z.TB,ty:h+C.pm(11),t:tl('TB','X','mid')}].filter(a=>a.t[0]),l2+C.pm(14),5)};
+ return[{h:52,views:[{name:['المسقط — الفرش السفلي (BB, BT)','PLAN - BOTTOM MAT (BB, BT)'],w:l1,h:l2,x0:0,y0:0,px:[16,16],py:27,min:wmax,draw:planM('BB','BT')},{name:['المسقط — الفرش العلوي (TB, TT)','PLAN - TOP MAT (TB, TT)'],w:l1,h:l2,x0:0,y0:0,px:[16,16],py:27,min:wmax,draw:planM('TB','TT')}]},
+  {h:26,views:[{name:['المقطع 1-1 (على l1)','SECTION 1-1 (ALONG l1)'],w:l1,h:h+stub,x0:0,y0:0,px:[24,60],py:13,draw:s11}]},
+  {h:26,views:[{name:['المقطع 2-2 (على l2)','SECTION 2-2 (ALONG l2)'],w:l2,h:h+stub,x0:0,y0:0,px:[24,60],py:13,draw:s22}]}]};
+BM.raftSheet2=function(){const F=BM.raft();if(!F)return null;const sp=SD.base('rf',['رافت مسطح — لوحة داخلية','FLAT RAFT - INTERIOR PANEL - BARS, CODES AND PULL-OUT'],window.QTL,[]);
+ sp.rows=BM.raftSheet(F);sp.bm=true;sp.bars=F.bars;sp.vol=F.vol||0;sp.notes=sp.notes.slice(0,4).concat(BM.commonNotes({hk:false},false));
+ sp.notes.push([F.both?'اتجاه l2 بنفس تسليح l1 افتراضًا؛ صمّمه بتبديل l1 وl2 ثم عدّل.':'يُرسم اتجاه l1 فقط.',F.both?'THE l2 DIRECTION IS ASSUMED TO MATCH l1; DESIGN IT BY SWAPPING l1 AND l2 AND EDIT.':'ONLY THE l1 DIRECTION IS SHOWN.']);
+ sp.notes.push(['طول كل سيخ = المجاز + تراكب (يستمر الحديد بين اللوحات)، والكراسي CB تسند الفرش العلوي.','EACH BAR = l + LAP (BARS CONTINUE BETWEEN PANELS); CHAIR BARS CB SUPPORT THE TOP MAT.']);
+ F.W.forEach(w=>sp.notes.push(w));return sp};
+const wrap=k=>{const old=SD.defs[k];SD.defs[k]=function(){try{if(BM.off)return old();const s=BM.footSheet(k);if(s)return s}catch(e){console.log('BM',k,e)}return old()}};
+['ftg','fr'].forEach(wrap);
+{const o2=SD.defs.cf;SD.defs.cf=function(){try{if(!BM.off){const s=BM.combSheet2();if(s)return s}}catch(e){console.log('BM cf',e)}return o2()}}
+{const o3=SD.defs.rf;SD.defs.rf=function(){try{if(!BM.off){const s=BM.raftSheet2();if(s)return s}}catch(e){console.log('BM rf',e)}return o3()}}
+{const old=SD.defs.fs;SD.defs.fs=function(){try{if(!BM.off){const s=BM.stripSheet2();if(s)return s}}catch(e){console.log('BM fs',e)}return old()}}
+
+/* ===================== integration with the structural-drawings page ===================== */
+{const SP=SM.SPEC,N_=(id,ar,en,d,u,g)=>({id,ar,en,d,u:u===undefined?'':u,g:g||'rf'}),S_=(id,ar,en,d,opts,g)=>({id,ar,en,d,sel:opts,u:'',g:g||'rf'});
+ const HK=S_('bm_hk','نهايات حديد الفرشات','Mat bar ends',1,[[1,'خطاف 90° لأعلى','90° up hook'],[0,'مستقيمة','Straight']]);
+ const DW=[N_('bm_nd','عدد الأسياخ الصاعدة (مبذور العمود)','Starter bars per column',8),N_('bm_dd','قطر الأسياخ الصاعدة Ø','Starter bar Ø',16,'mm'),N_('bm_nt','عدد كانات تثبيت المبذور داخل الأساس','Dowel ties inside the footing',2,'','st'),N_('bm_dt','قطر كانات التثبيت Ø','Dowel tie Ø',8,'mm','st')];
+ const ex={ftg:[HK].concat(DW),fr:[HK].concat(DW),cf:[HK].concat(DW),rf:[HK,S_('bm_both','اتجاه l2','l2 direction',1,[[1,'بنفس تسليح l1','Same as l1'],[0,'لا يُرسم','Not drawn']]),S_('bm_ch','الكراسي بين الفرشتين','Chair bars between mats',1,[[1,'نعم','Yes'],[0,'لا','No']]),S_('bm_ub','حديد الحافة U (طرفا l1)','Edge U-bars (both l1 ends)',1,[[1,'نعم','Yes'],[0,'لا','No']])].concat(DW),
+  fs:[HK,N_('bm_wsd','تباعد أسياخ الجدار الصاعدة','Wall starter spacing',200,'mm'),N_('bm_wdd','قطر أسياخ الجدار الصاعدة Ø','Wall starter Ø',12,'mm')]};
+ Object.keys(ex).forEach(k=>{if(SP[k])ex[k].forEach(f=>{if(!SP[k].f.some(x=>x.id==f.id))SP[k].f.push(f)})});
+ const osm=SM.sheet;
+ SM.sheet=function(en,ctx){const r=osm(en,ctx);try{if(r&&r.S&&r.S.sp&&r.S.sp.bm&&r.o){const bars=r.S.sp.bars;
+   r.o.bars=bars.map(b=>({m:b.code,db:b.db,n:b.n,L:b.L/1000,len:Math.round(b.n*b.L)/1000,kg:BM.kg(b),loc:b.desc||MATN[b.mat]||['',''],sh:['','']}));
+   r.o.kg=r.o.bars.reduce((a,b)=>a+b.kg,0);const by={};r.o.bars.forEach(b=>{by[b.db]=by[b.db]||{db:b.db,len:0,kg:0};by[b.db].len+=b.len;by[b.db].kg+=b.kg});r.o.by=Object.values(by).sort((a,b)=>a.db-b.db)}}catch(e){console.log('BM sm',e)}return r};
+}
+})();
+</script>
+<script>
+/*bar41*/
+/* FABRUM bar model, stage 2: beams (beam, bx, cb) and columns (col, cm, cx).
+   Same code system as bar40: ELEMENT-MAT-nØd-L.  LB = column longitudinal bars, BB = bottom beam bars, TT = top beam bars,
+   SB = side bars, ST = stirrups/ties written as Ø@zone1/zone2/mid.  Every bar has real legs; the pull-out is drawn to the code length. */
+(()=>{
+if(!window.BM||!window.SD||!window.SM)return;
+const BM=window.BM,SD=window.SD,R=Math.round,D2R=Math.PI/180;
+const gv=(id,d)=>{const v=SD.inp(id);return isFinite(v)?v:d};
+Object.assign(SD.LAY,{SP:{c:40,col:'#8a2be2',w:.4},LB:{c:5,col:'#1f4fb0',w:.5},SB:{c:130,col:'#2a8f8f',w:.4}});
+Object.assign(BM.MATN,{SP:['حلزون (طوق لولبي)','Spiral reinforcement'],LB:['حديد طولي رئيسي (عمود)','Main longitudinal bars (column)'],SB:['حديد جانبي (Skin)','Side (skin) bars']});
+const lay=SD.lay,sum=a=>a.reduce((x,y)=>x+y,0);
+const e135=db=>Math.max(6*db,75),e90=db=>db<=16?6*db:12*db;
+const ang=(dx,dy)=>{const a=Math.atan2(dy,dx)/D2R;return Math.round((((a%360)+360)%360)*1000)/1000};
+const SHN={closed:['كانات مغلقة (خطاف 135°)','Closed stirrups (135° hooks)'],closed90:['كانات مغلقة (خطاف 90°)','Closed stirrups (90° hooks)'],ov:['كانات متداخلة','Overlapping hoops'],ring:['طوق دائري','Circular hoop'],spiral:['حلزوني','Spiral'],cap:['غطاء علوي للكانة U','Top cap of U stirrup'],u:['كانات مفتوحة U','Open U stirrups'],inner:['كانات داخلية (ساق رابعة)','Inner stirrups (4-leg)'],
+ xv:['رابط وسطي عمودي','Vertical cross-ties'],xh:['رابط وسطي أفقي','Horizontal cross-ties'],dia:['كانات معينية','Diamond ties'],tee:['كانات بشكل T','T-shaped stirrups'],ell:['كانات بشكل L','L-shaped stirrups']};
+/* polygon (clockwise axis vertices) -> closed tie legs with 135 deg hooks at the first vertex */
+BM.poly=(P,db,h90)=>{const n=P.length,e=h90?e90(db):e135(db),d=[];for(let i=0;i<n;i++){const a=P[i],b=P[(i+1)%n];d.push([Math.hypot(b[0]-a[0],b[1]-a[1]),ang(b[0]-a[0],b[1]-a[1])])}
+ const ain=d[n-1][1];return h90?[[e,ain]].concat(d,[[e,d[0][1]]]):[[e,ain+45]].concat(d,[[e,ain-135]])};
+BM.rectTie=(w,h,db,h90)=>BM.poly([[0,h],[w,h],[w,0],[0,0]],db,h90);
+BM.uTie=(w,h,db,h90)=>{if(h90){const e=e90(db);return[[e,180],[h,270],[w,0],[h,90],[e,180]]}const e=e135(db);return[[e,135],[h,270],[w,0],[h,90],[e,225]]};
+BM.capBar=(w,db)=>{const e=e90(db);return[[e,90],[w,0],[e,270]]};
+BM.crossTie=(w,db)=>[[e135(db),315],[w,0],[e90(db),90]];
+/* ring (circular hoop): unrolled length = circumference + overlap + two 135 deg hooks; spiral: turns * sqrt((pi D)^2 + p^2) with 1.5 extra turns at each end */
+BM.ringLen=(D,db)=>Math.round(Math.PI*D+gv('bm_ov',150)+2*e135(db));
+BM.spiralLen=(D,p,H)=>{const turns=H/p+3;return Math.round(turns*Math.hypot(Math.PI*D,p))};
+/* merge identical bars (same material, diameter and legs) */
+BM.merge=list=>{const m={},o=[],nr=a=>(((Math.round(a*1000)/1000)%360)+360)%360,ks=(b,f)=>b.mat+'|'+b.db+'|'+(b.dir||'')+'|'+(b.s||0)+'|'+(b.zones?b.zones.join(';'):'')+'|'+f.map(l=>l[0]+'/'+nr(l[1])).join(',');
+ list.forEach(b=>{const k1=ks(b,b.legs),k2=ks(b,b.legs.map(l=>[l[0],180-l[1]]).reverse().map(l=>[l[0],l[1]+180])),k=k1<k2?k1:k2;if(m[k]){m[k].n+=b.n}else{m[k]=b;o.push(b)}});return o};
+/* ---------- stirrup distribution: zones from the end faces, middle zone divided evenly (spacing <= nominal) ---------- */
+BM.stirPlan=(Lt,sMid,kind)=>{const zs=[],a=gv('bm_z1l',0),as=gv('bm_z1s',100),b=gv('bm_z2l',0),bs=gv('bm_z2s',150);
+ if(a>0&&as>0)zs.push({s:R(as),l:R(a)});else{const Z=SD.zone();if(Z)zs.push({s:R(Z.spe),l:R(Z.zl)})}
+ if(b>0&&bs>0&&zs.length)zs.push({s:R(bs),l:R(b)});
+ let c=0;const ok=[];zs.forEach(q=>{if(c+q.l<Lt/2-60){ok.push(q);c+=q.l}});
+ const fs0=gv('bm_fs',0),first=fs0>0?R(fs0):(kind=='col'?R((ok.length?ok[0].s:sMid)/2):50);
+ const left=[],segs=[];let x=first,last=null;c=0;
+ ok.forEach(q=>{const seg={s:q.s,x0:c,x1:c+q.l,n:0};c+=q.l;x=last===null?first:last+q.s;while(x<=c+1e-6){left.push(x);last=x;x+=q.s;seg.n++}segs.push(seg)});
+ if(last===null){left.push(first);last=first}
+ const x0=last,x1=Lt-last,gap=x1-x0,m=gap<1?0:Math.max(Math.ceil(gap/sMid-1e-9)-1,0),inner=[];for(let i=1;i<=m;i++)inner.push(x0+gap*i/(m+1));
+ const right=left.map(v=>Lt-v).reverse();let pos=left.concat(inner,gap<1?right.slice(1):right).map(R);
+ return{pos,segs,first,zs:ok,sMid,mid:{x0:c,x1:Lt-c,s:R(gap<1?sMid:gap/(m+1))},zsum:c,zones:ok.length?ok.map(q=>[q.s,q.l]).concat([[sMid,R(Lt-2*c)]]):null}};
+/* dimension the zones along an element (horiz: element axis is x; else y) */
+BM.zoneDims=(C,pl,Lt,horiz,at,off,x0)=>{x0=x0||0;const D=(a,b,v,o)=>horiz?C.dimH(a+x0,b+x0,at,o,v):C.dimV(at,a+x0,b+x0,o,v),T=(a,b,s,o)=>{const m=(a+b)/2+x0;if(horiz)C.tx('TEXT',m,at+C.pm(o),'@'+s,'@'+s,{a:'c',h:2});else C.tx('TEXT',at+C.pm(o),m,'@'+s,'@'+s,{a:'l',h:2})};
+ if(pl.segs.length){pl.segs.forEach(q=>{D(q.x0,q.x1,R(q.x1-q.x0),off);D(Lt-q.x1,Lt-q.x0,R(q.x1-q.x0),off);T(q.x0,q.x1,q.s,off+5);T(Lt-q.x1,Lt-q.x0,q.s,off+5)});
+  D(pl.mid.x0,pl.mid.x1,R(pl.mid.x1-pl.mid.x0),off);{const q=pl.mid.x0+(pl.mid.x1-pl.mid.x0)*.28;T(q,q,pl.sMid,off+5)}}
+ else{T(Lt*.22,Lt*.22,pl.sMid,off-1)}};
+const hkL=(db,avail)=>Math.max(0,Math.min(R(SD.HKF(db)),Math.floor(avail)));
+const drawIt=(C,it)=>{const b=it.b,mk=(mir)=>b.pts.map(p=>[mir!=null?2*mir-(it.ox+p[0]):it.ox+p[0],it.oy+p[1]]);if(!it.only)C.pl(SD.LAY[b.mat]?b.mat:'REBAR',mk(null),0,b.db);if(it.mir!=null)C.pl(SD.LAY[b.mat]?b.mat:'REBAR',mk(it.mir),0,b.db)};
+const nm=(k,sh)=>[SHN[k][0]+(sh?' - '+sh[0]:''),SHN[k][1]+(sh?' - '+sh[1]:'')];
+const codesOf=(bars,role)=>{const a=bars.filter(b=>b.role==role).map(b=>b.code);return a.length?a.join('  +  '):''};
+const tl=s=>[s,s];
+
+/* ===================================== BEAMS ===================================== */
+/* P: {k,L,h,bw,bf,hf,T,cv,dst,sp,s,bot,top,hang,comp,topEnds}  ->  bars, drawing items */
+BM.beam=function(P,o){BM.curK=P.k||'beam';const O=BM.opts(),W=BM.warn=[];
+ const L=R(P.L),h=R(P.h),bw=R(P.bw),cv=P.cv,dst=P.dst,s=P.s|0,sw=gv('bm_sw',300),hk=gv('bm_bhk',1)==1,stock=O.stock,items=[],bars=[];
+ const add=(b,ox,oy,role,mir)=>{b.role=role;items.push({b,ox,oy,mir});BM.split(b,stock,BM.lap(b.db),W).forEach(x=>{x.role=role;bars.push(x)})};
+ const emb=db=>sw-cv-db/2,lrow=[];let cur=h-cv-dst;
+ const row=db=>{const y=cur-db/2;cur=y-db/2-15;return y};
+ const hh=db=>hkL(db,h-2*(cv+dst)-db);
+ const ext=[];
+ /* top rows: hanger, compression, support bars (elevation levels) */
+ const yH=P.hang&&!P.hang.bottom?row(P.hang.db):null,yC=P.comp?row(P.comp.db):null,yT=P.top?row(P.top.db):null;
+ const yBot=P.bot?cv+dst+P.bot.db/2:null;
+ /* bottom main bars */
+ if(P.bot&&s!=3){const db=P.bot.db,Lb=L+2*emb(db),hb=hk?hh(db):0;add(BM.mk({mat:'BB',n:P.bot.n,db,legs:hb>0?[[hb,270],[Lb,0],[hb,90]]:[[Lb,0]],desc:MATN('BB','bottom main')}),-emb(db),yBot+hb,'bot')}
+ /* top hanger */
+ if(P.hang&&!P.hang.bottom&&s!=3){const db=P.hang.db,Lb=L+2*emb(db),hb=hk?hh(db):0;add(BM.mk({mat:'TT',n:P.hang.n,db,legs:hb>0?[[hb,90],[Lb,0],[hb,270]]:[[Lb,0]],desc:MATN('TT','top hanger')}),-emb(db),yH-hb,'hang')}
+ /* cantilever: bottom hanger, top main bars anchored in the support */
+ if(s==3){if(P.hang&&P.hang.bottom){const db=P.hang.db,Lb=L+sw-2*cv-db;add(BM.mk({mat:'BB',n:P.hang.n,db,legs:[[Lb,0]],desc:MATN('BB','bottom hanger')}),-emb(db),cv+dst+db/2,'hang')}
+  if(P.top){const db=P.top.db,Lb=L+sw-2*cv-db,hb=hk?hh(db):0;add(BM.mk({mat:'TT',n:P.top.n,db,legs:hb>0?[[hb,90],[Lb,0]]:[[Lb,0]],desc:MATN('TT','top main (cantilever)')}),-emb(db),yT-hb,'top')}}
+ /* negative bars at the supports: 1/3 of the span */
+ else if(P.top){const db=P.top.db,e=P.topEnds||[1,1],ne=(e[0]?1:0)+(e[1]?1:0),hb=hk?hh(db):0;
+  if(ne>0){const Lt=R(emb(db)+L/3),b=BM.mk({mat:'TT',n:P.top.n*ne,db,legs:hb>0?[[hb,90],[Lt,0]]:[[Lt,0]],desc:MATN('TT','top at support')});b.role='top';
+   items.push({b,ox:-emb(db),oy:yT-hb,mir:e[1]?L/2:L/2,only:!e[0]&&!!e[1],both:e[0]&&e[1]});if(!(e[0]&&e[1]))items[items.length-1].mir=L/2;if(e[0]&&!e[1])items[items.length-1].mir=null;
+   BM.split(b,stock,BM.lap(db),W).forEach(x=>{x.role='top';bars.push(x)})}}
+ /* compression bars */
+ if(P.comp&&s!=3){const db=P.comp.db,Lb=L+2*emb(db),hb=hk?hh(db):0;add(BM.mk({mat:'TT',n:P.comp.n,db,legs:hb>0?[[hb,90],[Lb,0],[hb,270]]:[[Lb,0]],desc:MATN('TT','compression')}),-emb(db),yC-hb,'comp')}
+ /* manual extra bars of the calculation */
+ const EX=(window.QTL&&QTL.bars||[]).filter(b=>b.ex&&b.ex.kind!='X'),cnt={B:0,T0:0,T1:0};
+ EX.forEach(b=>{const kd=b.ex.kind,Le=Math.min(R(b.ex.L),L),db=b.db,j=cnt[kd]++,g=Math.max(25,db);
+  if(kd=='B'){const y=cv+dst+(P.bot?P.bot.db:(P.hang&&P.hang.bottom?P.hang.db:0))+g+db/2+j*(db+g);add(BM.mk({mat:'BB',n:b.n,db,legs:[[Le,0]],desc:MATN('BB','extra bottom')}),(L-Le)/2,y,'exB')}
+  else{const y=(yT||cur)-g-db/2-j*(db+g),hb=hk?hh(db):0;if(kd=='T0')add(BM.mk({mat:'TT',n:b.n,db,legs:hb>0?[[hb,90],[R(emb(db)+Le),0]]:[[R(emb(db)+Le),0]],desc:MATN('TT','extra top (left)')}),-emb(db),y-hb,'exT');
+   else add(BM.mk({mat:'TT',n:b.n,db,legs:hb>0?[[R(emb(db)+Le),0],[hb,270]]:[[R(emb(db)+Le),0]],desc:MATN('TT','extra top (right)')}),L-Le,y,'exT')}});
+ /* side (skin) bars when h > 900 mm */
+ let nS=0,yS=[];if(h>900&&gv('bm_sb',1)==1){const sd=gv('bm_sbd',12);nS=Math.max(1,Math.ceil((h/2-100)/250));const y0=cv+dst+(P.bot?P.bot.db:12)+60;for(let k=0;k<nS;k++)yS.push(y0+k*250);
+  add(BM.mk({mat:'SB',n:2*nS,db:sd,legs:[[L+2*emb(sd),0]],desc:MATN('SB','side bars')}),-emb(sd),yS[0],'sb');W.push([`حديد جانبي SB لأن العمق ${h} مم أكبر من 900 مم (ACI 9.7.2.3).`,`Side bars SB provided because depth ${h} mm exceeds 900 mm (ACI 9.7.2.3).`])}
+ /* stirrups */
+ const pl=BM.stirPlan(L,P.sp,'beam'),b_=R(bw-2*cv-dst),h_=R(h-2*cv-dst),a_=cv+dst/2,n=pl.pos.length,bst=gv('bm_bst',1),st=[];
+ const mkS=(k,legs)=>BM.mk({mat:'ST',n,db:dst,s:P.sp,zones:pl.zones,legs,desc:nm(k),shape:k,role:'st'});
+ const kind=BM.beamTies(bst,{b_,h_,dst,bw,h,cv,botN:P.bot?P.bot.n:0,botDb:P.bot?P.bot.db:16,mkS,W,P,st});
+ st.forEach(b=>{items.push({b,ox:0,oy:0,st:1});bars.push(b)});
+ const all=BM.finish(BM.merge(bars));
+ /* the drawing items share the merged bars' codes */
+ const F={k:P.k,L,h,bw,cv,dst,sw,s,hk,items,bars:all,pl,nT:n,kind,W,yH,yC,yT,yBot,yS,nS,P,vol:o?o.vol:0,b_,h_};return F};
+const MATN=(m,s)=>[(BM.MATN[m]||['',''])[0],s];
+/* elevation of a single beam */
+BM.beamElev=function(C,F){const {L,h,cv,dst,sw,s,items,pl,P,bars}=F,yb0=Math.max(260,R(.45*h)),ext=Math.min(yb0,260);
+ C.rc('CONC',0,0,L,h);
+ C.pl('OUTL',[[0,-yb0],[-sw,-yb0],[-sw,h+ext],[0,h+ext]]);if(s!=3)C.pl('OUTL',[[L,-yb0],[L+sw,-yb0],[L+sw,h+ext],[L,h+ext]]);
+ pl.pos.forEach(x=>C.ln('ST',x,cv+dst/2,x,h-cv-dst/2,dst));
+ items.filter(i=>!i.st).forEach(i=>drawIt(C,i));
+ BM.zoneDims(C,pl,L,true,h,7);
+ C.dimH(0,L,-yb0,-8,L);C.dimH(-sw,0,-yb0,-8,sw);if(s!=3)C.dimH(L,L+sw,-yb0,-8,sw);C.dimV(L+(s==3?0:sw),0,h,10,h);
+ const cd=r=>codesOf(bars,r),A=[],tx=L+(s==3?0:sw)+C.pm(16);
+ const put=(r,px,py)=>{const c=cd(r);if(c)A.push({px,py,ty:py,t:tl(c)})};
+ put('bot',L*.62,F.yBot);put('hang',L*.3,F.yH);put('comp',L*.45,F.yC);put('top',L*.1,F.yT);put('exB',L*.5,F.yBot+30);put('exT',L*.9,(F.yT||F.yH||h-cv)-30);if(F.nS)put('sb',L*.7,F.yS[0]);
+ bars.filter(b=>b.mat=='ST').forEach((b,i)=>A.push({px:pl.pos[Math.floor(pl.pos.length*(.7+.03*i))],py:h*.5,ty:h*.5+i*C.pm(5.2),t:tl(b.code)}));
+ SD.callouts(C,A,tx,5.2);
+ (P.cuts||[]).forEach(c=>{C.ln('AXIS',c[0],-yb0-C.pm(3),c[0],h+ext+C.pm(2));C.mark(c[0],h+ext+C.pm(6),c[1])})};
+/* sections: the original drawing with the codes in the labels, plus the extra stirrups */
+BM.beamSec=function(C,sc,F,roles){roles=roles||{};const bars=F.bars,P=Object.assign({},sc);const g=r=>{const c=codesOf(bars,roles[r]||r);return c?tl(c):null};
+ const stc=bars.filter(b=>b.mat=='ST'&&b.shape!='cap').map(b=>b.code).join('  +  ');
+ P.t=Object.assign({},sc.t,{bot:g('bot')||sc.t.bot,top:g('top')||sc.t.top,hang:g('hang')||sc.t.hang,comp:g('comp')||sc.t.comp,stir:stc?tl(stc):sc.t.stir});
+ SD.secBeam(C,P);
+ const bw=P.bw,h=P.h,cv=P.cv,dst=P.dst,a=cv+dst/2;
+ const inner=bars.find(b=>b.shape=='inner');if(inner){const db=P.bot?P.bot.db:16,aa=cv+dst+db/2,xs=lay(P.bot?P.bot.n:4,aa,bw-aa);if(xs.length>=4){const x0=xs[1]-db/2-dst/2,x1=xs[xs.length-2]+db/2+dst/2;C.rc('ST',x0,a,x1-x0,h-2*a,dst)}}
+ if(F.nS&&sc.m=='A'||F.nS&&!sc.m){const sd=gv('bm_sbd',12),aa=cv+dst+sd/2;F.yS.forEach(y=>{C.ci('SB',aa,y,sd/2,1);C.ci('SB',bw-aa,y,sd/2,1)})}};
+BM.beamSheet2=function(P,o,title){const F=BM.beam(P,o);if(!F)return null;const sp=SD.base(P.k,title,o,[]),yb0=Math.max(260,R(.45*P.h)),ext=Math.min(yb0,260),s=P.s|0;
+ const wmax=Math.max.apply(null,F.bars.map(b=>{const w=BM.horiz(b);return w.bb.x1-w.bb.x0}).concat([1]))/165,bwid=P.bf>0?P.bf:P.bw,x0=P.bf>0?-(P.bf-P.bw)/2:0;
+ sp.rows=[{h:46,views:[{name:['الواجهة الطولية','ELEVATION'],w:P.L+2*F.sw+300,h:P.h+yb0+ext,x0:-F.sw-150,y0:-yb0,px:[12,70],py:26,min:wmax,draw:C=>BM.beamElev(C,F)}]},
+  {h:54,views:P.secs.map(sc=>({name:['المقطع '+sc.m+'-'+sc.m,'SECTION '+sc.m+'-'+sc.m],w:bwid,h:P.h,x0:x0,y0:0,px:[24,60],py:14,min:20,draw:C=>BM.beamSec(C,Object.assign({m:sc.m},sc.P),F)}))}];
+ sp.bm=true;sp.bars=F.bars;sp.vol=F.vol;sp.notes=sp.notes.slice(0,4).concat(BM.beamNotes(F));F.W.forEach(w=>sp.notes.push(w));return sp};
+BM.beamNotes=F=>[
+ ['الرمز = العنصر - المادة - العدد والقطر - الطول بالملم؛ BB حديد سفلي، TT حديد علوي، SB جانبي، ST كانات (Ø@تباعد المناطق).','CODE = ELEMENT-MAT-NO.Ø DIA-LENGTH (mm); BB BOTTOM, TT TOP, SB SIDE, ST STIRRUPS (Ø@ZONE SPACINGS).'],
+ ['الطول = مجموع الأضلاع على محور السيخ، والمسحوب مرسوم بنفس الأطوال بالقياس الحقيقي.','LENGTH = SUM OF LEGS ON THE BAR AXIS; THE PULL-OUT IS DRAWN TO THE SAME TRUE LENGTHS.'],
+ [`عرض المسند ${F.sw} مم؛ ${F.hk?'الحديد السفلي والعلوي ينتهي بخطاف 90° داخل المسند':'الأسياخ مستقيمة داخل المسند'}، والحديد العلوي عند المساند يمتد L/3.`,`SUPPORT WIDTH ${F.sw} mm; ${F.hk?'BARS END IN 90° HOOKS INSIDE THE SUPPORT':'BARS RUN STRAIGHT INTO THE SUPPORT'}; TOP SUPPORT BARS EXTEND L/3.`],
+ [`الكانة الأولى ${F.pl.first} مم من وجه المسند (ACI 18.6.4.4)، والمنطقة الوسطى تُقسَّم بالتساوي بتباعد لا يزيد على المبيّن بالرمز.`,`FIRST STIRRUP ${F.pl.first} mm FROM THE SUPPORT FACE (ACI 18.6.4.4); THE MIDDLE ZONE IS DIVIDED EVENLY AT NO MORE THAN THE CODE SPACING.`]];
+/* beam stirrup library.  kinds: 1 closed 135, 2 closed 90, 3 U + cap, 4 open U, 5 double 4-leg, 6 triple 6-leg, 7 closed + cross-tie, 8 T/L outline */
+BM.beamTies=(kind,c)=>{const {b_,h_,dst,bw,h,cv,botN,botDb,mkS,W,P,st}=c,closed=h90=>st.push(mkS(h90?'closed90':'closed',BM.rectTie(b_,h_,dst,h90)));let used=kind;
+ const need=(m,msg)=>{if(botN<m){W.push(msg);closed(false);return true}return false};
+ if(kind==1)closed(false);
+ else if(kind==2)closed(true);
+ else if(kind==3){st.push(mkS('u',BM.uTie(b_,h_,dst,false)));st.push(mkS('cap',BM.capBar(b_,dst)))}
+ else if(kind==4)st.push(mkS('u',BM.uTie(b_,h_,dst,false)));
+ else if(kind==5){if(!need(4,['الكانة الرباعية الساق تحتاج 4 أسياخ سفلية على الأقل؛ استُعملت كانة مغلقة.','A 4-leg stirrup needs at least 4 bottom bars; a closed stirrup was used.'])){closed(false);const a=cv+dst+botDb/2,xs=lay(botN,a,bw-a),wi=R(xs[xs.length-2]-xs[1]+botDb+dst);st.push(mkS('inner',BM.rectTie(wi,h_,dst,false)))}}
+ else if(kind==6){if(!need(6,['الكانة سداسية الساق تحتاج 6 أسياخ سفلية على الأقل؛ استُعملت كانة مغلقة.','A 6-leg stirrup needs at least 6 bottom bars; a closed stirrup was used.'])){closed(false);const wi=R(2*b_/5);st.push(mkS('inner',BM.rectTie(wi,h_,dst,false)));st.push(mkS('inner',BM.rectTie(wi,h_,dst,false)))}}
+ else if(kind==7){closed(false);st.push(mkS('xv',BM.crossTie(h_,dst)))}
+ else if(kind==8){if(P.T>0){const ex=(P.bf-bw)/2,a=cv+dst/2,hf=P.hf,poly=P.T==1?[[-ex+a,h-a],[bw+ex-a,h-a],[bw+ex-a,h-hf+a],[bw-a,h-hf+a],[bw-a,a],[a,a],[a,h-hf+a],[-ex+a,h-hf+a]]:[[a,h-a],[bw+ex-a,h-a],[bw+ex-a,h-hf+a],[bw-a,h-hf+a],[bw-a,a],[a,a]];st.push(mkS(P.T==1?'tee':'ell',BM.poly(poly,dst,false)))}else{W.push(['شكل T/L يحتاج جسرًا مرتبطًا ببلاطة؛ استُعملت كانة مغلقة.','A T/L outline needs a flanged beam; a closed stirrup was used.']);closed(false)}}
+ else closed(false);return kind};
+/* wrap the old beam sheet builder (used by beam and bx) */
+{const ob=SD.beamSheet;SD.beamSheet=function(P,o,title){try{if(!BM.off){const s=BM.beamSheet2(P,o,title);if(s)return s}}catch(e){console.log('BM beam',e)}return ob.apply(this,arguments)}}
+
+
+/* ---------- options: lap method (ACI 25.5.2), stock bar length, first stirrup ---------- */
+{const lap0=BM.lap,fyfc=()=>{const k=BM.curK,f=((window.DS||{})[k]||{f:[]}).f.map(x=>x[0]),v=re=>{const i=f.find(x=>new RegExp(re+'$').test(x));return i?SD.inp(i):NaN};let fc=v('fc'),fy=v('fy');if(!(fc>0))fc=25;if(!(fy>0))fy=420;return{fc,fy}};
+ BM.ld=db=>{const q=fyfc(),k=db<=19?2.1:1.7;return Math.max(300,R(q.fy/(k*Math.sqrt(q.fc))*db))};
+ BM.lap=db=>{const m=gv('bm_lapm',0);if(!m)return lap0(db);const ld=q=>q;return Math.max(300,R(BM.ld(db)*(m==2?1.3:1)))};
+ const o0=BM.opts;BM.opts=function(){const O=o0.apply(this,arguments);O.stock=gv('bm_stk',O.stock||12000);return O}}
+/* ================================ continuous beam (cb) ================================ */
+BM.cb=function(P,o){BM.curK='cb';const O=BM.opts(),W=BM.warn=[],N=P.N,L=R(P.L),sw=gv('bm_sw',R(P.sw||300)),h=R(P.h),bw=R(P.bw),cv=P.cv,dst=P.dst,hk=gv('bm_bhk',1)==1,items=[],bars=[],Lt=N*L+(N-1)*sw,stock=O.stock;
+ const xs=i=>i*(L+sw),emb=db=>sw-cv-db/2,eInt=R(sw/2),hh=db=>hkL(db,h-2*(cv+dst)-db);
+ const add=(b,ox,oy,role)=>{b.role=role;items.push({b,ox,oy});BM.split(b,stock,BM.lap(b.db),W).forEach(x=>{x.role=role;bars.push(x)})};
+ /* bottom bars of every span */
+ P.spans.forEach((sp,i)=>{const db=sp.db,eL=i==0?emb(db):eInt,eR=i==N-1?emb(db):eInt,hbL=i==0&&hk?hh(db):0,hbR=i==N-1&&hk?hh(db):0,Lb=L+eL+eR,y=cv+dst+db/2,hm=Math.max(hbL,hbR);
+  const legs=[];if(hbL>0)legs.push([hbL,270]);legs.push([Lb,0]);if(hbR>0)legs.push([hbR,90]);
+  add(BM.mk({mat:'BB',n:sp.n,db,legs,desc:MATN('BB','span '+(i+1))}),xs(i)-eL,y+hbL,'bot'+i)});
+ /* top bars over the interior supports */
+ P.sups.forEach((sp,k)=>{const db=sp.db,half=R(L/3+sw/2+12*db),xc=xs(k+1)-sw/2,y=h-cv-dst-(P.hdb||12)-15-db/2;add(BM.mk({mat:'TT',n:sp.n,db,legs:[[2*half,0]],desc:MATN('TT','at support '+(k+2))}),xc-half,y,'sup'+k)});
+ /* continuous top hanger */
+ const hg=P.hang||{n:2,db:12},hdb=hg.db,hbH=hk?hh(hdb):0,yH=h-cv-dst-hdb/2,LH=Lt+2*emb(hdb);
+ add(BM.mk({mat:'TT',n:hg.n,db:hdb,legs:hbH>0?[[hbH,90],[LH,0],[hbH,270]]:[[LH,0]],desc:MATN('TT','top hanger (continuous)')}),-emb(hdb),yH-hbH,'hang');
+ const pl=BM.stirPlan(L,P.sp,'beam'),b_=R(bw-2*cv-dst),h_=R(h-2*cv-dst),n=pl.pos.length*N,bst=gv('bm_bst',1),st=[]; const mkS=(k,legs)=>BM.mk({mat:'ST',n,db:dst,s:P.sp,zones:pl.zones,legs,desc:nm(k),shape:k,role:'st'});
+ const kind=BM.beamTies(bst,{b_,h_,dst,bw,h,cv,botN:P.spans[0].n,botDb:P.spans[0].db,mkS,W,P:{T:0},st});
+ st.forEach(b=>{items.push({b,ox:0,oy:0,st:1});bars.push(b)});
+ const all=BM.finish(BM.merge(bars));
+ return{k:'cb',N,L,sw,h,bw,cv,dst,hk,items,bars:all,pl,W,Lt,P,vol:o?o.vol:0,yH,kind,xs}};
+BM.cbElev=function(C,F){const {N,L,sw,h,cv,dst,items,pl,Lt,xs,bars,P}=F,yb0=380;
+ C.rc('CONC',0,0,Lt,h);
+ for(let j=0;j<=N;j++){const x1=j==0?-sw:(j==N?Lt:xs(j)-sw),x2=j==0?0:(j==N?Lt+sw:xs(j));C.pl('OUTL',[[x1,0],[x1,-yb0],[x2,-yb0],[x2,0]])}
+ for(let i=0;i<N;i++)pl.pos.forEach(x=>C.ln('ST',xs(i)+x,cv+dst/2,xs(i)+x,h-cv-dst/2,dst));
+ items.filter(i=>!i.st).forEach(i=>drawIt(C,i));
+ for(let i=0;i<N;i++)BM.zoneDims(C,pl,L,true,h,7,xs(i));
+ C.dimH(0,Lt,-yb0,-7,R(Lt));C.dimV(Lt+sw,0,h,10,h);
+ const cd=r=>codesOf(bars,r),A=[];P.spans.forEach((sp,i)=>{const c=cd('bot'+i);if(c)A.push({px:xs(i)+L*.5,py:cv+dst+sp.db/2,ty:-yb0-C.pm(10)-(i%2)*C.pm(5),t:tl(c)})});
+ P.sups.forEach((s_,k)=>{const c=cd('sup'+k);if(c)A.push({px:xs(k+1)-sw/2-L/3*.4,py:h-cv-dst-(P.hdb||12)-15-s_.db/2,ty:h+C.pm(22)+(k%2)*C.pm(5),t:tl(c)})});
+ {const c=cd('hang');if(c)A.push({px:L*.18,py:F.yH,ty:h+C.pm(12),t:tl(c)})}
+ bars.filter(b=>b.mat=='ST').forEach((b,i)=>A.push({px:xs(0)+pl.pos[Math.floor(pl.pos.length*(.6+.03*i))],py:h*.5,ty:h+C.pm(32)+i*C.pm(5.2),t:tl(b.code)}));
+ SD.callouts(C,A.filter(a=>a.ty>=h||true),Lt+sw+C.pm(14),5.2);
+ (P.cuts||[]).forEach(c=>{C.ln('AXIS',c[0],-C.pm(2),c[0],h+C.pm(4));C.mark(c[0],h+C.pm(8),c[1])})};
+BM.cbSheet2=function(P,o,rowsOld,title,extra){const F=BM.cb(P,o);if(!F)return null;const sp=SD.base('cb',title,o,[]),bw=P.bw,h=P.h,Lt=F.Lt,secs=rowsOld[1].views;
+ const wmax=Math.max.apply(null,F.bars.map(b=>{const w=BM.horiz(b);return w.bb.x1-w.bb.x0}).concat([1]))/165;
+ sp.rows=[{h:50,views:[{name:['الواجهة الطولية','ELEVATION'],w:Lt+2*F.sw+300,h:h+380+120,x0:-F.sw-150,y0:-380,px:[12,70],py:36,min:wmax,draw:C=>BM.cbElev(C,F)}]},
+  {h:50,views:secs.map(v=>{const d=v.draw,m=v.name[0].slice(-3,-2);return Object.assign({},v,{px:[26,60],draw:C=>{const sc=P.secsP[m];BM.beamSec(C,Object.assign({m},sc),F,m=='A'?{bot:'bot0'}:{top:'sup0'})}})})}];
+ sp.bm=true;sp.bars=F.bars;sp.vol=F.vol;sp.notes=sp.notes.slice(0,4).concat(BM.beamNotes(F));
+ sp.notes.push(['الحديد السفلي لكل فتحة منفصل ويدخل المسند الداخلي نصف عرضه، والحديد العلوي عند المساند بطول 2(L/3 + نصف المسند + 12Ø).','BOTTOM BARS ARE SEPARATE PER SPAN AND RUN HALF THE SUPPORT WIDTH INTO INTERIOR SUPPORTS; SUPPORT TOP BARS = 2(L/3 + HALF SUPPORT + 12Ø).']);
+ F.W.forEach(w=>sp.notes.push(w));return sp};
+/* wrap the old cb definition: grab its parameters through the elevation callback */
+{const omk=SD.mkSheet;SD.mkSheet=function(k,o,title,rows,extra){
+  if(!BM.off&&(k=='cb')){try{let P=null;const oe=SD.elevCB;SD.elevCB=function(C,Pp){P=Pp};try{rows[0].views[0].draw({})}finally{SD.elevCB=oe}
+    if(P){const hg=SD.bf(o,'Top hanger');P.hang=hg?{n:hg.n,db:hg.db}:{n:2,db:12};P.hdb=P.hang.db;P.secsP={};rows[1].views.forEach(v=>{const m=v.name[0].slice(-3,-2);const dum={ci:()=>{},rc:()=>{},pl:()=>{},ln:()=>{},tx:()=>{},dimH:()=>{},dimV:()=>{},call:()=>{},mark:()=>{},pm:x=>x};let PP=null;const os=SD.secBeam;SD.secBeam=function(C,Pq){PP=Pq};try{v.draw(dum)}finally{SD.secBeam=os}if(PP)P.secsP[m]=PP});
+     const s=BM.cbSheet2(P,o,rows,title,extra);if(s)return s}}catch(e){console.log('BM cb',e)}}
+  if(!BM.off&&(k=='col'||k=='cm'||k=='cx')){try{let P=null;const oe=SD.elevCol;SD.elevCol=function(C,Pp){P=Pp};try{rows[0].views[0].draw({})}finally{SD.elevCol=oe}
+    if(P){const s=BM.colSheet2(k,P,o,title,extra);if(s)return s}}catch(e){console.log('BM col',e)}}
+  return omk.apply(this,arguments)}}
+
+/* ===================================== COLUMNS ===================================== */
+BM.col=function(k,P,o){BM.curK=k;const O=BM.opts(),W=BM.warn=[],circ=gv('bm_csec',0)==1,b=R(P.b),h=circ?R(P.b):R(P.h),cv=P.cv,dt=P.dt,db=P.db,Lu=R(P.Lu),lap=BM.lap(db),a=cv+dt+db/2,items=[],bars=[],stock=O.stock;
+ const n=P.pts?P.pts.length:2*P.n1+2*(P.n2-2),off=gv('bm_cof',0),top=gv('bm_ctop',0)==1,hbm=gv('bm_hb',500);
+ /* longitudinal bars */
+ let legs,desc,lx;
+ if(top){const hv=Lu+hbm-50,hk=Math.min(R(SD.HKF(db)),Math.floor(b-2*a));legs=[[hv,90],[hk,0]];desc=MATN('LB','top storey: hook into the slab')}
+ else if(off>0){const run=6*off,inc=Math.hypot(run,off),th=Math.atan2(off,run)/D2R,v2=lap-run;if(v2<150)W.push(['طول التراكب بعد الكوع قصير؛ زِد التراكب أو قلّل الإزاحة.','Lap after the offset bend is short; increase the lap or reduce the offset.']);legs=[[Lu,90],[inc,90-th],[Math.max(v2,0),90]];desc=MATN('LB','offset bend 1:6')}
+ else{legs=[[Lu+lap,90]];desc=MATN('LB','straight, lapped to the next storey')}
+ const lb=BM.mk({mat:'LB',n,db,legs,desc});lb.role='lb';
+ BM.split(lb,stock,lap,W).forEach(x=>{x.role='lb';bars.push(x)});
+ items.push({b:lb,ox:a,oy:0,mir:b/2});
+ /* ties */
+ const pl=BM.stirPlan(Lu,P.sp,'col'),bT=R(b-2*cv-dt),hT=R(h-2*cv-dt),nT=pl.pos.length,cst=gv('bm_cst',2),st=[];
+ const mkS=(kk,legs2,cnt)=>BM.mk({mat:'ST',n:cnt==null?nT:cnt,db:dt,s:P.sp,zones:pl.zones,legs:legs2,desc:nm(kk),shape:kk,role:'st'});
+ const xs=P.pts?P.pts.filter(q=>q[1]==P.pts[0][1]).map(q=>q[0]).sort((u,v)=>u-v):lay(P.n1,a,b-a),ys=P.pts?[]:lay(P.n2,a,h-a);
+ const alt=m=>{const r=[];for(let i=1;i<=m-2;i+=2)r.push(i);return r};
+ let kind=cst,xvI=[],xhI=[];
+ if(circ){const Dt=b-2*cv-dt;
+  if(cst==2){const p=P.sp,Ls=BM.spiralLen(Dt,p,Lu),cl=p-dt;if(cl<25||cl>75)W.push([`التباعد الصافي للحلزون ${R(cl)} مم خارج المدى 25-75 مم (ACI 25.7.3.1)؛ عدّل الخطوة.`,`Clear spiral spacing ${R(cl)} mm is outside 25-75 mm (ACI 25.7.3.1); change the pitch.`]);
+   const sp=BM.mk({mat:'SP',n:1,db:dt,s:p,legs:[[Ls,0]],desc:[BM.MATN.SP[0],'spiral, 1.5 extra turns each end'],shape:'spiral',unroll:true,role:'st'});st.push(sp);}
+  else{st.push(BM.mk({mat:'ST',n:nT,db:dt,s:P.sp,zones:pl.zones,legs:[[BM.ringLen(Dt,dt),0]],desc:nm('ring'),shape:'ring',unroll:true,role:'st'}))}
+  if(cst>2)W.push(['العمود الدائري يدعم الطوق الدائري أو الحلزوني فقط؛ استُعمل الطوق.','A round column supports circular hoops or spiral only; circular hoops were used.']);kind=cst==2?2:1}
+ else{
+  xvI=alt(xs.length);xhI=alt(ys.length);
+  if(kind==3&&!(P.n1%2==1&&P.n2%2==1&&P.n1>=3&&P.n2>=3&&!P.pts)){kind=2;W.push(['المعيني يحتاج سيخًا في منتصف كل وجه (عدد فردي على الوجهين)؛ استُعملت روابط وسطية.','A diamond tie needs a bar at the middle of each face (odd count on both faces); cross-ties were used.'])}
+  if(kind==4&&!(!P.pts&&P.n1>=4&&P.n2>=4)){kind=2;W.push(['الكانة الداخلية تحتاج 4 أسياخ على الأقل على كل وجه؛ استُعملت روابط وسطية.','An inner tie needs at least 4 bars on each face; cross-ties were used.'])}
+  if(kind==5){const long=Math.max(bT,hT),wl=R(.6*long);if(bT>=hT)st.push(mkS('ov',BM.rectTie(wl,hT,dt),2*nT));else st.push(mkS('ov',BM.rectTie(bT,wl,dt),2*nT))}
+  else{st.push(mkS(kind==6?'closed90':'closed',BM.rectTie(bT,hT,dt,kind==6)));
+   if(kind==2){if(xvI.length)st.push(mkS('xv',BM.crossTie(hT,dt),nT*xvI.length));if(xhI.length)st.push(mkS('xh',BM.crossTie(bT,dt),nT*xhI.length))}
+   else if(kind==3){const hx=bT/2,hy=hT/2;st.push(mkS('dia',BM.poly([[0,hy],[hx,0],[0,-hy],[-hx,0]],dt,false)))}
+   else if(kind==4){const wi=R(xs[xs.length-2]-xs[1]+db+dt),hi=R(ys[ys.length-2]-ys[1]+db+dt);st.push(mkS('inner',BM.rectTie(wi,hi,dt,false)))}}}
+ st.forEach(x=>{items.push({b:x,ox:0,oy:0,st:1});if(x.unroll&&x.L>stock)BM.split(x,stock,Math.max(300,48*dt),W).forEach(y=>{y.role='st';y.unroll=true;bars.push(y)});else bars.push(x)});
+ const all=BM.finish(BM.merge(bars));
+ return{k,b,h,cv,dt,db,Lu,lap,a,items,bars:all,pl,W,P,kind,xs,ys,xvI:kind==2&&!circ?xvI:[],xhI:kind==2&&!circ?xhI:[],top,off,vol:o?o.vol:0,bT,hT,n,circ,cst}};
+BM.colElev=function(C,F){const {b,Lu,cv,dt,db,a,lap,items,pl,bars,top,off}=F,hbm=gv('bm_hb',500),Hup=top?hbm:lap;
+ C.pl('OUTL',[[-250,-380],[-250,0],[b+250,0],[b+250,-380]]);C.ln('OUTL',-250,-380,-120,-300);C.ln('OUTL',b+250,-380,b+120,-300);
+ C.rc('CONC',0,0,b,Lu);if(top){C.rc('OUTL',-250,Lu,b+500,hbm)}
+ pl.pos.forEach(y=>C.ln('ST',cv,y,b-cv,y,dt));
+ items.filter(i=>!i.st).forEach(i=>drawIt(C,i));
+ BM.zoneDims(C,pl,Lu,false,b,14);
+ C.dimV(b,0,Lu,30,Lu);if(!top)C.dimV(b,Lu,Lu+lap,30,R(lap));
+ const cd=r=>codesOf(bars,r),A=[];
+ const lb=cd('lb');A.push({px:b-a,py:Lu*.62,ty:Lu*.62,t:tl(lb)});
+ const cs=bars.filter(x=>x.mat=='ST'||x.mat=='SP').map(x=>x.code);cs.forEach((c,i)=>A.push({px:cv,py:Lu*.35+i*0,ty:Lu*.35-i*C.pm(6),t:tl(c)}));
+ A.push({px:b-a,py:top?Lu+hbm*.5:Lu+lap*.5,ty:top?Lu+hbm*.5:Lu+lap*.5,t:tl(top?'HOOK':`LAP ${SD.LAPF()}{d}`)});
+ SD.callouts(C,A.map(q=>({px:q.px,py:q.py,ty:q.ty,t:q.t})),b+C.pm(52),5.2);
+ C.tx('TEXT',b/2,-C.pm(6),'FOOTING / SLAB','FOOTING / SLAB',{a:'c',h:2})};
+BM.colSec=function(C,F){const {b,h,cv,dt,db,a,bars,P,kind,xs,ys,xvI,xhI,circ,n}=F,lb=codesOf(bars,'lb'),cs=bars.filter(x=>x.mat=='ST'||x.mat=='SP').map(x=>x.code),pts=[];
+ if(circ){const Rb=b/2-a;for(let i=0;i<n;i++){const t=2*Math.PI*i/n+Math.PI/2;pts.push([b/2+Rb*Math.cos(t),b/2+Rb*Math.sin(t)])}}
+ else if(P.pts)P.pts.forEach(q=>pts.push(q));else{xs.forEach(x=>{pts.push([x,a]);pts.push([x,h-a])});ys.slice(1,-1).forEach(y=>{pts.push([a,y]);pts.push([b-a,y])})}
+ const c0=cv+dt/2;
+ if(circ){C.ci('CONC',b/2,b/2,b/2,0);C.ci('ST',b/2,b/2,(b-2*cv-dt)/2,0)}
+ else{C.rc('CONC',0,0,b,h);
+  if(F.cst==5&&!circ){const long=Math.max(b,h)-2*c0,wl=.6*long;if(b>=h){C.rc('ST',c0,c0,wl,h-2*c0,dt);C.rc('ST',b-c0-wl,c0,wl,h-2*c0,dt)}else{C.rc('ST',c0,c0,b-2*c0,wl,dt);C.rc('ST',c0,h-c0-wl,b-2*c0,wl,dt)}}
+  else C.rc('ST',c0,c0,b-2*c0,h-2*c0,dt)}
+ xvI.forEach(i=>C.ln('ST',xs[i],c0,xs[i],h-c0,dt));xhI.forEach(i=>C.ln('ST',c0,ys[i],b-c0,ys[i],dt));
+ if(bars.find(x=>x.shape=='dia')){const hx=(b-2*c0)/2,hy=(h-2*c0)/2;C.pl('ST',[[b/2,h/2+hy],[b/2+hx,h/2],[b/2,h/2-hy],[b/2-hx,h/2]],1,dt)}
+ if(bars.find(x=>x.shape=='inner')){const x0=xs[1]-db/2-dt/2,x1=xs[xs.length-2]+db/2+dt/2,y0=ys[1]-db/2-dt/2,y1=ys[ys.length-2]+db/2+dt/2;C.rc('ST',x0,y0,x1-x0,y1-y0,dt)}
+ pts.forEach(q=>C.ci('LB',q[0],q[1],db/2,1));
+ C.dimH(0,b,0,-9,b);C.dimV(0,0,h,-9,h);C.tx('TEXT',b/2,h/2-C.pm(1),`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+ const tx=b+C.pm(10),tp=pts.reduce((m,q)=>(q[1]>m[1]||(q[1]==m[1]&&q[0]>m[0]))?q:m,pts[0]),A=[{px:tp[0],py:tp[1],ty:tp[1],t:tl(lb)}];
+ cs.forEach((c,i)=>A.push({px:b-cv-dt/2,py:h*.5,ty:h*.5-i*C.pm(5),t:tl(c)}));SD.callouts(C,A,tx,4.6)};
+BM.colSheet2=function(k,P,o,title,extra){const F=BM.col(k,P,o);if(!F)return null;const sp=SD.base(k,title,o,[]),lap=F.lap,hbm=gv('bm_hb',500),Hup=F.top?hbm:lap;
+ const wmax=Math.max.apply(null,F.bars.map(b=>{const w=BM.horiz(b);return w.bb.x1-w.bb.x0}).concat([1]))/165;
+ sp.rows=[{h:100,views:[{name:['الواجهة','ELEVATION'],w:F.b,h:F.Lu+Hup+450,x0:0,y0:-450,px:[44,70],py:14,share:3,min:wmax,draw:C=>BM.colElev(C,F)},
+  {name:['المقطع','SECTION'],w:F.b,h:F.h,x0:0,y0:0,px:[24,60],py:30,min:10,share:3,draw:C=>BM.colSec(C,F)}]}];
+ sp.bm=true;sp.bars=F.bars;sp.vol=F.vol;sp.notes=sp.notes.slice(0,4).concat(BM.colNotes(F));F.W.forEach(w=>sp.notes.push(w));return sp};
+BM.colNotes=F=>[
+ ['الرمز = العنصر - المادة - العدد والقطر - الطول بالملم؛ LB حديد طولي، ST كانات (Ø@تباعد المناطق).','CODE = ELEMENT-MAT-NO.Ø DIA-LENGTH (mm); LB LONGITUDINAL BARS, ST TIES (Ø@ZONE SPACINGS).'],
+ ['الطول = مجموع الأضلاع على محور السيخ، والمسحوب مرسوم بنفس الأطوال بالقياس الحقيقي.','LENGTH = SUM OF LEGS ON THE BAR AXIS; THE PULL-OUT IS DRAWN TO THE SAME TRUE LENGTHS.'],
+ [F.top?'عمود الطابق الأخير: الأسياخ بخطاف 90° للداخل داخل البلاطة/الجسر.':(F.off>0?`الأسياخ بكوع إزاحة ${F.off} مم بميل 1:6 عند رأس العمود لتغيّر المقطع.`:'الأسياخ مستقيمة وتمتد فوق العمود بطول التراكب للطابق التالي.'),F.top?'TOP STOREY: BARS HOOKED 90° INWARD INTO THE SLAB/BEAM.':(F.off>0?`BARS OFFSET ${F.off} mm AT 1:6 AT THE COLUMN HEAD FOR THE SECTION CHANGE.`:'BARS RUN STRAIGHT AND EXTEND ABOVE THE COLUMN BY THE LAP LENGTH.')],
+ [`أول كانة ${F.pl.first} مم فوق وجه الأساس/البلاطة (≤ نصف التباعد، ACI 10.7.6.2)، والمنطقة الوسطى تُقسَّم بالتساوي بتباعد لا يزيد على المبيّن بالرمز.`,`FIRST TIE ${F.pl.first} mm ABOVE THE FOOTING/SLAB (≤ HALF SPACING, ACI 10.7.6.2); THE MIDDLE ZONE IS DIVIDED EVENLY AT NO MORE THAN THE CODE SPACING.`],
+ ...(F.circ||F.cst==5?[[F.circ?'الطوق الدائري/الحلزون مرسوم مفرودًا في منطقة السحب بطوله الحقيقي (محيط الطوق + تراكب + خطافان؛ الحلزون بـ1.5 لفة إضافية بكل طرف).':'الكانات المتداخلة: كل طوق يحيط بجزء من الأسياخ ويتشاركان بالأسياخ الوسطية.',F.circ?'RING/SPIRAL IS SHOWN UNROLLED IN THE PULL-OUT AT TRUE LENGTH (CIRCUMFERENCE + LAP + 2 HOOKS; SPIRAL HAS 1.5 EXTRA TURNS AT EACH END).':'OVERLAPPING HOOPS: EACH HOOP ENCLOSES PART OF THE BARS AND THEY SHARE THE MIDDLE BARS.']]:[])];
+
+/* ===================================== SM page fields ===================================== */
+{const SP=SM.SPEC,N_=(id,ar,en,d,u,g)=>({id,ar,en,d,u:u===undefined?'':u,g:g||'st'}),S_=(id,ar,en,d,opts,g)=>({id,ar,en,d,sel:opts,u:'',g:g||'st'});
+ const Z=[N_('bm_fs','أول كانة من الوجه (0 = حسب ACI تلقائي)','First stirrup from the face (0 = automatic per ACI)',0,'mm'),
+  N_('bm_z1l','طول المنطقة 1 من وجه المسند (0 = بلا)','Zone 1 length from the face (0 = none)',0,'mm'),N_('bm_z1s','تباعد المنطقة 1','Zone 1 spacing',100,'mm'),N_('bm_z2l','طول المنطقة 2 (0 = بلا)','Zone 2 length (0 = none)',0,'mm'),N_('bm_z2s','تباعد المنطقة 2','Zone 2 spacing',150,'mm')];
+ const GEN=[S_('bm_lapm','طول التراكب','Lap splice length',0,[[0,'حسب خانة التراكب (40Ø افتراضي)','From the lap input (40Ø default)'],[1,'ACI 25.5.2 فئة A (1.0 ld)','ACI 25.5.2 Class A (1.0 ld)'],[2,'ACI 25.5.2 فئة B (1.3 ld)','ACI 25.5.2 Class B (1.3 ld)']],'rf'),
+  S_('bm_stk','طول سيخ التسليح التجاري','Stock bar length',12000,[[6000,'6 م','6 m'],[9000,'9 م','9 m'],[12000,'12 م','12 m'],[15000,'15 م','15 m']],'rf')];
+ const BEAM=[N_('bm_sw','عرض المسند','Support width',300,'mm','dim'),S_('bm_bhk','نهايات الحديد داخل المسند','Bar ends inside the support',1,[[1,'خطاف 90°','90° hook'],[0,'مستقيمة','Straight']],'rf'),
+  S_('bm_bst','شكل الكانات','Stirrup shape',1,[[1,'مغلقة (خطاف 135°)','Closed (135° hooks)'],[2,'مغلقة (خطاف 90°)','Closed (90° hooks)'],[3,'U مع غطاء علوي (قطعتان)','U with top cap (two-piece)'],[4,'U مفتوحة','Open U'],[5,'مزدوجة 4 سيقان','Double (4-leg)'],[6,'ثلاثية 6 سيقان','Triple (6-leg)'],[7,'مغلقة + رابط وسطي (جسر عريض)','Closed + cross-tie (wide beam)'],[8,'مقطع T/L (جسر مرتبط ببلاطة)','T/L outline (flanged beam)']])];
+ const COL=[S_('bm_csec','شكل مقطع العمود','Column section',0,[[0,'مستطيل (b × h)','Rectangular (b × h)'],[1,'دائري (القطر = b)','Circular (diameter = b)']],'dim'),
+  S_('bm_cst','شكل الكانات','Tie shape',2,[[1,'مغلقة 135° (دائري: طوق)','Closed 135° (circular: hoop)'],[2,'مغلقة + روابط وسطية (دائري: حلزون)','Closed + cross-ties (circular: spiral)'],[3,'مغلقة + معينية','Closed + diamond'],[4,'مغلقة + كانة داخلية','Closed + inner tie'],[5,'كانات متداخلة (2)','Overlapping hoops (2)'],[6,'مغلقة بخطاف 90° (غير زلزالي)','Closed 90° hooks (non-seismic)']]),
+  N_('bm_ov','تراكب طرفي الطوق الدائري','Circular hoop end overlap',150,'mm'),
+  N_('bm_cof','إزاحة الأسياخ عند رأس العمود (0 = مستقيمة)','Bar offset at the column head (0 = straight)',0,'mm','rf'),S_('bm_ctop','نهاية الأسياخ العلوية','Top end of the bars',0,[[0,'تمتد وتتراكب للطابق التالي','Continue and lap to the next storey'],[1,'عمود أخير: خطاف داخل البلاطة','Top storey: hook into the slab']],'rf'),N_('bm_hb','عمق الجسر/البلاطة فوق العمود','Beam/slab depth above the column',500,'mm','dim')];
+ const add=(k,a)=>{if(SP[k])a.forEach(f=>{if(!SP[k].f.some(x=>x.id==f.id))SP[k].f.push(f)})};
+ ['beam','bx','cb'].forEach(k=>add(k,BEAM.concat(Z,GEN)));['col','cm','cx'].forEach(k=>add(k,COL.concat(Z,GEN)));['ftg','fr','fs','cf','rf'].forEach(k=>add(k,GEN))}
+})();
+
+</script>
+<script>
+window.PAPLBL=(p,en)=>{const f={A4:'71%',A2:'141%',A1:'200%',A0:'283%'}[p];return f?(en?' (A3 LAYOUT; '+p+' = '+f+')':' (A3؛ '+p+' = '+f+')'):' (A3)'};
+/*bar42*/
+/* FABRUM full raft (up to 50 m): column bays (single / equal / different), strips, edge bars (none / U / closed stirrups),
+   punching-shear steel (none / closed stirrups / headed studs), partial enlarged sections, code = drawn length. */
+(()=>{
+if(!window.BM||!window.SD||!window.SM||!window.SM.SPEC||!window.SM.SPEC.rf)return;
+const BM=window.BM,SD=window.SD,SM=window.SM,R=Math.round,SPEC=SM.SPEC;
+const gv=(id,d)=>{const v=SD.inp(id);return isFinite(v)?v:d};
+const MATN=BM.MATN,sum=a=>a.reduce((x,y)=>x+y,0),cum=a=>{const r=[0];a.forEach(x=>r.push(r[r.length-1]+x));return r};
+Object.assign(SD.LAY,{PS:{c:62,col:'#b03a2e',w:.35},SS:{c:210,col:'#7d3c98',w:.4},ES:{c:94,col:'#2c7a4b',w:.4}});
+Object.assign(MATN,{PS:['كانات قص ثاقب مغلقة حول العمود','Punching-shear closed stirrups'],SS:['مسامير قص برأس (shear studs)','Headed shear studs'],ES:['كانات حافة مغلقة','Closed edge stirrups']});
+/* ---------------- fields ---------------- */
+const N_=(id,ar,en,d,u,g,vis)=>{const f={id,ar,en,d,u:u===undefined?'':u,g:g||'dim'};if(vis)f.vis=vis;return f};
+const S_=(id,ar,en,d,opts,g,vis)=>{const f={id,ar,en,d,sel:opts,u:'',g:g||'rf'};if(vis)f.vis=vis;return f};
+const CNT=Array.from({length:16},(_,i)=>[i+1,String(i+1),String(i+1)]);
+const NEWF=[
+ S_('bm_mode','توزيع الأعمدة (الباكسات)','Column layout (bays)',0,[[0,'لوحة واحدة (أربعة أعمدة)','Single panel (4 columns)'],[1,'باكسات متساوية','Equal bays'],[2,'باكسات مختلفة','Different bays'],[3,'رفت بدون أعمدة (فرش فقط)','Raft without columns (mats only)']],'dim'),
+ N_('bm_nbx','عدد الباكسات بالاتجاه X (طول الباك = l1)','Bays in X (bay length = l1)',2,'','dim',v=>v.bm_mode==1),
+ N_('bm_nby','عدد الباكسات بالاتجاه Y (عرض الباك = l2)','Bays in Y (bay width = l2)',2,'','dim',v=>v.bm_mode==1),
+ S_('bm_cnx','عدد الباكسات بالاتجاه X','Number of bays in X',3,CNT,'dim',v=>v.bm_mode==2),
+ S_('bm_cny','عدد الباكسات بالاتجاه Y','Number of bays in Y',2,CNT,'dim',v=>v.bm_mode==2)]
+ .concat(Array.from({length:16},(_,i)=>N_('bm_bx'+(i+1),`طول الباك ${i+1} (اتجاه X)`,`Bay ${i+1} length (X)`,6000,'mm','dim',v=>v.bm_mode==2&&v.bm_cnx>=i+1)))
+ .concat(Array.from({length:16},(_,i)=>N_('bm_by'+(i+1),`عرض الباك ${i+1} (اتجاه Y)`,`Bay ${i+1} width (Y)`,6000,'mm','dim',v=>v.bm_mode==2&&v.bm_cny>=i+1)))
+ .concat([
+ N_('bm_rlx','طول الرفت (اتجاه X) — حتى 50 م','Raft length (X) - up to 50 m',20000,'mm','dim',v=>v.bm_mode==3),
+ N_('bm_rly','عرض الرفت (اتجاه Y) — حتى 50 م','Raft width (Y) - up to 50 m',15000,'mm','dim',v=>v.bm_mode==3),
+ N_('bm_rdb','قطر الفرش السفلي Ø','Bottom mat Ø',16,'mm','rf',v=>v.bm_mode==3),
+ N_('bm_rsb','تباعد الفرش السفلي','Bottom mat spacing',200,'mm','rf',v=>v.bm_mode==3),
+ N_('bm_rdt','قطر الفرش العلوي Ø','Top mat Ø',16,'mm','rf',v=>v.bm_mode==3),
+ N_('bm_rst','تباعد الفرش العلوي','Top mat spacing',200,'mm','rf',v=>v.bm_mode==3),
+ N_('bm_rov','بروز الرافت خارج محور العمود الطرفي (كل جهة)','Overhang beyond the outer column axis (each side)',500,'mm','dim'),
+ S_('bm_eg','حديد الحافة (الأطراف الأربعة)','Edge bars (all four edges)',1,[[0,'بدون','None'],[1,'حرف U','U-bars'],[2,'كانات مغلقة','Closed stirrups']],'rf'),
+ N_('bm_ud','قطر حديد الحافة Ø (0 = مثل شريحة العمود)','Edge bar Ø (0 = as column strip)',0,'mm','rf',v=>v.bm_eg>0),
+ N_('bm_us','تباعد حديد الحافة (0 = مثل شريحة العمود)','Edge bar spacing (0 = as column strip)',0,'mm','rf',v=>v.bm_eg>0),
+ S_('bm_pn','حديد القص الثاقب حول الأعمدة','Punching-shear steel at columns',0,[[0,'بدون','None'],[1,'كانات مغلقة','Closed stirrups'],[2,'مسامير قص برأس (studs)','Headed shear studs']],'rf'),
+ N_('bm_pd','قطر حديد القص Ø','Shear steel Ø',10,'mm','rf',v=>v.bm_pn>0),
+ N_('bm_pr','عدد الصفوف من وجه العمود','Rows from the column face',4,'','rf',v=>v.bm_pn>0),
+ N_('bm_ps','تباعد الصفوف (0 = d/2)','Row spacing (0 = d/2)',0,'mm','rf',v=>v.bm_pn>0),
+ N_('bm_pq','عدد خطوط القص على كل وجه','Shear lines per column face',2,'','rf',v=>v.bm_pn>0),
+ N_('bm_pw','عرض الكانة في المسقط','Stirrup plan width',150,'mm','rf',v=>v.bm_pn==1)]);
+NEWF.forEach(f=>{if(!SPEC.rf.f.some(x=>x.id==f.id))SPEC.rf.f.push(f)});
+{const u=SPEC.rf.f.find(x=>x.id=='bm_ub');if(u)u.vis=()=>false}
+['rtl1','rtl2','rtcc','m_cw','m_dn1','m_sn1','m_dn2','m_sn2','m_dp1','m_sp1','m_dp2','m_sp2','bm_nd','bm_dd','bm_nt','bm_dt','bm_rov','bm_pn','bm_pd','bm_pr','bm_ps','bm_pq','bm_pw'].forEach(id=>{const f=SPEC.rf.f.find(x=>x.id==id);if(!f)return;const o=f.vis;f.vis=v=>v.bm_mode!=3&&(o?o(v):true)});
+SPEC.rf.ar='رافت مسطح — لوحة واحدة أو رافت كامل (حتى 50 م)';SPEC.rf.en='Flat raft - single panel or full raft (up to 50 m)';
+/* ---------------- geometry ---------------- */
+BM.rfBays=(l1,l2)=>{const m=gv('bm_mode',0);let bx,by;
+ if(m==1){bx=Array(Math.max(1,Math.min(20,gv('bm_nbx',2)|0))).fill(l1);by=Array(Math.max(1,Math.min(20,gv('bm_nby',2)|0))).fill(l2)}
+ else if(m==2){const nx=Math.max(1,Math.min(16,gv('bm_cnx',3)|0)),ny=Math.max(1,Math.min(16,gv('bm_cny',2)|0));bx=[];by=[];for(let i=1;i<=nx;i++)bx.push(Math.max(500,R(gv('bm_bx'+i,l1))));for(let i=1;i<=ny;i++)by.push(Math.max(500,R(gv('bm_by'+i,l2))))}
+ else if(m==3){bx=[Math.max(1000,Math.min(50000,R(gv('bm_rlx',20000))))];by=[Math.max(1000,Math.min(50000,R(gv('bm_rly',15000))))]}
+ else{bx=[l1];by=[l2]}
+ return{m,bx,by}};
+/* strips across one direction: column strips centred on the column lines (edge strips run to the raft edge), middle strips between */
+BM.rfZones=(bays,ov,cw,tot)=>{const p=cum(bays).map(x=>x+ov),h=cw/2,z=[];
+ p.forEach((x,j)=>{let a=x-h,b=x+h;if(j==0)a=0;if(j==p.length-1)b=tot;a=Math.max(a,0);b=Math.min(b,tot);const prev=z.length?z[z.length-1].b:0;
+  if(a>prev+1)z.push({a:prev,b:a,col:false});if(b>Math.max(a,prev)+.5)z.push({a:Math.max(a,prev),b:b,col:true})});
+ return z};
+const zpos=(zones,col,spec)=>{const a=[];zones.forEach(q=>{if(q.col!=col)return;const n=Math.max(1,Math.ceil((q.b-q.a)/spec.s-1e-9)),st=(q.b-q.a)/n;for(let i=0;i<n;i++)a.push(q.a+(i+.5)*st)});return a};
+const nOf=(zones,col,s)=>zones.filter(q=>q.col==col).reduce((a,q)=>a+Math.max(1,Math.ceil((q.b-q.a)/s-1e-9)),0);
+const fyfc=k=>{const f=(DS[k]||{f:[]}).f.map(x=>x[0]),v=s=>{const i=f.find(x=>new RegExp(s+'$').test(x));return i?SD.inp(i):NaN};return{fc:v('fc'),fy:v('fy')}};
+const dowelPos=(c,nd,ins)=>{const nn=SD.colN(nd,c,c),xs=SD.lay(nn[0],ins,c-ins),ys=SD.lay(nn[1],ins,c-ins),a=[];
+ xs.forEach(x=>{a.push([x,ins]);a.push([x,c-ins])});ys.slice(1,-1).forEach(y=>{a.push([ins,y]);a.push([c-ins,y])});return a};
+/* ---------------- the raft ---------------- */
+BM.raft=function(){BM.curK='rf';const O=BM.opts(),W=BM.warn=[],X=SD.dbg().rf,o=window.QTL;if(!X||!o)return null;
+ let PK=X.PK;const c=X.c,h=X.h,cv=SD.inp(SD.cvId('rf')),cT=O.cvTop,both=gv('bm_both',1)==1;
+ const bay=BM.rfBays(R(X.l1),R(X.l2)),bx=bay.bx,by=bay.by,m3=bay.m==3,ov=m3?0:Math.max(0,R(gv('bm_rov',500)));
+ if(m3){const q=(i,d)=>Math.max(6,R(gv(i,d)));const sb=Math.max(50,R(gv('bm_rsb',200))),st=Math.max(50,R(gv('bm_rst',200))),b={db:q('bm_rdb',16),s:sb},t={db:q('bm_rdt',16),s:st};PK=[b,b,t,t];if(R(gv('bm_rlx',20000))>50000||R(gv('bm_rly',15000))>50000)W.push(['الأبعاد المدخلة تتجاوز 50 م؛ قُصّت إلى 50000 مم.','The entered size exceeds 50 m; it was clipped to 50000 mm.'])}
+ const Lx=sum(bx)+2*ov,Ly=sum(by)+2*ov;
+ if(Lx>50000||Ly>50000)W.push([`أبعاد الرافت ${Lx}×${Ly} مم تتجاوز 50000 مم؛ الرسم يعمل لكن راجع مهندسًا.`,`Raft ${Lx}x${Ly} mm exceeds 50000 mm; the drawing works but have it reviewed.`]);
+ if(!m3&&Math.max(bx.concat(by).reduce((a,b)=>Math.max(a,b),0))>12000)W.push(['الطريقة المباشرة (DDM) صُمّمت لباكسات منتظمة؛ للباكسات الأكبر من 12 م راجع مهندسًا.','The direct design method assumes regular panels; have bays above 12 m reviewed by an engineer.']);
+ const xs=m3?[]:cum(bx).map(x=>x+ov),ys=m3?[]:cum(by).map(y=>y+ov),ncol=xs.length*ys.length;
+ const cwIn=R(X.cw*1000),cwY=Math.min(cwIn,R(Math.min.apply(null,by)*.99)),cwX=Math.min(cwIn,R(Math.min.apply(null,bx)*.99));
+ const zY=m3?[{a:0,b:Ly,col:true}]:BM.rfZones(by,ov,cwY,Ly),zX=m3?[{a:0,b:Lx,col:true}]:BM.rfZones(bx,ov,cwX,Lx);
+ const dBx=Math.max(PK[0].db,PK[1].db),dBy=both?dBx:0,dTx=Math.max(PK[2].db,PK[3].db),dTy=both?dTx:0;
+ const z={BB:cv+dBx/2,BT:cv+dBx+dBy/2,TT:h-cT-dTy/2,TB:h-cT-dTy-dTx/2};
+ const eg=gv('bm_eg',1),hk=gv('bm_hk',1)==1&&eg==0;
+ let bars=[];const grp=[];
+ const pk=(mat,col)=>(mat=='BB'||mat=='BT')?(col?PK[0]:PK[1]):(col?PK[2]:PK[3]);
+ const addMat=(mat,dir,zones,col,Ltot)=>{const spec=pk(mat,col),n=nOf(zones,col,spec.s);if(!n)return;const db=spec.db,Lr=Ltot-2*cv,top=mat=='TB'||mat=='TT';
+  let e=0;if(hk)e=top?Math.max(0,Math.min(O.ext*db,z[mat]-cv-db/2)):Math.max(0,Math.min(O.ext*db,h-cT-z[mat]-db/2));
+  const legs=e>0?(top?[[e,90],[Lr-db,0],[e,270]]:[[e,270],[Lr-db,0],[e,90]]):[[Lr,0]];
+  bars=bars.concat(BM.split(BM.mk({mat,dir,n,db,desc:MATN[mat],legs:legs,strip:col?'col':'mid'}),O.stock,BM.lap(db)));grp.push({mat,dir,col,spec,n})};
+ [['BB','X',zY,Lx],['TB','X',zY,Lx]].concat(both?[['BT','Y',zX,Ly],['TT','Y',zX,Ly]]:[]).forEach(q=>{addMat(q[0],q[1],q[2],true,q[3]);addMat(q[0],q[1],q[2],false,q[3])});
+ bars=BM.merge(bars);
+ {const m={};bars.forEach(b=>{if(b.lapOf>1)m[b.mat+(b.dir?'-'+b.dir:'')]=b.lapOf});const ks=Object.keys(m);if(ks.length){const l=ks.map(k=>k+' ×'+m[k]).join('، '),le=ks.map(k=>k+' x'+m[k]).join(', ');W.push([`الأسياخ الأطول من ${O.stock} مم قُسّمت إلى قطع بتراكب ${SD.LAPF?SD.LAPF():40}Ø (عدد القطع): ${l}.`,`Bars longer than ${O.stock} mm are split with a ${SD.LAPF?SD.LAPF():40}d lap (pieces): ${le}.`])}}
+ /* chairs between the mats: one per m2 */
+ if(gv('bm_ch',1)==1){const dch=Math.max(10,Math.min(16,dTx||12)),yTop=z.TB-(dTx/2)-dch/2,yBot=cv+dBx+dBy+dch/2,H=Math.max(40,R(yTop-yBot)),n=Math.ceil(Lx*Ly/1e6);
+  bars.push(BM.mk({mat:'CB',dir:'',n,db:dch,desc:MATN.CB,legs:[[150,0],[H,90],[300,0],[H,270],[150,0]]}))}
+ /* edge bars on the four edges */
+ let ed=null;
+ if(eg>0){const dE=gv('bm_ud',0)>0?R(gv('bm_ud',0)):PK[0].db,sE=gv('bm_us',0)>0?R(gv('bm_us',0)):PK[0].s,lg=BM.lap(dE),nY=Math.floor((Ly-2*cv)/sE)+1,nX=Math.floor((Lx-2*cv)/sE)+1,n=2*nY+2*nX;
+  if(eg==1){const web=R(z.TB-z.BB);ed={eg,dE,sE,lg,web,n,w:lg};bars.push(BM.mk({mat:'UB',dir:'',n,db:dE,desc:MATN.UB,legs:[[lg,180],[web,270],[lg,0]]}))}
+  else{const wE=Math.max(300,lg),hE=R(h-cv-cT);ed={eg,dE,sE,lg,n,w:wE,hE};bars.push(BM.mk({mat:'ES',dir:'',n,db:dE,desc:MATN.ES,legs:BM.rectTie(wE-dE,hE-dE,dE,false)}))}}
+ /* starters and their ties at every column */
+ const dd=O.dd,nd=Math.max(4,O.nd|0),lap=BM.lap(dd),ins=O.ccv+O.dt+dd/2,dpos=dowelPos(c,nd,ins),yb=cv+dBx+dBy+dd/2,emb=h-yb,foot=O.ext*dd;
+ if(!m3){const fm=fyfc('rf'),ldc=(fm.fc>0&&fm.fy>0)?Math.max(.24*fm.fy*dd/Math.sqrt(fm.fc),.043*fm.fy*dd):0;if(ldc&&emb<ldc)W.push([`طول تثبيت الأسياخ الصاعدة ${R(emb)} مم أقل من ${R(ldc)} مم المطلوب (ACI 25.4.9).`,`Dowel embedment ${R(emb)} mm is below the required ${R(ldc)} mm (ACI 25.4.9).`])}
+ if(!m3)bars.push(BM.mk({mat:'DB',dir:'',n:dpos.length*ncol,db:dd,legs:[[lap+emb,270],[foot,0]],desc:MATN.DB}));
+ const nt=m3?0:Math.max(0,O.ntie|0);let tz=[];if(nt>0){const w=c-2*O.ccv-O.dt,e=Math.max(6*O.dt,75),yLo=yb+dd/2+O.dt/2+30,yHi=h-cT-O.dt/2,sp=nt>1?Math.floor((yHi-yLo)/(nt-1)/5)*5:0;tz=Array.from({length:nt},(_,k)=>nt>1?yHi-k*sp:yHi);
+  bars.push(BM.mk({mat:'ST',dir:'',n:nt*ncol,db:O.dt,s:sp||0,desc:MATN.ST,legs:[[e,135],[w,0],[w,270],[w,180],[w,90],[e,315]]}))}
+ /* punching-shear steel: lines radiating from every column face */
+ const pn=m3?0:gv('bm_pn',0);let pun=null;
+ if(pn>0){const dp=Math.max(6,R(gv('bm_pd',10))),rows=Math.max(1,Math.min(10,gv('bm_pr',4)|0)),q=Math.max(1,Math.min(6,gv('bm_pq',2)|0)),d=R(h-cv-(dBx+dBy)/2),sd=Math.floor(d/2/5)*5,s=gv('bm_ps',0)>0?R(gv('bm_ps',0)):sd,s0=Math.min(sd,s>0?s:sd),H=R(h-cv-cT),wS=Math.max(60,R(gv('bm_pw',150)));
+  let cnt=0;
+  const rowsFit=(avail)=>avail==null?rows:(avail<s0?0:Math.min(rows,Math.floor((avail-s0)/s)+1));
+  xs.forEach((x,i)=>ys.forEach((y,j)=>{const aL=i==0?ov-c/2-cv-wS/2:null,aR=i==xs.length-1?ov-c/2-cv-wS/2:null,aB=j==0?ov-c/2-cv-wS/2:null,aT=j==ys.length-1?ov-c/2-cv-wS/2:null;
+   cnt+=q*(rowsFit(aL)+rowsFit(aR)+rowsFit(aB)+rowsFit(aT))}));
+  if(s0+(rows-1)*s>Math.min(Math.min.apply(null,bx),Math.min.apply(null,by))/2-c/2)W.push(['صفوف القص تمتد لأكثر من نصف الباك؛ قلّل عدد الصفوف أو التباعد.','Shear rows extend beyond half the bay; reduce the rows or the spacing.']);
+  W.push([`القص الثاقب: d ≈ ${d} مم، أول صف عند ${s0} مم (≤ d/2) والصفوف كل ${s} مم؛ الصف الأخير عند ${s0+(rows-1)*s} مم من وجه العمود (${((s0+(rows-1)*s)/d).toFixed(1)}d). تحقق من المقطع الحرج الخارجي (ACI 22.6).`,`Punching: d ~ ${d} mm, first row at ${s0} mm (<= d/2), rows every ${s} mm; the last row is ${s0+(rows-1)*s} mm (${((s0+(rows-1)*s)/d).toFixed(1)}d) from the column face. Check the outer critical section (ACI 22.6).`]);
+  if(cnt>0){if(pn==1)bars.push(BM.mk({mat:'PS',dir:'',n:cnt,db:dp,desc:MATN.PS,legs:BM.rectTie(wS-dp,H-dp,dp,false)}));
+   else bars.push(BM.mk({mat:'SS',dir:'',n:cnt,db:dp,desc:MATN.SS,legs:[[H,90]]}))}
+  pun={pn,dp,rows,q,d,s0,s,H,wS,cnt}}
+ bars=BM.finish(bars);
+ return{k:'rf',l1:R(X.l1),l2:R(X.l2),c,h,cv,cT,both,Lx,Ly,bx,by,ov,xs,ys,ncol,zX,zY,cwX,cwY,PK,z,dBx,dBy,dTx,dTy,grp,bars,dpos,dd,lap,yb,foot,tz,ins,W,vol:Lx*Ly*h/1e9,stub:BM.stub(lap),ed,pun,eg,hk,mode:bay.m,m3}};
+/* smallest standard scale at which every bar of the pull-out fits in the right column of the details sheet */
+BM.pullNeedN=(bars,W,avH)=>{const NS=[50,60,75,100,125,150,200,250,300,400,500,750,1000];
+ for(let q=0;q<NS.length;q++){const N=NS[q],it=bars.map(b0=>{const b=BM.horiz(b0);return{pw:(b.bb.x1-b.bb.x0)/N,ph:(b.bb.y1-b.bb.y0)/N,st:b.legs.length==1,code:b.code}});
+  it.forEach(i=>{i.cw=Math.max(i.pw+(i.st?9:22),i.code.length*1.75+3);i.ch=i.ph+(i.st?16:25)});
+  if(it.some(i=>i.cw>W-2))continue;
+  const rows=[];it.slice().sort((a,b)=>b.cw-a.cw).forEach(i=>{let r=rows.find(r=>r.w+i.cw<=W-2);if(!r){r={w:0,h:0};rows.push(r)}r.w+=i.cw;r.h=Math.max(r.h,i.ch)});
+  if(rows.reduce((a,r)=>a+r.h,0)+12<=avH)return N}return 1000};
+/* ---------------- sheet ---------------- */
+BM.raftSheet=function(F){const m3=F.m3,{c,h,cv,both,Lx,Ly,bx,by,ov,xs,ys,zX,zY,PK,z,grp,bars,dpos,dd,lap,yb,foot,tz,ins,ed,pun,eg,hk}=F;
+ const stub=m3?0:Math.max(480,lap+140);
+ const codesOf=(mat,dir)=>bars.filter(b=>b.mat==mat&&(dir==null||b.dir==dir)).map(b=>b.code);
+ const tl=(mat,dir)=>{const a=codesOf(mat,dir);if(!a.length)return[''];const s=a.length>1?a[0]+'  (+'+(a.length-1)+')':a[0];return[s,s]};
+ const wmax=Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1]))/165;
+ const dotPos=(mat,dir)=>{const zones=dir=='X'?zY:zX,a=[];[true,false].forEach(col=>{const sp=pk(mat,col);zpos(zones,col,sp).forEach(p=>a.push([mat,sp.db,p]))});return a};
+ const pk=(mat,col)=>(mat=='BB'||mat=='BT')?(col?PK[0]:PK[1]):(col?PK[2]:PK[3]);
+ const winOf=(bays,tot)=>tot<=10000?tot:R(Math.min(tot,ov+Math.min(bays[0],6000)+c/2+300,9000));
+ const winX=winOf(bx,Lx),winY=winOf(by,Ly);
+ const suffix=b=>{const g=grp.filter(q=>q.mat==b.mat&&q.dir==b.dir&&q.spec.db==b.db);return g.length?'   Ø'+b.db+'@'+g.map(q=>q.spec.s+(m3?'':(q.col?'c':'m'))).join('/'):''};
+ const lgnd=(mx,my)=>{const a=[];bars.forEach(b=>{if(b.mat==mx||(both&&b.mat==my))a.push([b.mat=='BB'?'BBH':b.mat,b.code+suffix(b)]);else if(ed&&(b.mat=='UB'||b.mat=='ES')&&(mx=='BB'||mx=='TB'))a.push([b.mat,b.code])});return a};
+ /* layout of the plans: side by side with the legend below, or stacked with the legend on the right - whichever gives the larger scale */
+ const nP=Math.max(lgnd('BB','BT').length,lgnd('TB','TT').length),pyB=22+3.7*nP+4,nice=SD.nice;
+ const estSide=nice(Math.max(Lx/(97-26-18),Ly/(273-8-14-pyB))),estStack=nice(Math.max(Lx/(200-26-72),Ly/((267-2*(8+14+24))/2)));
+ const legR=estStack<estSide;
+ const planM=(mx,my)=>{const L=lgnd(mx,my);const draw=C=>{
+   C.rc('CONC',0,0,Lx,Ly);xs.forEach(x=>ys.forEach(y=>C.rc('OUTL',x-c/2,y-c/2,c,c)));
+   const sy=new Set(),sx=new Set();zY.forEach(q=>[q.a,q.b].forEach(v=>{if(v>1&&v<Ly-1)sy.add(R(v))}));sy.forEach(v=>C.ln('AXIS',0,v,Lx,v));
+   if(both){zX.forEach(q=>[q.a,q.b].forEach(v=>{if(v>1&&v<Lx-1)sx.add(R(v))}));sx.forEach(v=>C.ln('AXIS',v,0,v,Ly))}
+   const lines=(mat,dir,zones,layer)=>zones.forEach(q=>{const spec=pk(mat,q.col),n=Math.max(1,Math.ceil((q.b-q.a)/spec.s-1e-9)),st=(q.b-q.a)/n,k=Math.max(1,Math.ceil(3/(st/C.pm(1))));
+     for(let i=0;i<n;i+=k){const p=q.a+(i+.5)*st;if(dir=='X')C.pl(layer,[[cv,p],[Lx-cv,p]],0,spec.db);else C.pl(layer,[[p,cv],[p,Ly-cv]],0,spec.db)}});
+   lines(mx,'X',zY,mx=='BB'?'BBH':mx);if(both)lines(my,'Y',zX,my);
+   if(ed&&(mx=='BB'||mx=='TB')){const lay=eg==1?'UB':'ES',len=ed.w,xe=cv+ed.dE/2,k=Math.max(1,Math.ceil(6/(ed.sE/C.pm(1))));
+     for(let y=cv+ed.sE/2,i=0;y<=Ly-cv+1e-6;y+=ed.sE,i++)if(i%k==0){C.pl(lay,[[xe,y],[xe+len,y]],0,ed.dE);C.pl(lay,[[Lx-xe,y],[Lx-xe-len,y]],0,ed.dE)}
+     for(let x=cv+ed.sE/2,i=0;x<=Lx-cv+1e-6;x+=ed.sE,i++)if(i%k==0){C.pl(lay,[[x,xe],[x,xe+len]],0,ed.dE);C.pl(lay,[[x,Ly-xe],[x,Ly-xe-len]],0,ed.dE)}}
+   const lbl=(y,ar,en)=>C.tx('TEXT',Lx/2,y,ar,en,{a:'c',h:2.4,b:1});
+   if(!m3){const q1=zY.find(q=>q.col),q2=zY.find(q=>!q.col);if(q1)lbl((q1.a+q1.b)/2,'شريحة العمود','COLUMN STRIP');if(q2)lbl((q2.a+q2.b)/2,'الشريحة الوسطى','MIDDLE STRIP')}
+   /* dimensions: bays along the bottom and the left, overall outside */
+   const px=[0].concat(xs,[Lx]),py=[0].concat(ys,[Ly]);
+   if(!m3)for(let i=0;i<px.length-1;i++)if(px[i+1]-px[i]>1)C.dimH(px[i],px[i+1],0,-9,R(px[i+1]-px[i]));
+   if(!m3)for(let i=0;i<py.length-1;i++)if(py[i+1]-py[i]>1)C.dimV(0,py[i],py[i+1],-9,R(py[i+1]-py[i]));
+   C.dimH(0,Lx,0,-15,Lx);C.dimV(0,0,Ly,-15,Ly);
+   /* section marks */
+   const y1=m3?Ly/2:ys[0],x1=m3?Lx/2:xs[0];C.ln('AXIS',-C.pm(2),y1,Lx+C.pm(2),y1);C.mark(Lx+C.pm(6),y1,'1');C.ln('AXIS',x1,-C.pm(2),x1,Ly+C.pm(2));C.mark(x1,Ly+C.pm(6),'2');
+   if(legR)L.forEach((a,i)=>{const y=Ly-C.pm(3+3.7*i);C.ln(a[0],Lx+C.pm(10),y+C.pm(.8),Lx+C.pm(17),y+C.pm(.8));C.tx('TEXT',Lx+C.pm(19),y,a[1],a[1],{a:'l',h:2.2})});
+   else L.forEach((a,i)=>{const y=-C.pm(22+3.7*i);C.ln(a[0],0,y+C.pm(.8),C.pm(9),y+C.pm(.8));C.tx('TEXT',C.pm(11),y,a[1],a[1],{a:'l',h:2.2})})};
+  return draw};
+ /* ----- section 1-1 along X (first column line) and 2-2 along Y ----- */
+ const secV=(dir)=>{const W=dir=='X'?winX:winY,tot=dir=='X'?Lx:Ly,cl=dir=='X'?xs:ys,matL=dir=='X'?['BB','TB']:['BT','TT'],matD=dir=='X'?['BT','TT']:['BB','TB'],zones=dir=='X'?zX:zY;
+  return C=>{const brk=W<tot,b=C.pm(2);
+   if(brk)C.pl('CONC',[[0,0],[W,0],[W+b,h*.25],[W-b,h*.5],[W+b,h*.75],[W,h],[0,h]],1);else C.rc('CONC',0,0,W,h);
+   cl.forEach(x=>{const a=Math.max(0,x-c/2),e=Math.min(W,x+c/2);if(a<e)C.pl('OUTL',[[a,h],[a,h+stub],[e,h+stub],[e,h]])});
+   matL.forEach(m=>{const db=pk(m,true).db,top=m=='TB'||m=='TT',e=hk?(top?Math.max(0,Math.min(BM.O.ext*db,z[m]-cv-db/2)):Math.max(0,Math.min(BM.O.ext*db,h-F.cT-z[m]-db/2))):0,x0=cv+db/2;
+     C.pl(m,e>0?[[x0,z[m]+(top?-e:e)],[x0,z[m]],[W,z[m]]]:[[cv,z[m]],[W,z[m]]],0,db)});
+   if(both)matD.forEach(m=>{dotPos(m,dir=='X'?'Y':'X').forEach(p=>{if(p[2]<W)C.ci(m,p[2],z[m],p[1]/2,1)})});
+   if(ed){const xe=cv+ed.dE/2;if(eg==1){C.pl('UB',[[xe+ed.lg,z.TB],[xe,z.TB],[xe,z.BB],[xe+ed.lg,z.BB]],0,ed.dE);C.dimH(xe,xe+ed.lg,z.TB,5,ed.lg)}
+     else C.rc('ES',cv+ed.dE/2,cv+ed.dE/2,ed.w-ed.dE,ed.hE-ed.dE,ed.dE)}
+   cl.forEach((cx,i)=>{[[0,1],[1,-1]].forEach(a=>{const x=cx+(a[0]==0?-(c/2-ins):(c/2-ins));if(x<0||x>W)return;C.pl('DB',[[x,h+lap],[x,yb],[x+(a[0]==0?-foot:foot),yb]],0,dd)});
+     tz.forEach(y=>{const a=Math.max(0,cx-c/2+BM.O.ccv+BM.O.dt/2),e=Math.min(W,cx+c/2-BM.O.ccv-BM.O.dt/2);if(a<e)C.ln('ST',a,y,e,y,BM.O.dt)})});
+   const pp=[0].concat(cl.filter(x=>x<W),[W]);for(let i=0;i<pp.length-1;i++)if(pp[i+1]-pp[i]>1)C.dimH(pp[i],pp[i+1],0,-9,R(pp[i+1]-pp[i]));
+   C.dimV(W,0,h,10,h);if(cl[0]+c/2<W)C.dimV(cl[0]+c/2,h,h+lap,8,lap);C.tx('TEXT',W*.5,h/2,`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+   const it=[];const px=W*.62;
+   it.push({px:px,py:z[matL[0]],ty:z[matL[0]]-C.pm(5),t:tl(matL[0],dir)});it.push({px:W*.3,py:z[matD[0]],ty:z[matL[0]]-C.pm(10),t:tl(matD[0],dir=='X'?'Y':'X')});
+   it.push({px:W*.45,py:z[matL[1]],ty:h+C.pm(6),t:tl(matL[1],dir)});it.push({px:W*.8,py:z[matD[1]],ty:h+C.pm(11),t:tl(matD[1],dir=='X'?'Y':'X')});
+   if(cl[0]+c/2*.5<W)it.push({px:cl[0]+c/2*.5,py:h+lap*.5,ty:h+lap*.5,t:tl('DB')});
+   if(ed)it.push({px:cv+ed.dE+ed.lg*.5,py:(z.TB+z.BB)/2,ty:C.pm(0)+h*.5,t:tl(eg==1?'UB':'ES')});
+   SD.callouts(C,it.filter(a=>a.t[0]),W+C.pm(14),5)}};
+ /* ----- punching-shear detail (plan and elevation around one interior column) ----- */
+ let pdet=null;
+ if(pun&&pun.cnt>0){const E=R(c/2+pun.s0+(pun.rows-1)*pun.s+Math.max(150,pun.wS/2+100)),code=bars.filter(b=>b.mat=='PS'||b.mat=='SS')[0].code;
+  const plan=C=>{const dp=pun.dp,faces=[[1,0],[-1,0],[0,1],[0,-1]];C.rc('CONC',-E,-E,2*E,2*E);C.rc('OUTL',-c/2,-c/2,c,c);
+   faces.forEach(f=>{for(let l=0;l<pun.q;l++){const off=-c/2+(l+.5)*c/pun.q;for(let k=0;k<pun.rows;k++){const r=c/2+pun.s0+k*pun.s,px=f[0]!=0?f[0]*r:off,py=f[1]!=0?f[1]*r:off;
+     if(pun.pn==1){if(f[0]!=0)C.pl('PS',[[px-pun.wS/2,py],[px+pun.wS/2,py]],0,dp);else C.pl('PS',[[px,py-pun.wS/2],[px,py+pun.wS/2]],0,dp)}
+     else{C.ci('SS',px,py,Math.max(dp*1.5,40),0);C.ci('SS',px,py,dp/2,1)}}}});
+   C.dimH(c/2,c/2+pun.s0,-c/2,-6,pun.s0);if(pun.rows>1)C.dimH(c/2+pun.s0,c/2+pun.s0+pun.s,-c/2,-6,pun.s);C.dimH(-c/2,c/2,c/2,6,c);
+   C.tx('TEXT',0,E+C.pm(2.5),`${code}`,`${code}`,{a:'c',h:2.4,b:1});C.tx('TEXT',0,-E-C.pm(5),pun.q+' خطوط × 4 وجوه × '+pun.rows+' صفوف',pun.q+' lines x 4 faces x '+pun.rows+' rows',{a:'c',h:2.2})};
+  const sec=C=>{const dp=pun.dp,hw=Math.max(dp*3,40);C.rc('CONC',-E,0,2*E,h);C.pl('OUTL',[[-c/2,h],[-c/2,h+stub],[c/2,h+stub],[c/2,h]]);
+   C.pl('BB',[[-E,z.BB],[E,z.BB]],0,PK[0].db);C.pl('TB',[[-E,z.TB],[E,z.TB]],0,PK[2].db);
+   if(both){for(let x=-E+PK[0].s/2;x<E;x+=PK[0].s){C.ci('BT',x,z.BT,PK[0].db/2,1)}for(let x=-E+PK[2].s/2;x<E;x+=PK[2].s)C.ci('TT',x,z.TT,PK[2].db/2,1)}
+   [1,-1].forEach(sg=>{for(let k=0;k<pun.rows;k++){const x=sg*(c/2+pun.s0+k*pun.s);
+     if(pun.pn==1)C.rc('PS',x-pun.wS/2+dp/2,cv+dp/2,pun.wS-dp,pun.H-dp,dp);
+     else{C.ln('SS',x,cv,x,cv+pun.H,dp);C.rc('SS',x-hw/2,cv,hw,dp*.9,0,1);C.rc('SS',x-hw/2,cv+pun.H-dp*.9,hw,dp*.9,0,1)}}});
+   C.dimH(c/2,c/2+pun.s0,0,-8,pun.s0);if(pun.rows>1)C.dimH(c/2+pun.s0,c/2+pun.s0+pun.s,0,-8,pun.s);C.dimV(E,0,h,10,h);C.dimV(-E,cv,cv+pun.H,-10,pun.H);
+   C.tx('TEXT',0,h+stub+C.pm(3),`d = ${pun.d}`,`d = ${pun.d}`,{a:'c',h:2.4});
+   SD.callouts(C,[{px:c/2+pun.s0,py:cv+pun.H*.6,ty:h*.5,t:[code,code]}],E+C.pm(14),5)};
+  pdet=[{name:['تفصيل القص الثاقب — المسقط حول العمود','PUNCHING-SHEAR DETAIL - PLAN AROUND A COLUMN'],w:2*E,h:2*E,x0:-E,y0:-E,px:[16,16],py:14,draw:plan},
+   {name:['تفصيل القص الثاقب — المقطع','PUNCHING-SHEAR DETAIL - SECTION'],w:2*E,h:h+stub,x0:-E,y0:0,px:[16,50],py:13,draw:sec}]}
+ const pv=(n,a,b)=>({name:n,w:Lx,h:Ly,x0:0,y0:0,px:legR?[26,72]:[26,18],py:legR?[14,24]:[14,pyB],min:wmax,draw:planM(a,b)});
+ const pb=pv(['المسقط — الفرش السفلي (BB, BT)','PLAN - BOTTOM MAT (BB, BT)'],'BB','BT'),pt=pv(['المسقط — الفرش العلوي (TB, TT)','PLAN - TOP MAT (TB, TT)'],'TB','TT');
+ const s1={name:m3?['المقطع 1-1 (بامتداد X عند منتصف الرفت)','SECTION 1-1 (ALONG X AT MID-WIDTH)']:['المقطع 1-1 (على X عند محور العمود الأول)','SECTION 1-1 (ALONG X AT THE FIRST COLUMN LINE)'],w:winX,h:h+stub,x0:0,y0:0,px:[24,60],py:13,minD:BM.pullNeedN(bars,180,188),draw:secV('X')},
+  s2={name:m3?['المقطع 2-2 (بامتداد Y عند منتصف الرفت)','SECTION 2-2 (ALONG Y AT MID-LENGTH)']:['المقطع 2-2 (على Y عند محور العمود الأول)','SECTION 2-2 (ALONG Y AT THE FIRST COLUMN LINE)'],w:winY,h:h+stub,x0:0,y0:0,px:[24,60],py:13,draw:secV('Y')};
+ const plans=legR?[{h:46,views:[pb]},{h:46,views:[pt]}]:[{h:52,views:[pb,pt]}];
+ const Bv=[s1,s2].concat(pdet||[]),pyS=v=>Array.isArray(v.py)?v.py[0]+v.py[1]:2*v.py,Sx=Math.max(20,Bv.reduce((a,v)=>a+v.h,0)/Math.max(255-Bv.reduce((a,v)=>a+8+pyS(v),0),50));
+ const det=Bv.map(v=>({h:v.h/Sx+8+pyS(v),views:[v]}));
+ return{A:plans,B:det,split:true,all:plans.concat([{h:24,views:[s1]},{h:24,views:[s2]}],pdet?[{h:30,views:pdet}]:[])}};
+BM.rfPart='all';
+BM.raftSheet2=function(){const F=BM.raft();if(!F)return null;BM.lastRaft=F;const R_=BM.raftSheet(F),part=R_.split?BM.rfPart:'all';
+ const sp=SD.base('rf',['رافت مسطح — '+(F.m3?'بدون أعمدة':(F.mode?'رافت كامل':'لوحة')),'FLAT RAFT - '+(F.m3?'WITHOUT COLUMNS':(F.mode?'FULL RAFT':'PANEL'))+' - BARS, CODES AND PULL-OUT'],window.QTL,[]);
+ sp.rows=part=='B'?R_.B:(part=='A'?R_.A:R_.all);sp.bm=part!='B';sp.noPull=(part=='A');sp.pullB=(part=='B')?F.bars:null;sp.bars=F.bars;sp.vol=F.vol;sp.notes=sp.notes.slice(0,4).concat(BM.commonNotes({hk:F.hk},false));
+ if(F.m3)sp.notes=sp.notes.filter(n=>!/الصاعدة|الثاقب|DOWEL|STARTER|PUNCHING/i.test(n[0]+n[1]));
+ if(F.m3)sp.notes.push([`رفت بدون أعمدة ${F.Lx} × ${F.Ly} × ${F.h} مم: فرش سفلي وعلوي بتوزيع واحد منتظم؛ لا توجد أسياخ صاعدة ولا كانات أعمدة ولا حديد قص ثاقب.`,`RAFT WITHOUT COLUMNS ${F.Lx} x ${F.Ly} x ${F.h} mm: BOTTOM AND TOP MATS WITH ONE UNIFORM DISTRIBUTION; NO STARTER BARS, COLUMN TIES OR PUNCHING STEEL.`]);
+ else sp.notes.push([`الرافت ${F.Lx} × ${F.Ly} مم: ${F.bx.length} × ${F.by.length} باك، ${F.ncol} عمود، بروز ${F.ov} مم. التباعدات مبيّنة قرب الأكواد: c = شريحة العمود، m = الشريحة الوسطى.`,`RAFT ${F.Lx} x ${F.Ly} mm: ${F.bx.length} x ${F.by.length} BAYS, ${F.ncol} COLUMNS, ${F.ov} mm OVERHANG. SPACING SHOWN WITH THE CODES: c = COLUMN STRIP, m = MIDDLE STRIP.`]);
+ if(part=='A')sp.notes.push(['المقاطع وتفاصيل القص الثاقب وسحب الأسياخ بالقياس الحقيقي على لوحة التفاصيل.','SECTIONS, PUNCHING-SHEAR DETAILS AND THE TRUE-LENGTH BAR PULL-OUT ARE ON THE DETAILS SHEET.']);
+ sp.notes.push([F.both?'اتجاه Y بنفس تسليح X افتراضًا؛ صمّمه بتبديل l1 وl2 ثم عدّل.':'يُرسم اتجاه X فقط.',F.both?'Y DIRECTION ASSUMED TO MATCH X; DESIGN IT BY SWAPPING l1 AND l2 AND EDIT.':'ONLY THE X DIRECTION IS SHOWN.']);
+ sp.notes.push(['الأسياخ الأطول من طول القضيب تُقسَّم بتراكب وفق ACI؛ المساقط تُرسم بعيّنة من الأسياخ عند صغر المقياس والعدد الحقيقي في الجدول.','BARS LONGER THAN THE STOCK LENGTH ARE SPLIT WITH ACI LAPS; PLANS SHOW A SAMPLE OF THE BARS AT SMALL SCALE - THE TRUE COUNT IS IN THE SCHEDULE.']);
+ if(F.pun)sp.notes.push(['القص الثاقب: الأعمدة الطرفية والركنية تُحسب صفوفها حتى حافة الرافت فقط؛ تحقق من المقطع الحرج.','PUNCHING: ROWS AT EDGE/CORNER COLUMNS STOP AT THE RAFT EDGE ONLY; CHECK THE CRITICAL SECTION.']);
+ F.W.forEach(w=>sp.notes.push(w));return sp};
+/* a full raft (or punching steel) goes on two sheets: plans + schedule + pull-out, and an enlarged details sheet */
+{const ob=SD.buildAll;SD.buildAll=function(k,opt){if(k!='rf'||BM.off)return ob(k,opt);
+ let sp=false;try{sp=!!BM.raft()}catch(e){console.log('BM rf split',e)}
+ if(!sp){BM.rfPart='all';return ob(k,opt)}
+ try{BM.rfPart='A';const A=SD.build('rf');BM.rfPart='B';const d0=SD.dtl;SD.dtl=1;let B=null;try{B=SD.build('rf')}finally{SD.dtl=d0}
+  if(!A)return null;return B?[A,B]:[A]}finally{BM.rfPart='all'}}}
+/* the pull-out of a split raft lives in the right column of the details sheet */
+{const opr=BM.pullRegion;BM.pullRegion=function(C,S,sp){if(sp&&sp.noPull)return;return opr.apply(this,arguments)}}
+{const of2=SD.frame;SD.frame=function(S,sp,N){const r=of2(S,sp,N);
+ if(sp&&sp.pullB&&sp.pullB.length){const C=new SD.Ctx(S,0,0,1),f=(l,x1,y1,x2,y2)=>C.ln(l,x1*N,y1*N,x2*N,y2*N),t=(x,y,ar,en,o)=>C.tx('TEXT',x*N,y*N,ar,en,o);BM.pullRegion(C,S,sp,sp.pullB,N,230,180,262,t,f)}
+ return r}}
+/* the schedule volume must be the full raft */
+{const osm=SM.sheet;SM.sheet=function(en,ctx){const r=osm(en,ctx);try{if(r&&r.S&&r.S.sp&&r.S.sp.bm&&r.S.k=='rf'&&r.o)r.o.vol=r.S.sp.vol}catch(e){console.log('BM rf vol',e)}return r}}
+})();
+
+</script>
+<script>/*bar43*/
+/* FABRUM bar model, stage 3 core: shared helpers + one-way slab (slab) + two-way slab (gr).
+   Same code system: ELEMENT-MAT-DIR-nØd-L.  Long-bar pull-out goes on a second sheet when it would force a tiny drawing scale. */
+(()=>{
+if(!window.BM||!window.SD||!window.SM)return;
+const BM=window.BM,SD=window.SD,R=Math.round,SP=SM.SPEC;
+const gv=(id,d)=>{const v=SD.inp(id);return isFinite(v)?v:d},lay=SD.lay,sum=a=>a.reduce((x,y)=>x+y,0);
+BM.E={};BM.V={};BM.T43={};
+Object.assign(SD.LAY,{VB:{c:150,col:'#2e5fa3',w:.45},HB:{c:20,col:'#b5651d',w:.4},EB:{c:6,col:'#c2185b',w:.5}});
+Object.assign(BM.MATN,{VB:['حديد رأسي','Vertical bars'],HB:['حديد أفقي','Horizontal bars'],EB:['أسياخ طرفية (حافة الجدار)','End (boundary) bars']});
+/* ---------- bar helpers ---------- */
+const KEY=(b,k)=>{b.key=k;b.keys=[k];return b};
+BM.KEY=KEY;
+const nr=a=>(((Math.round(a*1000)/1000)%360)+360)%360;
+const ks=(b,f)=>[b.mat,b.db,b.dir||'',b.s||0,b.zones?b.zones.join(';'):'',f.map(l=>l[0]+'/'+nr(l[1])).join(',')].join('|');
+BM.mergeK=list=>{const m={},o=[];list.forEach(b=>{const k1=ks(b,b.legs),k2=ks(b,b.legs.map(l=>[l[0],180-l[1]]).reverse().map(l=>[l[0],l[1]+180])),k=k1<k2?k1:k2;
+ if(m[k]){m[k].n+=b.n;m[k].keys=m[k].keys.concat(b.keys||[])}else{b.keys=(b.keys||[]).slice();m[k]=b;o.push(b)}});return o};
+/* split long bars with an ACI lap, merge identical ones, assign codes; one summary warning */
+BM.fin=(list,stock,W)=>{let out=[],ns=0;
+ list.forEach(b=>{if(!(b.n>0)||!(b.L>0))return;const p=BM.split(b,stock,BM.lap(b.db),null);if(p.length>1||p[0].lapOf)ns++;p.forEach(x=>{x.keys=b.keys;x.key=b.key;out.push(x)})});
+ out=BM.mergeK(out);BM.finish(out);
+ if(ns)W.push([`بعض الأسياخ أطول من ${stock} مم فقُسّمت بتراكب ACI (راجع الجدول).`,`Some bars exceed ${stock} mm and were split with an ACI lap (see schedule).`]);return out};
+const code=(F,key)=>{const bs=F.bars.filter(b=>b.keys&&b.keys.indexOf(key)>=0);if(!bs.length)return'';return bs.length>1?bs[0].code+' (+'+(bs.length-1)+')':bs[0].code};
+BM.codeOf=code;
+const TL=(F,key)=>{const c=code(F,key);return[c,c]};
+BM.TLK=TL;
+/* callout list: [key,px,py,ty] ; text goes at tx */
+const CALL=(C,F,a,tx,gap)=>SD.callouts(C,a.map(q=>{const t=TL(F,q[0]);if(q[4]&&t[0]){t[0]+='  '+q[4];t[1]+='  '+q[4]}return{px:q[1],py:q[2],ty:q[3]===undefined?q[2]:q[3],t}}).filter(q=>q.t[0]),tx,gap||5);
+BM.CALL=CALL;
+const legend=(C,F,items,x,y)=>items.forEach((q,i)=>{const yy=y-i*C.pm(5.6),t=TL(F,q[0]);if(!t[0])return;C.pl(q[1],[[x,yy],[x+C.pm(9),yy]],0,q[3]||10);C.tx('TEXT',x+C.pm(11),yy-C.pm(.8),t[0]+'  '+(Array.isArray(q[2])?q[2][0]:q[2]),t[1]+'  '+(Array.isArray(q[2])?q[2][1]:q[2]),{a:'l',h:2.3})});
+BM.legend=legend;
+const zig=(C,x,y0,y1)=>{const d=C.pm(1.4);C.pl('OUTL',[[x,y0],[x+d,y0+(y1-y0)*.35],[x-d,y0+(y1-y0)*.65],[x,y1]])};
+BM.zig=zig;
+/* number of bars of spacing s that cover width w (spacing <= s) */
+const cnt=(w,s)=>Math.max(1,Math.ceil(w/s-1e-9));
+const cnt1=(w,s)=>Math.max(2,Math.ceil(w/s-1e-9)+1);
+BM.cnt=cnt;BM.cnt1=cnt1;
+/* sample positions: evenly thinned to at most m */
+const thin=(a,m)=>{if(a.length<=m)return a;const k=Math.ceil(a.length/m);return a.filter((x,i)=>i%k==0)};
+BM.thin=thin;
+/* sheet from a bar model */
+BM.mkSheet=(k,ti,F,rows,notes)=>{const sp=SD.base(k,ti,window.QTL,[]);sp.rows=rows;sp.bm=true;sp.bars=F.bars;sp.vol=F.vol||0;
+ sp.notes=sp.notes.slice(0,4).concat([
+  ['الرمز = العنصر - المادة - الاتجاه - العدد والقطر - الطول بالملم. BB وBT حديد سفلي، TB وTT حديد علوي، VB رأسي، HB أفقي، ST كانات.','CODE: ELEMENT-MAT-DIR-NO. Ø DIA-LENGTH (mm).  BB/BT BOTTOM BARS, TB/TT TOP BARS, VB VERTICAL, HB HORIZONTAL, ST TIES.'],
+  ['الطول = مجموع أطوال أضلاع السيخ على محوره (زوايا نظرية)، والمسحوب مرسوم بنفس الأطوال.','LENGTH = SUM OF LEG LENGTHS ON THE BAR AXIS (THEORETICAL CORNERS); THE PULL-OUT IS DRAWN TO THE SAME LENGTHS.']].concat(notes||[]));
+ (F.W||[]).forEach(w=>sp.notes.push(w));return sp};
+/* pull-out as a full sheet (second sheet) at the smallest standard scale that fits every bar */
+BM.pullRows=bars=>{let N=25,v;for(let i=0;i<10;i++){v=BM.pullView(bars,N);const nn=SD.nice(Math.max(v.w/180,v.h/245));if(nn<=N)break;N=nn}
+ v=BM.pullView(bars,N);return[{h:273,views:[Object.assign(v,{min:N,minD:N,px:[6,6],py:6})]}]};
+/* ---------- per element builder registry ---------- */
+const reg=(k,ar,en,E,V)=>{BM.E[k]=E;BM.V[k]=V;BM.T43[k]=[ar,en]};
+BM.reg=reg;
+/* the sheet for an element: part 'A' (drawings + schedule), 'B' (pull-out sheet) or 'all' */
+BM.build43=k=>{BM.curK=k;const F=BM.E[k]();if(!F)return null;const part=BM.part43||'all',T=BM.T43[k];
+ if(part=='B'&&!F.split){const sp=SD.base(k,[T[0]+' — سحب الأسياخ',T[1]+' - BAR PULL-OUT (TRUE LENGTH)'],window.QTL,[]);sp.rows=BM.pullRows(F.bars);sp.notes=[['كل سيخ مرسوم بالقياس الحقيقي وبطوله بالكود؛ الجدول والرسم على اللوحة الرئيسية.','EVERY BAR IS DRAWN TO ITS CODE LENGTH; THE SCHEDULE AND DRAWINGS ARE ON THE MAIN SHEET.']];sp.bm=false;sp.bars=null;return sp}
+ BM.mn=part=='all'?Math.max(1,Math.ceil(F.wmax/165)):1;
+ const r=BM.V[k](F,part=='all'?BM.mn:0,part),split=!Array.isArray(r),rows=split?(part=='B'?r.B:r.A):r;
+ const sp=BM.mkSheet(k,[T[0],T[1].toUpperCase()+' - BARS, CODES AND PULL-OUT'],F,rows,F.notes);
+ if(split){if(part=='B'){sp.bm=false;sp.pullB=F.bars}else{sp.noPull=true;sp.notes.push(['المقاطع وسحب الأسياخ بالطول الحقيقي على لوحة التفاصيل.','SECTIONS AND THE TRUE-LENGTH BAR PULL-OUT ARE ON THE DETAILS SHEET.'])}}
+ else if(part=='A')sp.noPull=true;
+ return sp};
+{const ob=SD.buildAll;SD.buildAll=function(k,opt){if(!BM.E[k]||BM.off)return ob(k,opt);
+ let F=null,probe=null;try{BM.curK=k;F=BM.E[k]();if(F)probe=BM.V[k](F,1,'A')}catch(e){console.log('BM43 build',k,e)}if(!F||!probe)return ob(k,opt);
+ const f0=SD.force,d0=SD.dtl;try{
+  if(!Array.isArray(probe)){BM.part43='A';const A=SD.build(k);BM.part43='B';SD.dtl=1;SD.force=0;const e0=SD.enl;SD.enl=1;let B=null;try{B=SD.build(k)}finally{SD.dtl=d0;SD.enl=e0}return A?(B?[A,B]:[A]):null}
+  BM.part43='nat';const Sn=SD.build(k);BM.part43='all';const S1=SD.build(k);
+  if(!S1)return null;if(!(S1.pullOver||(Sn&&S1.N>Sn.N)))return[S1];
+  BM.part43='A';const A=SD.build(k);BM.part43='B';SD.force=0;const B=SD.build(k);return A&&B?[A,B]:[S1]}
+ finally{BM.part43='all';SD.force=f0;SD.dtl=d0}}}
+/* wrap the old sheet definitions */
+const wrap=k=>{const old=SD.defs[k];SD.defs[k]=function(){try{if(!BM.off){const s=BM.build43(k);if(s)return s}}catch(e){console.log('BM43',k,e)}return old()}};
+BM.wrap43=wrap;
+/* common option fields (lap method, stock length, support width) */
+{const GEN=[SP.beam.f.find(f=>f.id=='bm_lapm'),SP.beam.f.find(f=>f.id=='bm_stk')].filter(Boolean);
+ BM.addOpts=(k,extra)=>{if(!SP[k])return;GEN.concat(extra||[]).forEach(f=>{if(!SP[k].f.some(x=>x.id==f.id))SP[k].f.push(f)})}}
+const N_=(id,ar,en,d,u,g)=>({id,ar,en,d,u:u===undefined?'':u,g:g||'rf'}),S_=(id,ar,en,d,opts,g)=>({id,ar,en,d,sel:opts,u:'',g:g||'rf'});
+BM.N_=N_;BM.S_=S_;
+const BR=N_('bm_br','عرض المسند (جسر أو جدار)','Support width (beam or wall)',250,'mm','dim');
+BM.BR=BR;
+/* ========================= one-way slab (per metre width) ========================= */
+reg('slab','بلاطة باتجاه واحد (لكل متر عرض)','One-way slab (per metre width)',()=>{
+ BM.curK='slab';const O=BM.opts(),W=BM.warn=[],L=gv('sL',4000),ss=gv('ss',0),h=gv('m_h',150),d1=gv('m_d1',12),s1=gv('m_s1',150),d2=gv('m_d2',10),s2=gv('m_s2',250),cv=gv('scv',20),br=gv('bm_br',250);
+ const cant=ss==3,ext=Math.max(0,Math.min(150,br-cv)),e3=R(.3*L),nM=cnt(1000,s1),nc=ss==1?1:(ss==2?2:0),stock=O.stock,X=[];
+ if(h<2*cv+d1+d2)W.push(['السماكة لا تكفي لطبقتين من الحديد مع الغطاء.','Thickness is too small for two layers of bars with the cover.']);
+ if(cant){const dn=Math.max(0,h-2*cv),ldh=Math.max(8*d1,150);if(br-cv<ldh)W.push([`عرض المسند ${br} مم أقل من طول الخطاف المطلوب ${ldh} مم لتثبيت سيخ الكابولي (ACI 25.4.3).`,`Support width ${br} mm is less than the hook development length ${ldh} mm needed to anchor the cantilever bar (ACI 25.4.3).`]);
+  X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nM,db:d1,perM:1,legs:[[dn,90],[br-cv+L-cv,0]],desc:['حديد الكابولي الرئيسي (علوي، خطاف للأسفل في المسند)','Cantilever main bars (top, hook down in the support)']}),'M'));
+  X.push(KEY(BM.mk({mat:'TT',dir:'Y',n:cnt1(L-cv,s2),db:d2,perM:1,legs:[[1000,0]],desc:['حديد التوزيع تحت الرئيسي','Distribution bars']}),'D'))}
+ else{
+  X.push(KEY(BM.mk({mat:'BB',dir:'X',n:nM,db:d1,perM:1,legs:[[L+2*ext,0]],desc:['الحديد الرئيسي السفلي','Bottom main bars']}),'M'));
+  X.push(KEY(BM.mk({mat:'BT',dir:'Y',n:cnt1(L-2*cv,s2),db:d2,perM:1,legs:[[1000,0]],desc:['حديد التوزيع السفلي','Bottom distribution bars']}),'D'));
+  if(nc){X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nM*nc,db:d1,perM:1,legs:[[2*e3+br,0]],desc:['حديد علوي فوق المسند المستمر (0.3L على كل جهة)','Top bars over the continuous support (0.3L each side)']}),'T'));
+   X.push(KEY(BM.mk({mat:'TT',dir:'Y',n:cnt1(2*e3+br,s2)*nc,db:d2,perM:1,legs:[[1000,0]],desc:['توزيع علوي فوق المسند','Top distribution over the support']}),'TD'))}}
+ const bars=BM.fin(X,stock,W),wm=Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1]));
+ return{k:'slab',L,ss,h,d1,s1,d2,s2,cv,br,cant,ext,e3,nc,bars,W,vol:L*1000*h/1e9,wmax:wm,
+  notes:[[cant?'كابولي: الحديد الرئيسي علوي وبخطاف للأسفل داخل المسند.':(nc?'الحديد العلوي عند المسند المستمر بنفس قطر وتباعد الرئيسي (افتراض) وبامتداد 0.3L من وجه المسند.':'مسند بسيط: لا حديد علوي.'),cant?'CANTILEVER: MAIN BARS ON TOP WITH A DOWNWARD HOOK IN THE SUPPORT.':(nc?'TOP BARS AT THE CONTINUOUS SUPPORT ASSUMED SAME Ø/SPACING AS THE MAIN BARS, EXTENDING 0.3L EACH SIDE.':'SIMPLE SUPPORTS: NO TOP BARS.')],
+   ['الكميات لكل متر عرض من البلاطة؛ حديد التوزيع طول كل سيخ 1000 مم (يستمر بتراكب).','QUANTITIES PER METRE WIDTH; EACH DISTRIBUTION BAR IS 1000 mm (CONTINUED WITH A LAP).']]}},
+ (F,mn)=>{const {L,h,cv,d1,s1,d2,s2,br,cant,ext,e3,nc,ss}=F,sup=Math.max(300,R(h*1.6)),lc=ss==2,rc=ss>=1&&ss<3,pad=e3,x0=lc?pad:0,sx=x0+br,tot=x0+2*br+L+(rc?pad:0),yb=cv+d1/2,yt=h-cv-d1/2;
+  const sec=C=>{C.rc('CONC',0,0,tot,h);
+   if(cant){C.rc('OUTL',0,-sup,br,sup);C.rc('OUTL',0,h,br,sup*.6)}else{C.rc('OUTL',x0,-sup,br,sup);C.rc('OUTL',x0+br+L,-sup,br,sup)}
+   if(lc)zig(C,0,0,h);if(rc)zig(C,tot,0,h);
+   const A=[];
+   if(cant){C.pl('TB',[[br-cv-d1/2,h-cv-d1/2-(h-2*cv)],[br-cv-d1/2,yt],[br+L-cv,yt]],0,d1);A.push(['M',br+L-cv,yt,h+C.pm(10)]);
+    C.pl('TT',[[br+L*.25,yt-d1/2-d2/2],[br+L*.25+1,yt-d1/2-d2/2]],0,d2);C.dimH(br,br+L,h+sup*.4,5,L);C.dimV(0,0,h,-8,h);C.dimH(0,br,-sup,-5,br)}
+   else{C.pl('BB',[[sx-ext,yb],[sx+L+ext,yb]],0,d1);A.push(['M',sx+L+ext,yb,yb]);
+    const xp=sx+L*.3;[xp,xp+d2*2].forEach(x=>C.ci('BT',x,yb+d1/2+d2/2,d2/2,1));A.push(['D',xp+d2*2,yb+d1/2+d2/2,yb+C.pm(8)]);
+    [[lc,sx],[rc,sx+L]].forEach(q=>{if(!q[0])return;const xc=q[1]===sx?sx-br/2:sx+br/2,a=Math.max(0,xc-e3-br/2),b=Math.min(tot,xc+e3+br/2);C.pl('TB',[[a,yt],[b,yt]],0,d1);C.dimH(q[1]===sx?a:sx+L,q[1]===sx?sx:b,h,5,q[1]===sx?R(sx-a):R(b-sx-L))});
+    if(nc){const xt=rc?tot:sx;A.push(['T',xt,yt,h+C.pm(8)]);A.push(['TD',xt-d1*2,yt-d1/2-d2/2,h+C.pm(15)])}
+    C.dimH(sx,sx+L,0,-8,L);C.dimH(x0,sx,-sup,-5,br);C.dimH(sx+L,sx+L+br,-sup,-5,br);C.dimV(tot,0,h,8,h);C.tx('TEXT',tot*.5,h*.5,`c=${cv}`,`c=${cv}`,{a:'c',h:2})}
+   CALL(C,F,A,tot+C.pm(14),5)};
+  const xs=[],w=1000,xw=lay(1,0,0);for(let x=s1/2;x<w;x+=s1)xs.push(x);
+  const cs=C=>{C.rc('CONC',0,0,w,h);const y1=cv+d2+d1/2,yD=cv+d2/2;
+   if(cant){const yt1=h-cv-d1/2;xs.forEach(x=>C.ci('TB',x,yt1,d1/2,1));C.pl('TT',[[cv,yt1-d1/2-d2/2],[w-cv,yt1-d1/2-d2/2]],0,d2)}
+   else{C.pl('BT',[[cv,yD],[w-cv,yD]],0,d2);xs.forEach(x=>C.ci('BB',x,y1,d1/2,1));
+    if(nc){const yt1=h-cv-d2-d1/2;C.pl('TT',[[cv,h-cv-d2/2],[w-cv,h-cv-d2/2]],0,d2);xs.forEach(x=>C.ci('TB',x,yt1,d1/2,1))}}
+   C.dimH(0,w,0,-8,w);C.dimV(w,0,h,8,h);if(xs.length>1)C.dimH(xs[0],xs[1],h,5,s1);
+   CALL(C,F,cant?[['M',xs[1]||xs[0],h-cv-d1/2,h+C.pm(8)]]:[['M',xs[xs.length-1],cv+d2+d1/2,-C.pm(14)],['D',w*.2,cv+d2/2,-C.pm(20)]],w+C.pm(14),5)};
+  return[{h:44,views:[{name:['المقطع الطولي','LONGITUDINAL SECTION'],w:tot,h:h+sup,x0:0,y0:-sup,px:[24,62],py:14,min:mn,draw:sec}]},
+   {h:34,views:[{name:['مقطع عرضي (عرض 1 م)','CROSS SECTION (1 m WIDE)'],w:w,h:h,x0:0,y0:0,px:[24,62],py:14,draw:cs}]}]});
+/* ========================= two-way slab, simply supported (gr) ========================= */
+reg('gr','بلاطة باتجاهين مسنودة بسيطًا','Two-way slab, simply supported',()=>{
+ BM.curK='gr';const O=BM.opts(),W=BM.warn=[],la=gv('ga',4000),lb=gv('gb',5000),h=gv('m_h',150),d1=gv('m_d1',10),s1=gv('m_s1',150),d2=gv('m_d2',10),s2=gv('m_s2',200),cv=gv('gcv',20),br=gv('bm_br',250);
+ const ext=Math.max(0,Math.min(150,br-cv)),nB=cnt1(lb-2*cv,s1),nT=cnt1(la-2*cv,s2),stock=O.stock;
+ if(lb<la)W.push(['الطول الطويل lb أصغر من القصير la؛ بدّلهما.','The long span lb is smaller than la; swap them.']);
+ if(lb/la>2)W.push(['lb/la > 2: البلاطة تعمل باتجاه واحد؛ استعمل أداة البلاطة باتجاه واحد.','lb/la > 2: the slab acts one-way; use the one-way slab tool.']);
+ const X=[KEY(BM.mk({mat:'BB',dir:'X',n:nB,db:d1,legs:[[la+2*ext,0]],desc:['الاتجاه القصير (الطبقة السفلى)','Short direction (lower layer)']}),'S'),
+  KEY(BM.mk({mat:'BT',dir:'Y',n:nT,db:d2,legs:[[lb+2*ext,0]],desc:['الاتجاه الطويل (الطبقة العليا)','Long direction (upper layer)']}),'T')];
+ const bars=BM.fin(X,stock,W);
+ return{k:'gr',la,lb,h,d1,s1,d2,s2,cv,br,ext,nB,nT,bars,W,vol:la*lb*h/1e9,wmax:Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1])),
+  notes:[['الاتجاه القصير في الطبقة السفلى (الأعمق)، والطويل فوقه. حديد الزوايا (التواء) غير مرسوم؛ تحقق منه عند الحاجة.','SHORT DIRECTION IN THE LOWER LAYER, LONG DIRECTION ABOVE IT. CORNER (TORSION) STEEL IS NOT SHOWN; CHECK IT IF NEEDED.'],
+   ['الأسياخ مستقيمة وتمتد 150 مم داخل المسند.','BARS ARE STRAIGHT AND EXTEND 150 mm INTO THE SUPPORT.']]}},
+ (F,mn)=>{const {la,lb,h,d1,s1,d2,s2,cv,br,ext,nB,nT}=F;
+  const ys=lay(nB,cv,lb-cv),xs=lay(nT,cv,la-cv);
+  const plan=C=>{C.rc('CONC',0,0,la,lb);C.rc('OUTL',-br,-br,la+2*br,lb+2*br);
+   thin(ys,28).forEach(y=>C.pl('BBH',[[-ext,y],[la+ext,y]],0,d1));thin(xs,28).forEach(x=>C.pl('BT',[[x,-ext],[x,lb+ext]],0,d2));
+   C.dimH(0,la,-br,-8,la);C.dimV(la+br,0,lb,8,lb);C.dimV(la+br,ys[0],ys[1]||ys[0],16,R(ys[1]-ys[0]));C.dimH(xs[0],xs[1]||xs[0],lb+br,5,R(xs[1]-xs[0]));
+   BM.legend(C,F,[['S','BBH',`Ø${d1}@${s1}`,d1],['T','BT',`Ø${d2}@${s2}`,d2]],la+br+C.pm(24),lb)};
+  const sec=(w,key,db,dO,sp,pos)=>C=>{C.rc('CONC',0,0,w,h);C.rc('OUTL',-br,-Math.max(300,h*1.4),br,Math.max(300,h*1.4));C.rc('OUTL',w,-Math.max(300,h*1.4),br,Math.max(300,h*1.4));
+   const yS=cv+db/2,yL=cv+d1+d2/2;const own=key=='S'?[cv+d1/2,cv+d1+d2/2]:[cv+d1+d2/2,cv+d1/2];
+   C.pl(key=='S'?'BB':'BT',[[-ext,own[0]],[w+ext,own[0]]],0,db);pos.forEach(x=>C.ci(key=='S'?'BT':'BB',x,own[1],dO/2,1));
+   C.dimH(0,w,0,-8,w);C.dimV(w+br,0,h,6,h);C.tx('TEXT',w*.5,h*.55,`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+   CALL(C,F,[[key,w+ext,own[0],own[0]],[key=='S'?'T':'S',pos[pos.length-1],own[1],h+C.pm(10)]],w+br+C.pm(16),5)};
+  const posL=thin(xs,12),posS=thin(ys,12);
+  return[{h:50,views:[{name:['المسقط','PLAN'],w:la+2*br,h:lb+2*br,x0:-br,y0:-br,px:[22,62],py:16,min:mn,draw:plan}]},
+   {h:26,views:[{name:['المقطع 1-1 (على الاتجاه القصير)','SECTION 1-1 (SHORT DIRECTION)'],w:la+br,h:h+Math.max(300,h*1.4),x0:-br,y0:-Math.max(300,h*1.4),px:[22,62],py:14,draw:sec(la,'S',d1,d2,s2,posL)}]},
+   {h:26,views:[{name:['المقطع 2-2 (على الاتجاه الطويل)','SECTION 2-2 (LONG DIRECTION)'],w:lb+br,h:h+Math.max(300,h*1.4),x0:-br,y0:-Math.max(300,h*1.4),px:[22,62],py:14,draw:sec(lb,'T',d2,d1,s1,posS)}]}]});
+BM.addOpts('slab',[BR]);BM.addOpts('gr',[BR]);
+BM.wrapAll=()=>['slab','gr','tw','hs','stair','sx','rw','rx','tk','tx','sw','pl'].forEach(k=>{if(BM.E[k]&&!BM['w43'+k]){BM['w43'+k]=1;BM.wrap43(k)}});
+BM.wrapAll();
+})();
+</script>
+<script>/*bar44*/
+/* stage 3b: flat slab (tw), ribbed slab (hs), stairs (stair, sx) */
+(()=>{
+if(!window.BM||!window.BM.reg)return;
+const BM=window.BM,BM_=BM,SD=window.SD,R=Math.round,{KEY,CALL,zig,cnt,cnt1,thin,reg,N_,S_,BR}=BM_,gv=(id,d)=>{const v=SD.inp(id);return isFinite(v)?v:d},lay=SD.lay,D2R=Math.PI/180;
+/* evenly spaced positions of bars of spacing s in [a,b] */
+const pos=(a,b,s)=>{const n=cnt(b-a,s),st=(b-a)/n;return Array.from({length:n},(_,i)=>a+(i+.5)*st)};
+/* ---------- ACI 318 one-way slab design per metre width (stairs); from memory of the code - see the notes on the sheet ---------- */
+const DES=(()=>{const PI=Math.PI,b1=fc=>fc<=28?.85:Math.max(.65,.85-.05*(fc-28)/7);
+ const reqAs=(Mu,d,fc,fy)=>{if(Mu<=0)return 0;const Rn=Mu*1e6/(.9*1000*d*d),q=1-2*Rn/(.85*fc);if(q<0)return Infinity;return .85*fc/fy*(1-Math.sqrt(q))*1000*d};
+ const asMin=(h,fy)=>Math.max(.0018*420/fy,.0014)*1000*h;
+ const pick=(Mu,h,cv,fc,fy,dbs)=>{const smax=Math.min(3*h,450),am=asMin(h,fy);let r=null;
+  for(const db of dbs){const d=h-cv-db/2,rq=reqAs(Mu,d,fc,fy),Ar=Math.max(rq,am),Ab=PI*db*db/4;let s=isFinite(Ar)?Math.floor(1000*Ab/Ar/25)*25:25;s=Math.max(25,Math.min(s,smax));r={db,d,rq,Ar,s,Asp:1000*Ab/s,smax,am,ok:isFinite(Ar)&&s>=100};if(s>=125&&isFinite(Ar))break}
+  return r};
+ const pickD=(h,fy,dbs)=>{const am=asMin(h,fy),smax=Math.min(5*h,450);let r=null;for(const db of dbs){const Ab=PI*db*db/4;let s=Math.max(50,Math.min(Math.floor(1000*Ab/am/25)*25,smax));r={db,s,Asp:1000*Ab/s,am,smax};if(s>=150)break}return r};
+ const check=(Mu,h,cv,fc,fy,db,s)=>{const d=h-cv-db/2,rq=reqAs(Mu,d,fc,fy),am=asMin(h,fy),Ab=PI*db*db/4,Asp=1000*Ab/s;return{d,rq,am,Asp,smax:Math.min(3*h,450),ok:isFinite(rq)&&Asp>=Math.max(rq,am)*.99&&s<=Math.min(3*h,450)}};
+ const shear=(Vu,d,As,fc)=>{const ls=Math.min(1,Math.sqrt(2/(1+.004*d))),rho=As/(1000*d),Vc=.75*.66*ls*Math.cbrt(rho)*Math.sqrt(fc)*d;return{Vu,phiVc:Vc,ok:Vu<=Vc}};
+ const tc=(As,d,fc,fy)=>{const a=As*fy/(.85*fc*1000);return a/b1(fc)/d<=.375};
+ return{reqAs,asMin,pick,pickD,check,shear,tc}})();
+const DF=[N_('bm_td','قطر الحديد العلوي عند المسند Ø (0 = تلقائي)','Top bar Ø at the supports (0 = auto)',0,'mm','rf',v=>v.bm_dsg!=1&&v.bm_sup!=0),N_('bm_ts','تباعد الحديد العلوي (0 = تلقائي)','Top bar spacing (0 = auto)',0,'mm','rf',v=>v.bm_dsg!=1&&v.bm_sup!=0),
+ N_('bm_ll','الحمل الحي','Live load',3,'kN/m²','rf'),N_('bm_fl','تغطية وتشطيبات (حمل ميت إضافي)','Finishes (extra dead load)',1.5,'kN/m²','rf'),
+ S_('bm_sup','ظروف الاستناد','Support condition',1,[[1,'مستمر جزئيًا مع الجسر/الجدار (حديد علوي)','Partly restrained (top bars at supports)'],[0,'مسند بسيط (بدون حديد علوي)','Simply supported (no top bars)']],'rf'),
+ S_('bm_dsg','طريقة التسليح','Reinforcement method',0,[[0,'من المدخلات (مع فحص حسب ACI)','From the inputs (checked to ACI)'],[1,'تصميم تلقائي حسب ACI 318','Automatic design to ACI 318']],'rf')];
+BM.DF=DF;
+/* top bars at a support: extension past the inflection point (0.092 L) + max(d,12 db), not less than ld */
+const topExt=(L,d,dbT,cap)=>{const Lt=Math.max(BM.ld(dbT),R(.0918*L+Math.max(d,12*dbT)));return Math.ceil(Math.min(Lt,cap)/25)*25};
+const dnote=(a,e)=>[a,e];
+/* ============================ flat slab interior panel (DDM) ============================ */
+reg('tw','بلاطة مسطحة (DDM) — لوحة داخلية','Flat slab (DDM) - interior panel',()=>{
+ BM.curK='tw';const O=BM.opts(),W=BM.warn=[],l1=gv('wa',6000),l2=gv('wb',6000),c=gv('wc',400),h=gv('m_h',200),cv=gv('wcv',20),both=gv('bm_wb',1)==1;
+ const cw=Math.min(gv('m_cw',3000),Math.min(l1,l2)),dn1=gv('m_dn1',16),sn1=gv('m_sn1',150),dn2=gv('m_dn2',12),sn2=gv('m_sn2',200),dp1=gv('m_dp1',14),sp1=gv('m_sp1',150),dp2=gv('m_dp2',12),sp2=gv('m_sp2',200),stock=O.stock;
+ if(gv('m_cw',3000)>Math.min(l1,l2))W.push(['عرض شريحة العمود أكبر من أصغر بُعد؛ قُصّر.','Column strip width exceeds the smaller panel dimension; it was limited.']);
+ const X=[];
+ (both?[['X',l1,l2],['Y',l2,l1]]:[['X',l1,l2]]).forEach(q=>{const dir=q[0],Ls=q[1],Wd=q[2],ln=Ls-c,Lp=R(ln+300),Lt=R(c+.6*ln),mB=dir=='X'?'BB':'BT',mT=dir=='X'?'TB':'TT',wm=Math.max(0,Wd-cw);
+  X.push(KEY(BM.mk({mat:mB,dir,n:2*cnt(cw/2,sp1),db:dp1,legs:[[Lp,0]],desc:['موجب - شريحة العمود','Positive - column strip']}),'pc'+dir));
+  if(wm>1)X.push(KEY(BM.mk({mat:mB,dir,n:cnt(wm,sp2),db:dp2,legs:[[Lp,0]],desc:['موجب - الشريحة الوسطى','Positive - middle strip']}),'pm'+dir));
+  X.push(KEY(BM.mk({mat:mT,dir,n:4*cnt(cw/2,sn1),db:dn1,legs:[[Lt,0]],desc:['سالب فوق العمود - شريحة العمود','Negative over column - column strip']}),'nc'+dir));
+  if(wm>1)X.push(KEY(BM.mk({mat:mT,dir,n:2*cnt(wm,sn2),db:dn2,legs:[[Lt,0]],desc:['سالب فوق العمود - الشريحة الوسطى','Negative over column - middle strip']}),'nm'+dir))});
+ const bars=BM.fin(X,stock,W);
+ return{k:'tw',split:true,l1,l2,c,h,cv,cw,dn1,sn1,dn2,sn2,dp1,sp1,dp2,sp2,both,bars,W,vol:l1*l2*h/1e9,wmax:1,
+  notes:[[`لوحة داخلية ${l1} × ${l2} مم بأعمدة ${c} مم؛ الحديد السفلي ينتهي ${150} مم داخل العمود، والعلوي بطول c + 0.6 من الطول الصافي (0.3 على كل جهة).`,`INTERIOR PANEL ${l1} x ${l2} mm, ${c} mm COLUMNS; BOTTOM BARS END 150 mm INTO THE COLUMN, TOP BARS c + 0.6 OF THE CLEAR SPAN (0.3 EACH SIDE).`],
+   [both?'اتجاه Y بنفس التسليح افتراضًا (خيار «اتجاه Y»).':'يُرسم اتجاه X فقط.',both?'Y DIRECTION ASSUMED THE SAME (OPTION «Y DIRECTION»).':'ONLY THE X DIRECTION IS DRAWN.'],
+   ['المساقط تُرسم بعيّنة من الأسياخ؛ العدد الحقيقي في الجدول. c = شريحة العمود، m = الوسطى.','PLANS SHOW A SAMPLE OF THE BARS; THE TRUE COUNT IS IN THE SCHEDULE. c = COLUMN STRIP, m = MIDDLE STRIP.']]}},
+ (F,mn,part)=>{const {l1,l2,c,h,cv,cw,dn1,sn1,dn2,sn2,dp1,sp1,dp2,sp2,both,bars}=F;
+  const ln1=l1-c,ln2=l2-c,t1=R(.3*ln1);
+  const cats=(Wd,s1,s2)=>({c:pos(0,cw/2,s1).concat(pos(Wd-cw/2,Wd,s1)),m:Wd-cw>1?pos(cw/2,Wd-cw/2,s2):[]});
+  const bot=cats(l2,sp1,sp2),botY=cats(l1,sp1,sp2),top=cats(l2,sn1,sn2),topY=cats(l1,sn1,sn2);
+  const plan=isTop=>C=>{C.rc('CONC',0,0,l1,l2);[[0,0],[l1,0],[0,l2],[l1,l2]].forEach(p=>C.rc('OUTL',p[0]-c/2,p[1]-c/2,c,c));
+   [cw/2,l2-cw/2].forEach(y=>C.pl('HIDD',[[0,y],[l1,y]]));[cw/2,l1-cw/2].forEach(x=>C.pl('HIDD',[[x,0],[x,l2]]));
+   const ta=(a,k)=>thin(a,k);let L_=[];
+   if(!isTop){const x0=c/2-150,x1=l1-c/2+150,y0=c/2-150,y1=l2-c/2+150;
+    ta(bot.c,4).forEach(y=>C.pl('BBH',[[x0,y],[x1,y]],0,dp1));ta(bot.m,3).forEach(y=>C.pl('BBH',[[x0,y],[x1,y]],0,dp2));
+    if(both){ta(botY.c,4).forEach(x=>C.pl('BT',[[x,y0],[x,y1]],0,dp1));ta(botY.m,3).forEach(x=>C.pl('BT',[[x,y0],[x,y1]],0,dp2))}
+    L_=[['pcX','BBH',`Ø${dp1}@${sp1} (c)`,dp1],['pmX','BBH',`Ø${dp2}@${sp2} (m)`,dp2],['pcY','BT',`Ø${dp1}@${sp1} (c)`,dp1],['pmY','BT',`Ø${dp2}@${sp2} (m)`,dp2]]}
+   else{const e=c/2+t1;
+    ta(top.c,4).forEach(y=>{C.pl('TB',[[0,y],[e,y]],0,dn1);C.pl('TB',[[l1-e,y],[l1,y]],0,dn1)});ta(top.m,3).forEach(y=>{C.pl('TB',[[0,y],[e,y]],0,dn2);C.pl('TB',[[l1-e,y],[l1,y]],0,dn2)});
+    if(both){const e2=c/2+R(.3*ln2);ta(topY.c,4).forEach(x=>{C.pl('TT',[[x,0],[x,e2]],0,dn1);C.pl('TT',[[x,l2-e2],[x,l2]],0,dn1)});ta(topY.m,3).forEach(x=>{C.pl('TT',[[x,0],[x,e2]],0,dn2);C.pl('TT',[[x,l2-e2],[x,l2]],0,dn2)})}
+    L_=[['ncX','TB',`Ø${dn1}@${sn1} (c)`,dn1],['nmX','TB',`Ø${dn2}@${sn2} (m)`,dn2],['ncY','TT',`Ø${dn1}@${sn1} (c)`,dn1],['nmY','TT',`Ø${dn2}@${sn2} (m)`,dn2]]}
+   C.dimH(0,l1,-c/2,-8,l1);C.dimV(-c/2,0,l2,-8,l2);C.dimV(l1+c/2,0,cw/2,8,R(cw/2));C.tx('TEXT',l1*.5,cw/4,'c','c',{a:'c',h:2.4});C.tx('TEXT',l1*.5,l2/2,'m','m',{a:'c',h:2.4});
+   BM.legend(C,F,L_,l1+c/2+C.pm(6),l2)};
+  const secX=C=>{const stub=Math.max(450,h*2),e=c/2+t1,yb=cv+dp1/2,yt=h-cv-dn1/2;C.rc('CONC',-c/2,0,l1+c,h);
+   [0,l1].forEach(x=>{C.pl('OUTL',[[x-c/2,-stub*.6],[x-c/2,0]]);C.pl('OUTL',[[x+c/2,-stub*.6],[x+c/2,0]]);C.pl('OUTL',[[x-c/2,h],[x-c/2,h+stub]]);C.pl('OUTL',[[x+c/2,h],[x+c/2,h+stub]])});
+   C.pl('BB',[[c/2-150,yb],[l1-c/2+150,yb]],0,dp1);C.pl('TB',[[-c/2,yt],[e,yt]],0,dn1);C.pl('TB',[[l1-e,yt],[l1+c/2,yt]],0,dn1);
+   C.dimH(c/2,l1-c/2,0,-8,ln1);C.dimH(c/2,e,h+stub*.5,5,t1);C.dimH(l1-e,l1-c/2,h+stub*.5,5,t1);C.dimV(l1+c/2,0,h,8,h);C.tx('TEXT',l1*.5,h*.5,`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+   CALL(C,F,[['pcX',l1-c/2+150,yb,yb],['ncX',l1+c/2,yt,yt]],l1+c/2+C.pm(16),5)};
+  const wS=1000,strip=(tit,dp_,sp_,dn_,sn_,kp,kn,kpm)=>C=>{C.rc('CONC',0,0,wS,h);const xs_=s=>{const a=[];for(let x=s/2;x<wS;x+=s)a.push(x);return a},pb=xs_(sp_),pt=xs_(sn_);
+   pb.forEach(x=>C.ci('BB',x,cv+dp_/2,dp_/2,1));pt.forEach(x=>C.ci('TB',x,h-cv-dn_/2,dn_/2,1));
+   C.dimH(0,wS,0,-8,wS);C.dimH(pb[0],pb[0]+sp_,h,5,sp_);C.dimH(pt[0],pt[0]+sn_,h,11,sn_);C.dimV(wS,0,h,8,h);
+   CALL(C,F,[[kp,pb[pb.length-1],cv+dp_/2,cv+dp_/2],[kn,pt[pt.length-1],h-cv-dn_/2,h-cv-dn_/2]],wS+C.pm(14),5)};
+  const wP=Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1]));
+  const A=[{h:48,views:[{name:['المسقط - الفرش السفلي (BB, BT)','PLAN - BOTTOM MAT (BB, BT)'],w:l1+c,h:l2+c,x0:-c/2,y0:-c/2,px:[22,66],py:[14,14],draw:plan(false)}]},
+   {h:48,views:[{name:['المسقط - الفرش العلوي (TB, TT)','PLAN - TOP MAT (TB, TT)'],w:l1+c,h:l2+c,x0:-c/2,y0:-c/2,px:[22,66],py:[14,14],draw:plan(true)}]}];
+  const stub=Math.max(450,h*2),B=[{h:34,views:[{name:['المقطع على شريحة العمود (اتجاه X)','SECTION ON THE COLUMN STRIP (X)'],w:l1+c,h:h+stub*1.6,x0:-c/2,y0:-stub*.6,px:[22,62],py:14,minD:BM.pullNeedN?BM.pullNeedN(bars,180,188):0,draw:secX}]},
+   {h:24,views:[{name:['شريحة العمود - مقطع بعرض 1 م','COLUMN STRIP - 1 m WIDE SECTION'],w:wS,h:h,x0:0,y0:0,px:[22,62],py:14,draw:strip('',dp1,sp1,dn1,sn1,'pcX','ncX')}]},
+   {h:24,views:[{name:['الشريحة الوسطى - مقطع بعرض 1 م','MIDDLE STRIP - 1 m WIDE SECTION'],w:wS,h:h,x0:0,y0:0,px:[22,62],py:14,draw:strip('',dp2,sp2,dn2,sn2,'pmX','nmX')}]}];
+  return{A,B}});
+BM.addOpts('tw',[N_('bm_wb','اتجاه Y','Y direction',1,'','rf')].map(f=>S_('bm_wb','اتجاه Y','Y direction',1,[[1,'بنفس تسليح X','Same as X'],[0,'لا يُرسم','Not drawn']])));
+/* ============================ ribbed (hordi) slab, one way, per rib ============================ */
+reg('hs','سقف أعصاب (هوردي) باتجاه واحد','Ribbed (hordi) slab, one way',()=>{
+ BM.curK='hs';const O=BM.opts(),W=BM.warn=[],L=gv('hsL',4000),ss=gv('hss',0),bw=gv('hsb',120),bk=gv('hsx',400),h=gv('hsh',250),hst=gv('hst',50),np=gv('m_np',2),dp=gv('m_dp',12),nn=gv('m_nn',0),dn=gv('m_dn',10),dT=gv('m_dT',6),sT=gv('m_sT',250),spv=gv('m_spv',0),cv=gv('hscv',20),br=gv('bm_br',250),dst=gv('bm_hst',8);
+ const mod=bw+bk,ext=Math.max(0,Math.min(150,br-cv)),e3=R(.3*L),nc=ss==1?1:(ss==2?2:0),stock=O.stock,X=[];
+ X.push(KEY(BM.mk({mat:'BB',dir:'X',n:np,db:dp,legs:[[L+2*ext,0]],desc:['حديد سفلي في العصب (لكل عصب)','Rib bottom bars (per rib)']}),'B'));
+ if(nn>0&&nc)X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nn*nc,db:dn,legs:[[2*e3+br,0]],desc:['حديد علوي في العصب عند المسند (لكل عصب)','Rib top bars at the support (per rib)']}),'T'));
+ if(spv>0){const wS=bw-2*cv-dst,hS=h-2*cv-dst;if(wS<=0)W.push(['العصب أضيق من أن يتسع للكانة.','The rib is too narrow for the stirrup.']);else X.push(KEY(BM.mk({mat:'ST',n:Math.floor(L/spv)+1,db:dst,s:spv,legs:BM.rectTie(wS,hS,dst),desc:['كانات العصب (لكل عصب)','Rib stirrups (per rib)']}),'S'))}
+ X.push(KEY(BM.mk({mat:'TT',dir:'X',n:cnt(mod,sT),db:dT,legs:[[L,0]],desc:['شبكة الغطاء بالاتجاه X (لكل عصب)','Topping mesh X (per rib)']}),'MX'));
+ X.push(KEY(BM.mk({mat:'TT',dir:'Y',n:cnt1(L,sT),db:dT,legs:[[mod,0]],desc:['شبكة الغطاء بالاتجاه Y (لكل عصب)','Topping mesh Y (per rib)']}),'MY'));
+ const bars=BM.fin(X,stock,W);
+ return{k:'hs',L,ss,bw,bk,h,hst,np,dp,nn,dn,dT,sT,spv,cv,br,mod,ext,e3,nc,dst,bars,W,vol:L*(bw*(h-hst)+mod*hst)/1e9,wmax:Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1])),
+  notes:[[`الكميات لكل عصب (وحدة عرضها ${mod} مم = عرض العصب + البلوك)؛ عدد الأعصاب لكل متر = ${(1000/mod).toFixed(2)}.`,`QUANTITIES ARE PER RIB (MODULE ${mod} mm = RIB + BLOCK); RIBS PER METRE = ${(1000/mod).toFixed(2)}.`],
+   [spv>0?`كانات العصب Ø${dst} (افتراض) بتباعد ${spv} مم.`:'بدون كانات في العصب (التباعد 0).',spv>0?`RIB STIRRUPS Ø${dst} (ASSUMED) AT ${spv} mm.`:'NO RIB STIRRUPS (SPACING 0).'],
+   ['البلوك (الهوردي) مجوّف ويُرسم متقطعًا ولا يدخل في الكميات.','HOLLOW BLOCKS ARE DRAWN DASHED AND ARE NOT IN THE QUANTITIES.']]}},
+ (F,mn)=>{const {L,ss,bw,bk,h,hst,np,dp,nn,dn,dT,sT,spv,cv,br,mod,ext,e3,nc,dst}=F,lc=ss==2,rc=ss>=1,pad=e3,x0=lc?pad:0,sx=x0+br,tot=x0+2*br+L+(rc?pad:0),sup=Math.max(300,R(h*1.2)),yb=cv+dst+dp/2,yt=h-cv-dst-dn/2;
+  const lsec=C=>{C.rc('CONC',0,0,tot,h);C.rc('OUTL',x0,-sup,br,sup);C.rc('OUTL',x0+br+L,-sup,br,sup);if(lc)zig(C,0,0,h);if(rc)zig(C,tot,0,h);
+   C.pl('HIDD',[[sx,h-hst],[sx+L,h-hst]]);
+   C.pl('BB',[[sx-ext,yb],[sx+L+ext,yb]],0,dp);
+   if(spv>0)thin(Array.from({length:Math.floor(L/spv)+1},(_,i)=>sx+i*spv),24).forEach(x=>C.pl('ST',[[x,cv+dst/2],[x,h-cv-dst/2]],0,dst));
+   [[lc,sx],[rc,sx+L]].forEach(q=>{if(!q[0]||!(nn>0))return;const xc=q[1]===sx?sx-br/2:sx+br/2;C.pl('TB',[[Math.max(0,xc-e3-br/2),yt],[Math.min(tot,xc+e3+br/2),yt]],0,dn)});
+   C.pl('TT',[[sx+L*.2,h-hst/2],[sx+L*.8,h-hst/2]],0,dT);
+   C.dimH(sx,sx+L,0,-8,L);C.dimV(tot,0,h,8,h);C.dimV(tot,h-hst,h,18,hst);C.dimH(x0,sx,-sup,-5,br);C.tx('TEXT',tot*.5,h*.5,`c=${cv}`,`c=${cv}`,{a:'c',h:2});
+   CALL(C,F,[['B',sx+L*.7,yb,-sup-C.pm(6)],['MX',sx+L*.4,h-hst/2,h+C.pm(8)]].concat(nn>0&&nc?[['T',rc?sx+L+br/2:sx-br/2,yt,h+C.pm(16)]]:[]).concat(spv>0?[['S',sx+L*.15,h/2,-sup-C.pm(13)]]:[]),tot+C.pm(14),5)};
+  const nrib=4,wT=(nrib-1)*mod+bw;
+  const csec=C=>{C.rc('CONC',0,h-hst,wT,hst);const ps=(w,n)=>lay(n,cv+dst+dp/2,w-cv-dst-dp/2);
+   for(let i=0;i<nrib;i++){const x=i*mod;C.rc('CONC',x,0,bw,h-hst);if(i<nrib-1)C.rc('HIDD',x+bw,0,bk,h-hst);
+    C.rc('STIR',x+cv+dst/2,cv+dst/2,bw-2*cv-dst,h-2*cv-dst,dst);ps(bw,np).forEach(xx=>C.ci('BB',x+xx,yb,dp/2,1));if(nn>0&&nc)ps(bw,nn).forEach(xx=>C.ci('TB',x+xx,yt,dn/2,1))}
+   for(let x=sT/2;x<wT;x+=sT)C.ci('TT',x,h-hst/2,dT/2,1);
+   C.dimH(0,bw,0,-8,bw);C.dimH(bw,mod,0,-8,bk);C.dimV(wT,0,h,8,h);C.dimV(wT,h-hst,h,18,hst);C.dimH(0,mod,h,6,mod);
+   CALL(C,F,[['B',bw*.5,yb,-C.pm(20)],['MY',wT*.7,h-hst/2,h+C.pm(14)]].concat(spv>0?[['S',mod*2+bw,h/2,-C.pm(27)]]:[]),wT+C.pm(16),5)};
+  return[{h:44,views:[{name:['مقطع طولي في العصب','RIB LONGITUDINAL SECTION'],w:tot,h:h+sup,x0:0,y0:-sup,px:[22,62],py:14,min:mn,draw:lsec}]},
+   {h:34,views:[{name:['مقطع عرضي (4 أعصاب)','CROSS SECTION (4 RIBS)'],w:wT,h:h,x0:0,y0:0,px:[22,62],py:14,draw:csec}]}]});
+BM.addOpts('hs',[BR]);
+/* ============================ stairs: shared geometry ============================ */
+const flightGeo=(nR,H,g,h,cv,d1)=>{const r=H/nR,th=Math.atan2(r,g),ct=Math.cos(th);return{r,th,thd:th/D2R,ct,Ls:R((nR-1)*Math.hypot(g,r)),run:(nR-1)*g,off:(cv+d1/2)/ct}};
+/* ============================ single flight, per metre width ============================ */
+reg('stair','سلم بشوط واحد (لكل متر عرض)','Single-flight stair (per metre width)',()=>{
+ BM.curK='stair';const O=BM.opts(),W=BM.warn=[],H=gv('zH',3000),g=gv('zg',280),nR=Math.max(2,R(gv('m_nR',18))),h=gv('m_h',150),cv=gv('zcv',20),br=gv('bm_br',250),fc=gv('zfc',25),fy=gv('zfy',420),auto=gv('bm_dsg',0)==1,ll=gv('bm_ll',3),fin=gv('bm_fl',1.5),sup=gv('bm_sup',1)==1;
+ let d1=gv('m_d1',12),s1=gv('m_s1',150),d2=gv('m_d2',10),s2=gv('m_s2',250);
+ const G=flightGeo(nR,H,g,h,cv,d1),stock=O.stock;
+ if(G.r<100||G.r>200)W.push([`ارتفاع القائمة ${G.r.toFixed(0)} مم خارج المدى المعتاد 100-200 مم.`,`Riser ${G.r.toFixed(0)} mm is outside the usual 100-200 mm range.`]);
+ /* ---- design (ACI 318, one-way slab per metre width, horizontal span) ---- */
+ const run=G.run,L=Math.min(run+h,run+br),sw=25*(h/1000/G.ct+G.r/2000),Dd=sw+fin,wu=1.2*Dd+1.6*ll,Mu=wu*(L/1000)*(L/1000)/8,Mn=sup?Mu/3:0;
+ let pm,pd;if(auto){pm=DES.pick(Mu,h,cv,fc,fy,[10,12,14,16,18,20]);d1=pm.db;s1=pm.s;pd=DES.pickD(h,fy,[8,10,12]);d2=pd.db;s2=pd.s}
+ else{pm=DES.check(Mu,h,cv,fc,fy,d1,s1);pd=DES.check(0,h,cv,fc,fy,d2,s2);pd.Asp=1000*Math.PI*d2*d2/4/s2;pd.am=DES.asMin(h,fy);pd.smax=Math.min(5*h,450)}
+ const dEff=h-cv-d1/2,Asp=1000*Math.PI*d1*d1/4/s1,Vu=wu*(L/2000-dEff/1000),sh=DES.shear(Vu,dEff,Asp,fc);
+ if(!isFinite(pm.rq||pm.Ar))W.push(['السماكة لا تكفي لتحمّل العزم؛ زِد سماكة البلاطة.','Thickness is not enough for the moment; increase the slab thickness.']);
+ if(!auto&&!pm.ok)W.push([`⚠ الحديد الرئيسي المدخل غير كافٍ: As المجهز ${R(pm.Asp)} < المطلوب ${R(Math.max(pm.rq,pm.am))} مم²/م (أو التباعد أكبر من ${pm.smax} مم).`,`⚠ The entered main steel is not enough: As provided ${R(pm.Asp)} < required ${R(Math.max(pm.rq,pm.am))} mm2/m (or spacing above ${pm.smax} mm).`]);
+ if(!auto&&pd.Asp<pd.am*.99)W.push([`⚠ حديد التوزيع المدخل أقل من الحد الأدنى ${R(pd.am)} مم²/م (ACI 24.4.3.2).`,`⚠ The entered distribution steel is below the minimum ${R(pd.am)} mm2/m (ACI 24.4.3.2).`]);
+ if(!DES.tc(Asp,dEff,fc,fy))W.push(['المقطع غير متحكَّم بالشد (c/d > 0.375)؛ زِد السماكة.','Section is not tension-controlled (c/d > 0.375); increase the thickness.']);
+ if(!sh.ok)W.push([`⚠ القص غير كافٍ: Vu = ${sh.Vu.toFixed(1)} > φVc = ${sh.phiVc.toFixed(1)} كن/م؛ زِد السماكة.`,`⚠ Shear is not enough: Vu = ${sh.Vu.toFixed(1)} > φVc = ${sh.phiVc.toFixed(1)} kN/m; increase the thickness.`]);
+ const hmin=L/20*(.4+fy/700);if(h<hmin)W.push([`السماكة ${h} مم أقل من L/20 = ${R(hmin)} مم (ACI 7.3.1.1)؛ يلزم فحص الهطول.`,`Thickness ${h} mm is below L/20 = ${R(hmin)} mm (ACI 7.3.1.1); a deflection check is required.`]);
+ const ext=Math.max(150,Math.min(300,br-cv));
+ const X=[KEY(BM.mk({mat:'BB',dir:'X',n:cnt(1000,s1),db:d1,legs:[[ext,0],[G.Ls,G.thd],[ext,0]],desc:['الحديد الرئيسي السفلي (يتبع ميل البلاطة)','Bottom main bars (follow the waist slope)']}),'M'),
+  KEY(BM.mk({mat:'BT',dir:'Y',n:cnt1(G.Ls,s2),db:d2,legs:[[1000,0]],desc:['حديد التوزيع','Distribution bars']}),'D')];
+ let top=null;
+ if(sup){const tdI=R(gv('bm_td',0)),tsI=R(gv('bm_ts',0)),pt=(!auto&&tdI>0&&tsI>0)?{db:tdI,s:tsI,d:h-cv-tdI/2}:DES.pick(Mn,h,cv,fc,fy,[10,12,14,16]),dbT=pt.db,c=cv+dbT/2,Lt=topExt(L,pt.d,dbT,.4*L),hk=Math.max(0,Math.min(12*dbT,h-2*cv-dbT)),emb=Math.max(0,br-cv),jump=R(G.r-c/G.ct+c),nT=cnt(1000,pt.s);
+  const lg=a=>a.filter(q=>q[0]>0);
+  X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nT,db:dbT,legs:lg([[hk,90],[emb,0],[jump,90],[Lt,G.thd]]),desc:['حديد علوي عند المسند السفلي','Top bars at the lower support']}),'TL'));
+  X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nT,db:dbT,legs:lg([[Lt,G.thd],[emb,0],[hk,270]]),desc:['حديد علوي عند المسند العلوي','Top bars at the upper support']}),'TU'));
+  top={pt,dbT,Lt,hk,emb,jump,nT,c}}
+ const bars=BM.fin(X,stock,W);
+ const fm=n=>n.toFixed(2);
+ const notes=[[`التصميم (ACI 318) لكل م عرض: wu = 1.2×${fm(Dd)} + 1.6×${ll} = ${fm(wu)} كن/م² (وزن ذاتي ${fm(sw)} + تشطيبات ${fin})، L = ${R(L)} مم، Mu = ${fm(Mu)} كن.م/م.`,`DESIGN (ACI 318) PER m WIDTH: wu = 1.2 x ${fm(Dd)} + 1.6 x ${ll} = ${fm(wu)} kN/m2 (SELF WEIGHT ${fm(sw)} + FINISHES ${fin}), L = ${R(L)} mm, Mu = ${fm(Mu)} kN.m/m.`],
+  [`As المطلوب = ${R(Math.max(pm.rq,pm.am))} مم²/م ← Ø${d1}@${s1} (As المجهز = ${R(Asp)}). التوزيع: Ø${d2}@${s2} ≥ As,min = ${R(pd.am)} مم²/م. القص: Vu = ${fm(sh.Vu)} ≤ φVc = ${fm(sh.phiVc)} كن/م.`,`As REQUIRED = ${R(Math.max(pm.rq,pm.am))} mm2/m -> Ø${d1}@${s1} (As PROVIDED = ${R(Asp)}). DISTRIBUTION: Ø${d2}@${s2} >= As,min = ${R(pd.am)} mm2/m. SHEAR: Vu = ${fm(sh.Vu)} <= φVc = ${fm(sh.phiVc)} kN/m.`],
+  sup?[`حديد علوي عند المسندين Ø${top.dbT}@${top.pt.s} بامتداد ${top.Lt} مم داخل الشوط وتثبيت ${top.emb} مم بخطاف (M⁻ = Mu/3 بالممارسة؛ ليس شرطًا في ACI).`,`TOP BARS AT BOTH SUPPORTS Ø${top.dbT}@${top.pt.s}, ${top.Lt} mm INTO THE FLIGHT, ANCHORED ${top.emb} mm WITH A HOOK (M- = Mu/3 BY PRACTICE; NOT AN ACI REQUIREMENT).`]:['مسند بسيط: لا حديد علوي؛ الحديد السفلي يمتد ≥ 150 مم داخل المسند (ACI 7.7.3.8).','SIMPLY SUPPORTED: NO TOP BARS; BOTTOM BARS EXTEND >= 150 mm INTO THE SUPPORT (ACI 7.7.3.8).'],
+  ['الحمل الحي وظروف الاستناد من مدخلاتك؛ التصميم لكل م عرض ويحتاج مراجعة مهندس مختص.','LIVE LOAD AND SUPPORT CONDITION ARE YOUR INPUTS; THE DESIGN IS PER m WIDTH AND NEEDS REVIEW BY A QUALIFIED ENGINEER.']];
+ return{k:'stair',H,g,nR,h,d1,s1,d2,s2,cv,br,G,ext,top,bars,W,vol:G.Ls*1000*h/1e9+G.run*1000*G.r*(nR-1)/2/1e9,wmax:Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1])),notes}},
+ (F,mn)=>{const {H,g,nR,h,d1,s1,d2,s2,cv,br,G,ext}=F,r=G.r,xe=(nR-1)*g,S0=r-h/G.ct,So=x=>r+(r/g)*x-h/G.ct,Ob=x=>So(x)+G.off*0+ (cv+d1/2)/G.ct;
+  const lsec=C=>{const top=[[-br,0],[0,0]];for(let i=0;i<nR-1;i++){top.push([i*g,(i+1)*r]);top.push([(i+1)*g,(i+1)*r])}top.push([xe,H]);top.push([xe+br,H]);
+   const pts=top.concat([[xe+br,H-h],[xe,H-h],[xe,So(xe)],[0,So(0)],[0,-h],[-br,-h]]);C.pl('CONC',pts,1);
+   const y0=Ob(0),b=F.bars.find(q=>q.keys.indexOf('M')>=0);
+   if(b){const P=b.pts.map(p=>[-ext+p[0],y0+p[1]]);C.pl('BB',P,0,d1)}
+   if(F.top){const T=F.top,tl=F.bars.find(q=>q.keys.indexOf('TL')>=0),tu=F.bars.find(q=>q.keys.indexOf('TU')>=0);
+    if(tl)C.pl('TB',tl.pts.map(p=>[-T.emb+p[0],-T.c-T.hk+p[1]]),0,T.dbT);
+    if(tu){const cx=T.Lt*G.ct,cy=T.Lt*Math.sin(G.th);C.pl('TB',tu.pts.map(p=>[xe-cx+p[0],H-T.c/G.ct-cy+p[1]]),0,T.dbT)}}
+   const nd=Math.min(cnt1(G.Ls,s2),30),st=G.Ls/(cnt1(G.Ls,s2)-1||1),kx=Math.cos(G.th),ky=Math.sin(G.th),nx=-ky,ny=kx,dd=(d1/2+d2/2);
+   for(let i=0;i<cnt1(G.Ls,s2);i+=Math.ceil(cnt1(G.Ls,s2)/30))C.ci('BT',i*st*kx+nx*dd,y0+i*st*ky+ny*dd,d2/2,1);
+   C.dimH(0,xe,-h,-8,R(xe));C.dimV(xe+br,0,H,8,H);C.dimH(0,g,r,5,g);C.dimV(0,0,r,-6,R(r));C.dimV(xe+br,H-h,H,18,h);C.tx('TEXT',xe*.5,-h-C.pm(14),`${nR-1} × ${g} = ${R(xe)}`,`${nR-1} x ${g} = ${R(xe)}`,{a:'c',h:2.2});
+   CALL(C,F,[['M',xe*.62,y0+xe*.62*(r/g),H+C.pm(8)],['D',xe*.3+nx*dd,y0+xe*.3*(r/g)+ny*dd,H+C.pm(16)]].concat(F.top?[['TL',F.top.Lt*G.ct*.5,r-F.top.c/G.ct+(r/g)*F.top.Lt*G.ct*.5,H+C.pm(24)],['TU',xe-F.top.Lt*G.ct*.5,H-F.top.c/G.ct-F.top.Lt*Math.sin(G.th)*.5,H+C.pm(32)]]:[]),xe+br+C.pm(14),5)};
+  const w=1000,cs=C=>{C.rc('CONC',0,0,w,h);const ys=[];for(let x=s1/2;x<w;x+=s1)ys.push(x);ys.forEach(x=>C.ci('BB',x,cv+d2+d1/2,d1/2,1));C.pl('BT',[[cv,cv+d2/2],[w-cv,cv+d2/2]],0,d2);if(F.top)for(let x=F.top.pt.s/2;x<w;x+=F.top.pt.s)C.ci('TB',x,h-cv-F.top.dbT/2,F.top.dbT/2,1);
+   C.dimH(0,w,0,-8,w);C.dimV(w,0,h,8,h);if(ys.length>1)C.dimH(ys[0],ys[1],h,5,s1);
+   CALL(C,F,[['M',ys[ys.length-1],cv+d2+d1/2,-C.pm(14)],['D',w*.2,cv+d2/2,-C.pm(20)]],w+C.pm(14),5)};
+  return[{h:64,views:[{name:['مقطع طولي في الشوط','LONGITUDINAL SECTION THROUGH THE FLIGHT'],w:xe+2*br,h:H+h*1.5,x0:-br,y0:-h*1.5,px:[22,62],py:[34,14],min:mn,draw:lsec}]},
+   {h:22,views:[{name:['مقطع عرضي في البلاطة (عرض 1 م)','SLAB CROSS SECTION (1 m WIDE)'],w:w,h:h,x0:0,y0:0,px:[22,62],py:14,draw:cs}]}]});
+BM.addOpts('stair',[BR].concat(DF));{const f=window.SM.SPEC.stair.f;['m_d1','m_s1','m_d2','m_s2'].forEach(id=>{const q=f.find(x=>x.id==id);if(q){const o=q.vis;q.vis=v=>v.bm_dsg!=1&&(o?o(v):true)}})}
+/* ============================ two flights + landing ============================ */
+reg('sx','سلم بشوطين وبسطة','Two-flight stair with landing',()=>{
+ BM.curK='sx';const O=BM.opts(),W=BM.warn=[],H=gv('sxH',3000),g=gv('sxg',280),nR=Math.max(4,2*Math.round(gv('m_nR',18)/2)),Wf=gv('sxW',1200),b=gv('sxb',250),Ll=gv('m_Ll',2500),h=gv('m_h',130),cv=gv('sxcv',20),fc=gv('sxfc',25),fy=gv('sxfy',420),stock=O.stock,auto=gv('bm_dsg',0)==1,ll=gv('bm_ll',3),fin=gv('bm_fl',1.5),sup=gv('bm_sup',1)==1;
+ let d1=gv('m_d1',10),s1=gv('m_s1',250),dD=gv('m_dD',8),sD=gv('m_sD',200),dl=gv('m_dl',10),sl=gv('m_sl',325);
+ const nF=nR/2,G=flightGeo(nF,H/2,g,h,cv,d1),ext=Math.max(0,Math.min(150,b-cv)),Wl=2*Wf,run=G.run;
+ /* ---- design: flight strip + landing slab (per metre width), ACI 318 ---- */
+ const Lf=Math.min(run+h,run+(b+Ll)/2),swF=25*(h/1000/G.ct+G.r/2000),wuF=1.2*(swF+fin)+1.6*ll,MuF=wuF*(Lf/1000)*(Lf/1000)/8,Rup=wuF*Lf/2000;
+ const Ld=Math.min(Wl+h,Wl+b),swL=25*h/1000,wuL=1.2*(swL+fin)+1.6*ll+Rup/(Ll/1000),MuL=wuL*(Ld/1000)*(Ld/1000)/8;
+ let pF,pL,pdd;
+ if(auto){pF=DES.pick(MuF,h,cv,fc,fy,[10,12,14,16,18,20]);d1=pF.db;s1=pF.s;pL=DES.pick(MuL,h,cv,fc,fy,[10,12,14,16,18,20]);dl=pL.db;sl=pL.s;pdd=DES.pickD(h,fy,[8,10,12]);dD=pdd.db;sD=pdd.s}
+ else{pF=DES.check(MuF,h,cv,fc,fy,d1,s1);pL=DES.check(MuL,h,cv,fc,fy,dl,sl);pdd=DES.check(0,h,cv,fc,fy,dD,sD);pdd.Asp=1000*Math.PI*dD*dD/4/sD;pdd.am=DES.asMin(h,fy)}
+ const AsF=1000*Math.PI*d1*d1/4/s1,AsL=1000*Math.PI*dl*dl/4/sl,dF=h-cv-d1/2,dL=h-cv-dl/2,shF=DES.shear(wuF*(Lf/2000-dF/1000),dF,AsF,fc),shL=DES.shear(wuL*(Ld/2000-dL/1000),dL,AsL,fc);
+ if(!isFinite(pF.rq||pF.Ar)||!isFinite(pL.rq||pL.Ar))W.push(['السماكة لا تكفي لتحمّل العزم؛ زِد سماكة البلاطة.','Thickness is not enough for the moment; increase the slab thickness.']);
+ if(!auto&&!pF.ok)W.push([`⚠ حديد الشوط الرئيسي المدخل غير كافٍ: المجهز ${R(pF.Asp)} < المطلوب ${R(Math.max(pF.rq,pF.am))} مم²/م.`,`⚠ The entered flight steel is not enough: provided ${R(pF.Asp)} < required ${R(Math.max(pF.rq,pF.am))} mm2/m.`]);
+ if(!auto&&!pL.ok)W.push([`⚠ حديد البسطة الرئيسي المدخل غير كافٍ: المجهز ${R(pL.Asp)} < المطلوب ${R(Math.max(pL.rq,pL.am))} مم²/م.`,`⚠ The entered landing steel is not enough: provided ${R(pL.Asp)} < required ${R(Math.max(pL.rq,pL.am))} mm2/m.`]);
+ if(!auto&&pdd.Asp<pdd.am*.99)W.push([`⚠ حديد التوزيع المدخل أقل من الحد الأدنى ${R(pdd.am)} مم²/م (ACI 24.4.3.2).`,`⚠ The entered distribution steel is below the minimum ${R(pdd.am)} mm2/m (ACI 24.4.3.2).`]);
+ if(!DES.tc(AsF,dF,fc,fy)||!DES.tc(AsL,dL,fc,fy))W.push(['المقطع غير متحكَّم بالشد (c/d > 0.375)؛ زِد السماكة.','Section is not tension-controlled (c/d > 0.375); increase the thickness.']);
+ if(!shF.ok||!shL.ok)W.push([`⚠ القص غير كافٍ: الشوط ${shF.Vu.toFixed(1)}/${shF.phiVc.toFixed(1)}، البسطة ${shL.Vu.toFixed(1)}/${shL.phiVc.toFixed(1)} كن/م؛ زِد السماكة.`,`⚠ Shear is not enough: flight ${shF.Vu.toFixed(1)}/${shF.phiVc.toFixed(1)}, landing ${shL.Vu.toFixed(1)}/${shL.phiVc.toFixed(1)} kN/m; increase the thickness.`]);
+ const hmin=Math.max(Lf,Ld)/20*(.4+fy/700);if(h<hmin)W.push([`السماكة ${h} مم أقل من L/20 = ${R(hmin)} مم (ACI 7.3.1.1)؛ يلزم فحص الهطول.`,`Thickness ${h} mm is below L/20 = ${R(hmin)} mm (ACI 7.3.1.1); a deflection check is required.`]);
+ const X=[KEY(BM.mk({mat:'BB',dir:'X',n:2*cnt(Wf,s1),db:d1,legs:[[ext,0],[G.Ls,G.thd],[Ll-cv,0]],desc:['رئيسي الشوط (يستمر داخل البسطة)','Flight main bars (continue into the landing)']}),'F'),
+  KEY(BM.mk({mat:'BT',dir:'Y',n:2*cnt1(G.Ls,sD),db:dD,legs:[[Wf-2*cv,0]],desc:['توزيع الشوط','Flight distribution bars']}),'FD'),
+  KEY(BM.mk({mat:'BB',dir:'Y',n:cnt1(Ll-2*cv,sl),db:dl,legs:[[Wl+2*ext,0]],desc:['رئيسي البسطة (بين الجسرين الجانبيين)','Landing main bars (between side beams)']}),'L'),
+  KEY(BM.mk({mat:'BT',dir:'X',n:cnt1(Wl-2*cv,sD),db:dD,legs:[[Ll-2*cv,0]],desc:['توزيع البسطة','Landing distribution bars']}),'LD')];
+ let top=null;
+ if(sup){const tdI=R(gv('bm_td',0)),tsI=R(gv('bm_ts',0)),pt=(!auto&&tdI>0&&tsI>0)?{db:tdI,s:tsI,d:h-cv-tdI/2}:DES.pick(MuF/3,h,cv,fc,fy,[10,12,14,16]),dbT=pt.db,c=cv+dbT/2,Lt=topExt(Lf,pt.d,dbT,.4*Lf),hk=Math.max(0,Math.min(12*dbT,h-2*cv-dbT)),emb=Math.max(0,b-cv),jump=R(G.r-c/G.ct+c),nT=2*cnt(Wf,pt.s),embL=Math.max(0,Math.min(Lt,Ll-2*cv)),lg=a=>a.filter(q=>q[0]>0);
+  const ptl=DES.pick(MuL/3,h,cv,fc,fy,[10,12,14,16]),dbL=ptl.db,LtL=topExt(Ld,ptl.d,dbL,.4*Ld),hkL=Math.max(0,Math.min(12*dbL,h-2*cv-dbL)),embB=Math.max(0,b-cv),nL=2*cnt1(Ll-2*cv,ptl.s);
+  X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nT,db:dbT,legs:lg([[hk,90],[emb,0],[jump,90],[Lt,G.thd]]),desc:['حديد علوي عند مسند الشوط السفلي','Top bars at the flight lower support']}),'TL'));
+  X.push(KEY(BM.mk({mat:'TB',dir:'X',n:nT,db:dbT,legs:lg([[Lt,G.thd],[embL,0]]),desc:['حديد علوي عند التقاء الشوط بالبسطة','Top bars at the flight-landing junction']}),'TU'));
+  X.push(KEY(BM.mk({mat:'TT',dir:'Y',n:nL,db:dbL,legs:lg([[hkL,90],[embB,0],[LtL,0]]),desc:['حديد علوي للبسطة عند الجسرين الجانبيين','Landing top bars at the side beams']}),'LT'));
+  top={pt,dbT,Lt,hk,emb,jump,nT,c,embL,ptl,dbL,LtL,embB,nL}}
+ const bars=BM.fin(X,stock,W),fm=n=>n.toFixed(2);
+ const notes=[[`الشوطان متماثلان (${nF} قائمة لكل شوط) ويلتقيان في بسطة عمقها ${Ll} مم وعرضها ${Wl} مم.`,`TWO IDENTICAL FLIGHTS (${nF} RISERS EACH) MEET AT A ${Ll} mm DEEP, ${Wl} mm WIDE LANDING.`],
+  [`التصميم (ACI 318) لكل م عرض — الشوط: wu = ${fm(wuF)} كن/م²، L = ${R(Lf)} مم، Mu = ${fm(MuF)} كن.م/م، As المطلوب ${R(Math.max(pF.rq,pF.am))} ← Ø${d1}@${s1} (المجهز ${R(AsF)}). القص ${fm(shF.Vu)} ≤ ${fm(shF.phiVc)} كن/م.`,`DESIGN (ACI 318) PER m WIDTH - FLIGHT: wu = ${fm(wuF)} kN/m2, L = ${R(Lf)} mm, Mu = ${fm(MuF)} kN.m/m, As REQ ${R(Math.max(pF.rq,pF.am))} -> Ø${d1}@${s1} (PROVIDED ${R(AsF)}). SHEAR ${fm(shF.Vu)} <= ${fm(shF.phiVc)} kN/m.`],
+  [`البسطة (بين الجسرين): wu = ${fm(wuL)} كن/م² (تشمل ردّ فعل الشوطين كحمل موزع تقريبي)، L = ${R(Ld)} مم، Mu = ${fm(MuL)}، As المطلوب ${R(Math.max(pL.rq,pL.am))} ← Ø${dl}@${sl}. التوزيع Ø${dD}@${sD} ≥ ${R(pdd.am)} مم²/م.`,`LANDING (BETWEEN BEAMS): wu = ${fm(wuL)} kN/m2 (INCLUDES THE FLIGHT REACTIONS AS AN APPROXIMATE UNIFORM LOAD), L = ${R(Ld)} mm, Mu = ${fm(MuL)}, As REQ ${R(Math.max(pL.rq,pL.am))} -> Ø${dl}@${sl}. DISTRIBUTION Ø${dD}@${sD} >= ${R(pdd.am)} mm2/m.`],
+  sup?[`حديد علوي (M⁻ = Mu/3 بالممارسة، ليس شرطًا في ACI): الشوط Ø${top.dbT}@${top.pt.s} بامتداد ${top.Lt} مم، والبسطة Ø${top.dbL}@${top.ptl.s} بامتداد ${top.LtL} مم عند كل جسر.`,`TOP BARS (M- = Mu/3 BY PRACTICE, NOT AN ACI REQUIREMENT): FLIGHT Ø${top.dbT}@${top.pt.s}, ${top.Lt} mm; LANDING Ø${top.dbL}@${top.ptl.s}, ${top.LtL} mm AT EACH BEAM.`]:['مسند بسيط: لا حديد علوي.','SIMPLY SUPPORTED: NO TOP BARS.'],
+  ['الحمل الحي وظروف الاستناد من مدخلاتك؛ التصميم يحتاج مراجعة مهندس مختص.','LIVE LOAD AND SUPPORT CONDITION ARE YOUR INPUTS; THE DESIGN NEEDS REVIEW BY A QUALIFIED ENGINEER.']];
+ return{k:'sx',H,g,nR,nF,Wf,b,Ll,h,d1,s1,dD,sD,dl,sl,cv,G,ext,Wl,top,bars,W,vol:(2*G.Ls*Wf*h+Wl*Ll*h)/1e9,wmax:Math.max.apply(null,bars.map(q=>q.bb.x1-q.bb.x0).concat([1])),split:false,notes}},
+ (F,mn)=>{const {H,g,nF,Wf,b,Ll,h,d1,s1,dD,sD,dl,sl,cv,G,ext,Wl}=F,r=G.r,xe=(nF-1)*g,So=x=>r+(r/g)*x-h/G.ct,Hh=H/2;
+  const lsec=C=>{const top=[[-b,0],[0,0]];for(let i=0;i<nF-1;i++){top.push([i*g,(i+1)*r]);top.push([(i+1)*g,(i+1)*r])}top.push([xe,Hh]);top.push([xe+Ll,Hh]);
+   C.pl('CONC',top.concat([[xe+Ll,Hh-h],[xe,Hh-h],[xe,So(xe)],[0,So(0)],[0,-h],[-b,-h]]),1);C.rc('OUTL',xe+Ll-b,Hh-h-Math.max(350,h*2.5),b,Math.max(350,h*2.5));
+   const y0=(r-h/G.ct)+(cv+d1/2)/G.ct,bb=F.bars.find(q=>q.keys.indexOf('F')>=0);if(bb)C.pl('BB',bb.pts.map(p=>[-ext+p[0],y0+p[1]]),0,d1);
+   if(F.top){const T=F.top,tl=F.bars.find(q=>q.keys.indexOf('TL')>=0),tu=F.bars.find(q=>q.keys.indexOf('TU')>=0);
+    if(tl)C.pl('TB',tl.pts.map(p=>[-T.emb+p[0],-T.c-T.hk+p[1]]),0,T.dbT);
+    if(tu){const cx=T.Lt*G.ct,cy=T.Lt*Math.sin(G.th);C.pl('TB',tu.pts.map(p=>[xe-cx+p[0],Hh-T.c/G.ct-cy+p[1]]),0,T.dbT)}}
+   C.dimH(0,xe,-h,-8,R(xe));C.dimH(xe,xe+Ll,Hh,5,Ll);C.dimV(xe+Ll,0,Hh,8,Hh);C.dimV(xe+Ll,Hh-h,Hh,18,h);C.dimH(0,g,r,5,g);C.dimV(0,0,r,-6,R(r));
+   CALL(C,F,[['F',xe*.6,y0+xe*.6*(r/g),Hh+C.pm(14)],['L',xe+Ll*.5,Hh-h+cv+d1+dl/2,-h-C.pm(10)]].concat(F.top?[['TL',F.top.Lt*G.ct*.5,r-F.top.c/G.ct+(r/g)*F.top.Lt*G.ct*.5,Hh+C.pm(22)],['TU',xe-F.top.Lt*G.ct*.5,Hh-F.top.c/G.ct-F.top.Lt*Math.sin(G.th)*.5,Hh+C.pm(30)]]:[]),xe+Ll+C.pm(14),5)};
+  const run=xe,plan=C=>{C.rc('CONC',0,0,Wl,run+Ll);C.pl('HIDD',[[Wf,0],[Wf,run]]);
+   for(let i=1;i<nF;i++){C.pl('OUTL',[[0,i*g],[Wf,i*g]]);C.pl('OUTL',[[Wf,run-i*g],[Wl,run-i*g]])}
+   C.pl('OUTL',[[0,run],[Wl,run]]);const xs=lay(Math.min(cnt(Wf,s1),8),s1/2,Wf-s1/2);xs.forEach(x=>{C.pl('BB',[[x,ext],[x,run+Ll-cv]],0,d1)});
+   thin(Array.from({length:cnt1(Ll-2*cv,sl)},(_,i)=>run+cv+i*sl),8).forEach(y=>C.pl('BT',[[cv,y],[Wl-cv,y]],0,dl));
+   if(F.top)thin(Array.from({length:cnt1(Ll-2*cv,F.top.ptl.s)},(_,i)=>run+cv+i*F.top.ptl.s),8).forEach(y=>{C.pl('TT',[[cv,y],[cv+F.top.LtL,y]],0,F.top.dbL);C.pl('TT',[[Wl-cv,y],[Wl-cv-F.top.LtL,y]],0,F.top.dbL)});
+   C.tx('TEXT',Wf/2,run*.5,'↑','UP',{a:'c',h:5,b:1});C.tx('TEXT',Wf*1.5,run*.5,'↓','DN',{a:'c',h:5,b:1});
+   C.dimH(0,Wf,0,-8,Wf);C.dimH(Wf,Wl,0,-8,Wf);C.dimV(Wl,0,run,8,R(run));C.dimV(Wl,run,run+Ll,8,Ll);
+   CALL(C,F,[['F',xs[xs.length-1],run*.35,run*.3],['L',Wl*.8,run+Ll*.5,run+Ll*.55]].concat(F.top?[['LT',F.top.LtL*.5,run+Ll*.3,run+Ll*.8]]:[]),Wl+C.pm(24),5)};
+  return[{h:44,views:[{name:['مقطع طولي في الشوط والبسطة','LONGITUDINAL SECTION THROUGH FLIGHT AND LANDING'],w:xe+Ll+b,h:Hh+Math.max(350,h*2.5)+h,x0:-b,y0:-Math.max(350,h*2.5)-h*.5,px:[22,62],py:[38,14],min:mn,draw:lsec}]},
+   {h:44,views:[{name:['المسقط','PLAN'],w:Wl,h:run+Ll,x0:0,y0:0,px:[22,62],py:14,draw:plan}]}]});
+BM.addOpts('sx',DF);{const f=window.SM.SPEC.sx.f;['m_d1','m_s1','m_dD','m_sD','m_dl','m_sl'].forEach(id=>{const q=f.find(x=>x.id==id);if(q){const o=q.vis;q.vis=v=>v.bm_dsg!=1&&(o?o(v):true)}})}
+BM.wrapAll();
+})();
+</script>
+<script>/*bar45*/
+/* stage 3c: retaining walls (rw, rx), tank walls (tk, tx), shear wall (sw), piles (pl) */
+(()=>{
+if(!window.BM||!window.BM.reg)return;
+const BM=window.BM,SD=window.SD,R=Math.round,{KEY,CALL,zig,cnt,cnt1,thin,reg,N_,S_}=BM,gv=(id,d)=>{const v=SD.inp(id);return isFinite(v)?v:d},lay=SD.lay,PI=Math.PI;
+const mxw=bars=>Math.max.apply(null,bars.map(b=>b.bb.x1-b.bb.x0).concat([1]));
+const FB=N_('bm_fb','ارتفاع الحرية فوق الماء','Freeboard above water',300,'mm','dim');
+/* ============================ cantilever retaining walls, per metre run ============================ */
+const retaining=(k,P)=>reg(k,P.ar,P.en,()=>{
+ BM.curK=k;const O=BM.opts(),W=BM.warn=[],H=gv(P.H,3000),B=gv('m_B',2000),hf=gv('m_hf',300),t=gv('m_t',250),toe=gv('m_toe',500),dv=gv('m_dv',14),sv=gv('m_sv',150),dh=gv('m_dh',10),sh=gv('m_sh',200),dT=gv('m_dT',12),sT=gv('m_sT',150),dH=gv('m_dH',12),sH=gv('m_sH',150),cs=gv(P.cs,50),cb=gv(P.cb,75);
+ const cut=P.cut?Math.min(gv('m_cut',530),H):0,hk=P.key?gv('m_hk',0):0,beta=P.slope?gv(P.slope,0):0,df=P.front?gv(P.front,0):0,stock=O.stock,heel=B-toe-t;
+ if(heel<0)W.push(['عرض القاعدة أصغر من المقدمة + سماكة الجذع.','Base width is smaller than toe + stem thickness.']);
+ const yH=cb+dT+dv/2,xr=toe+t-cs-dv/2,foot=Math.max(0,Math.min(Math.max(12*dv,150),xr-cb)),ldh=Math.max(8*dv,150);
+ if(hf-cb-dT<ldh)W.push([`عمق القاعدة لا يكفي لتثبيت سيخ الجذع بخطاف (المطلوب ${ldh} مم، ACI 25.4.3).`,`Base depth is not enough to anchor the stem bar with a hook (${ldh} mm needed, ACI 25.4.3).`]);
+ const X=[];const nv=cnt(1000,sv),Lv=hf+H-cs-yH;
+ if(cut>0&&cut<H){const n2=Math.floor(nv/2),n1=nv-n2;X.push(KEY(BM.mk({mat:'VB',dir:'X',n:n1,db:dv,legs:[[Lv,270],[foot,180]],desc:['رأسي الجذع (يمتد للأعلى بالكامل) - وجه الردم','Stem vertical bars (full height) - backfill face']}),'V1'));
+  if(n2>0)X.push(KEY(BM.mk({mat:'VB',dir:'X',n:n2,db:dv,legs:[[hf+cut-yH,270],[foot,180]],desc:['رأسي الجذع (يُقطع على ارتفاع '+cut+' مم)','Stem vertical bars (cut at '+cut+' mm)']}),'V2'))}
+ else X.push(KEY(BM.mk({mat:'VB',dir:'X',n:nv,db:dv,legs:[[Lv,270],[foot,180]],desc:['رأسي الجذع - وجه الردم','Stem vertical bars - backfill face']}),'V1'));
+ X.push(KEY(BM.mk({mat:'HB',dir:'Y',n:2*cnt1(H-cs,sh),db:dh,legs:[[1000,0]],desc:['أفقي الجذع (الوجهان)','Stem horizontal bars (both faces)']}),'H'));
+ const Lt=Math.min(B-2*cb,(toe-cb)+t+BM.ld(dT)),Lh=B-cb-Math.max(cb,toe-BM.ld(dH));
+ X.push(KEY(BM.mk({mat:'BB',dir:'X',n:cnt(1000,sT),db:dT,legs:[[R(Lt),0]],desc:['حديد المقدمة السفلي','Toe bottom bars']}),'T'));
+ X.push(KEY(BM.mk({mat:'TB',dir:'X',n:cnt(1000,sH),db:dH,legs:[[R(Lh),0]],desc:['حديد الكعب العلوي','Heel top bars']}),'HL'));
+ X.push(KEY(BM.mk({mat:'BT',dir:'Y',n:cnt1(B-2*cb,sh),db:dh,legs:[[1000,0]],desc:['طولي القاعدة السفلي (توزيع)','Base longitudinal bottom (distribution)']}),'LB'));
+ X.push(KEY(BM.mk({mat:'TT',dir:'Y',n:cnt1(B-2*cb,sh),db:dh,legs:[[1000,0]],desc:['طولي القاعدة العلوي (توزيع)','Base longitudinal top (distribution)']}),'LT'));
+ const bars=BM.fin(X,stock,W);
+ return{k,H,B,hf,t,toe,heel,dv,sv,dh,sh,dT,sT,dH,sH,cs,cb,cut,hk,beta,df,yH,xr,foot,bars,W,vol:(B*hf+t*H+hk*t)*1000/1e9,wmax:mxw(bars),
+  notes:[['الأسياخ الرأسية على وجه الردم بخطاف نحو المقدمة؛ حديد المقدمة سفلي والكعب علوي ويمتدان بطول التماسك ld داخل الجذع/المقدمة.','STEM BARS ON THE BACKFILL FACE WITH A HOOK TOWARD THE TOE; TOE BARS ARE BOTTOM AND HEEL BARS ARE TOP, EXTENDED BY ld INTO THE STEM/TOE.'],
+   [P.cut?'نصف الأسياخ الرأسية يُقطع على الارتفاع المدخل؛ تحقق من ld فوق نقطة القطع.':'لا قطع في الأسياخ الرأسية.',P.cut?'HALF OF THE STEM BARS ARE CUT AT THE ENTERED HEIGHT; CHECK ld ABOVE THE CUT POINT.':'NO CURTAILMENT OF THE STEM BARS.'],
+   ['حديد وجه المقدمة الرأسي (الحد الأدنى) وحديد الطولي للقاعدة: افتراض بنفس قطر وتباعد الأفقي؛ الكميات لكل متر طولي.','FRONT-FACE MINIMUM VERTICAL BARS ARE NOT SHOWN; BASE LONGITUDINAL BARS ASSUMED THE SAME Ø/SPACING AS THE HORIZONTAL BARS; QUANTITIES PER METRE RUN.']]}},
+ (F,mn)=>{const {H,B,hf,t,toe,heel,dv,sv,dh,sh,dT,sT,dH,sH,cs,cb,cut,hk,beta,df,yH,xr,foot}=F,tb=Math.tan((beta||0)*PI/180),top=hf+H;
+  const sec=C=>{C.pl('CONC',[[0,0],[B,0],[B,hf],[toe+t,hf],[toe+t,top],[toe,top],[toe,hf],[0,hf]],1);if(hk>0)C.rc('CONC',toe,-hk,t,hk);
+   C.pl('SOIL',[[toe+t,top],[B,top+(B-toe-t)*tb]]);if(df>0)C.pl('SOIL',[[0,hf+df],[toe,hf+df]]);
+   const bv=F.bars.filter(b=>b.keys.some(q=>q=='V1'||q=='V2'));bv.forEach(b=>{const x=xr,y0=b.keys.indexOf('V2')>=0?hf+cut:top-cs;const yb=y0-(b.pts[1][1]-b.pts[0][1])*0;
+    C.pl('VB',[[x,y0],[x,yH],[x-foot,yH]],0,dv)});
+   C.pl('BB',[[cb,cb+dT/2],[Math.min(B-cb,toe+t+BM.ld(dT)),cb+dT/2]],0,dT);C.pl('TB',[[B-cb,hf-cb-dH/2],[Math.max(cb,toe-BM.ld(dH)),hf-cb-dH/2]],0,dH);
+   thin(Array.from({length:cnt1(H-cs,sh)},(_,i)=>hf+cs+i*(H-cs)/(cnt1(H-cs,sh)-1||1)),12).forEach(y=>{C.ci('HB',toe+cs+dh/2,y,dh/2,1);C.ci('HB',toe+t-cs-dh/2-dv-dh/2,y,dh/2,1)});
+   thin(lay(cnt1(B-2*cb,sh),cb,B-cb),8).forEach(x=>{C.ci('BT',x,cb+dT+dh/2,dh/2,1);C.ci('TT',x,hf-cb-dH-dh/2,dh/2,1)});
+   C.dimV(-C.pm(0),0,hf,-8,hf);C.dimV(0,hf,top,-8,H);C.dimH(0,B,0,-8,B);C.dimH(0,toe,hf+(df>0?df:0),5,toe);C.dimH(toe,toe+t,top,5,t);C.dimH(toe+t,B,hf,-4,R(heel));
+   CALL(C,F,[['V1',xr,top-cs,top-cs],['H',toe+t-cs,hf+H*.5,hf+H*.5],['T',B*.72,cb+dT/2,cb-C.pm(0)],['HL',B-cb,hf-cb-dH/2,hf+C.pm(6)]].concat(F.bars.some(b=>b.keys.indexOf('V2')>=0)?[['V2',xr,hf+cut,hf+cut]]:[]),B+C.pm(18),5)};
+  return[{h:70,views:[{name:['المقطع العرضي (لكل متر طولي)','CROSS SECTION (PER METRE RUN)'],w:B,h:top+hk,x0:0,y0:-hk,px:[26,64],py:[14,16],min:mn,draw:sec}]}]});
+retaining('rw',{ar:'جدار ساند (لكل متر طولي)',en:'Retaining wall (per metre run)',H:'rH',cs:'rcs',cb:'rcb'});
+retaining('rx',{ar:'جدار ساند كابولي (لكل متر طولي)',en:'Cantilever retaining wall (per metre run)',H:'rxH',cs:'rxcs',cb:'rxcb',cut:1,key:1,slope:'rxs',front:'rxdf'});
+/* ============================ tank wall (per metre run) ============================ */
+reg('tk','جدار خزان (لكل متر طولي)','Tank wall (per metre run)',()=>{
+ BM.curK='tk';const O=BM.opts(),W=BM.warn=[],H=gv('tkH',3000),t=gv('m_t',250),dv=gv('m_dv',14),sv=gv('m_sv',150),dh=gv('m_dh',10),sh=gv('m_sh',200),cv=gv('tkcv',50),fb=gv('bm_fb',300),Hw=H+fb,tb=t,stock=O.stock;
+ const yh=-tb+cv+dh+dv/2,xv=t-cv-dv/2,foot=Math.max(0,Math.min(Math.max(12*dv,150),xv-cv)),ldh=Math.max(8*dv,150);
+ if(tb-cv-dh<ldh)W.push([`سماكة القاعدة (= سماكة الجدار) لا تكفي لتثبيت الخطاف ${ldh} مم.`,`Base thickness (= wall thickness) does not allow the ${ldh} mm hook anchorage.`]);
+ const X=[KEY(BM.mk({mat:'VB',dir:'X',n:cnt(1000,sv),db:dv,legs:[[Hw-cv-yh,270],[foot,0]],desc:['رأسي الجدار على وجه الماء (خطاف داخل القاعدة)','Wall vertical bars on the water face (hooked into the base)']}),'V'),
+  KEY(BM.mk({mat:'HB',dir:'Y',n:2*cnt1(Hw-2*cv,sh),db:dh,legs:[[1000,0]],desc:['أفقي الجدار (الوجهان)','Wall horizontal bars (both faces)']}),'H')];
+ const bars=BM.fin(X,stock,W);
+ return{k:'tk',H,t,dv,sv,dh,sh,cv,fb,Hw,tb,yh,xv,foot,bars,W,vol:t*Hw*1000/1e9,wmax:mxw(bars),
+  notes:[[`ارتفاع الجدار = عمق الماء + ${fb} مم حرية؛ سماكة القاعدة مفترضة = سماكة الجدار.`,`WALL HEIGHT = WATER DEPTH + ${fb} mm FREEBOARD; BASE THICKNESS ASSUMED = WALL THICKNESS.`],
+   ['حديد رأسي على وجه الماء فقط؛ الكميات لكل متر طولي. تحقق من تحكم الشقوق (ACI 350) بنفسك.','VERTICAL BARS ON THE WATER FACE ONLY; QUANTITIES PER METRE RUN. CHECK CRACK CONTROL (ACI 350) YOURSELF.']]}},
+ (F,mn)=>{const {H,t,dv,sv,dh,sh,cv,Hw,tb,yh,xv,foot}=F,bw=3*t;
+  const sec=C=>{C.rc('CONC',-t,-tb,3*t,tb);C.rc('CONC',0,0,t,Hw);zig(C,2*t,-tb,0);
+   C.pl('VB',[[xv,Hw-cv],[xv,yh],[xv+foot,yh]],0,dv);
+   thin(Array.from({length:cnt1(Hw-2*cv,sh)},(_,i)=>cv+i*(Hw-2*cv)/(cnt1(Hw-2*cv,sh)-1||1)),14).forEach(y=>{C.ci('HB',cv+dh/2,y,dh/2,1);C.ci('HB',t-cv-dh/2-dv-dh/2,y,dh/2,1)});
+   C.pl('SOIL',[[t,H],[3*t,H]]);C.tx('TEXT',2*t,H+C.pm(3),'مستوى الماء','WATER LEVEL',{a:'c',h:2});
+   C.dimV(-t,-tb,0,-8,tb);C.dimV(-t,0,Hw,-8,Hw);C.dimH(0,t,Hw,5,t);C.dimV(-t,0,H,-18,H);
+   CALL(C,F,[['V',xv,Hw-cv,Hw-cv],['H',cv+dh/2,Hw*.4,Hw*.4]],2*t+C.pm(18),5)};
+  return[{h:70,views:[{name:['مقطع في الجدار والقاعدة','SECTION THROUGH WALL AND BASE'],w:3*t+t,h:Hw+tb,x0:-t,y0:-tb,px:[34,64],py:[14,14],min:mn,draw:sec}]}]});
+BM.addOpts('tk',[FB]);
+/* ============================ ground tank, rectangular or circular ============================ */
+reg('tx','خزان مائي أرضي','Ground water tank',()=>{
+ BM.curK='tx';const O=BM.opts(),W=BM.warn=[],circ=gv('txT',0)==1,H=gv('txH',3000),L=gv('txL',5000),Bw=circ?L:gv('txB',3000),t=gv('m_t',250),tb=gv('m_tb',250),dv=gv('m_dv',18),sv=gv('m_sv',125),d1=gv('m_d1',20),s1=gv('m_s1',125),d2=gv('m_d2',14),s2=gv('m_s2',125),dh=gv('m_dh',12),sh=gv('m_sh',150),cv=gv('txcv',40),fb=gv('bm_fb',300),Hw=H+fb,stock=O.stock;
+ const zl=R(H/2),zu=Hw-zl,P=circ?PI*L:2*(L+Bw),X=[],lap=db=>BM.lap(db);
+ const ring=(d,inner)=>{const e=cv+d/2,Li=inner?L+2*e:L+2*t-2*e,Bi=inner?Bw+2*e:Bw+2*t-2*e;return R(circ?PI*Li+lap(d):2*(Li+Bi)+lap(d))};
+ const yh=-tb+cv+dh*2+dv/2,foot=Math.max(0,Math.min(Math.max(12*dv,150),tb-2*cv-2*dh));
+ X.push(KEY(BM.mk({mat:'VB',dir:'W',n:cnt(P,sv),db:dv,legs:[[Hw-cv-yh,270],[foot,0]],desc:['رأسي الجدار على وجه الماء (خطاف داخل القاعدة)','Wall vertical bars, water face (hooked into the base)']}),'V'));
+ [[d1,s1,zl,'1'],[d2,s2,zu,'2']].forEach(q=>{[['IN',1],['OUT',0]].forEach(f=>X.push(KEY(BM.mk({mat:'HB',dir:f[0],n:cnt(q[2],q[1]),db:q[0],legs:[[ring(q[0],f[1]),0]],unroll:true,desc:[(q[3]=='1'?'حلقات سفلية':'حلقات علوية')+(f[1]?' - وجه الماء':' - الوجه الخارجي'),(q[3]=='1'?'Lower rings':'Upper rings')+(f[1]?' - water face':' - outer face')]}),'R'+q[3]+f[0])))});
+ const Lb=L+2*t-2*cv,Bb=Bw+2*t-2*cv;
+ X.push(KEY(BM.mk({mat:'BB',dir:'X',n:cnt1(Bw+2*t-2*cv,sh),db:dh,legs:[[Lb,0]],desc:['حديد القاعدة السفلي X','Base bottom bars X']}),'BX'));
+ X.push(KEY(BM.mk({mat:'BT',dir:'Y',n:cnt1(L+2*t-2*cv,sh),db:dh,legs:[[Bb,0]],desc:['حديد القاعدة السفلي Y','Base bottom bars Y']}),'BY'));
+ const bars=BM.fin(X,stock,W);
+ return{k:'tx',circ,H,L,Bw,t,tb,dv,sv,d1,s1,d2,s2,dh,sh,cv,fb,Hw,zl,zu,P,yh,foot,bars,W,vol:(circ?PI/4*((L+2*t)*(L+2*t)*tb+((L+2*t)*(L+2*t)-L*L)*Hw):((L+2*t)*(Bw+2*t)*tb+((L+2*t)*(Bw+2*t)-L*Bw)*Hw))/1e9,wmax:mxw(bars),
+  notes:[[`الحلقات السفلية على نصف عمق الماء (${zl} مم) والعلوية على الباقي؛ وجهان لكل حلقة، وتُقسَّم وتتراكب عند تجاوز طول القضيب.`,`LOWER RINGS COVER HALF THE WATER DEPTH (${zl} mm), UPPER RINGS THE REST; TWO FACES; THEY ARE SPLIT AND LAPPED BEYOND THE STOCK LENGTH.`],
+   [circ?'خزان دائري: القطر الداخلي = '+L+' مم.':'خزان مستطيل: الأبعاد الداخلية '+L+' × '+Bw+' مم.',circ?'CIRCULAR TANK: INNER DIAMETER '+L+' mm.':'RECTANGULAR TANK: INNER SIZE '+L+' x '+Bw+' mm.'],
+   ['القاعدة: طبقة سفلية فقط بالإدخال؛ سقف الخزان غير مشمول؛ ارتفاع الحرية '+fb+' مم.','BASE: BOTTOM LAYER ONLY FROM THE INPUT; TANK ROOF NOT INCLUDED; FREEBOARD '+fb+' mm.']]}},
+ (F,mn)=>{const {circ,H,L,Bw,t,tb,dv,sv,d1,s1,d2,s2,dh,sh,cv,Hw,zl,zu,P,yh,foot}=F;
+  const sec=C=>{C.rc('CONC',-t,-tb,3*t,tb);C.rc('CONC',-t,0,t,Hw);zig(C,2*t,-tb,0);C.pl('VB',[[-cv-dv/2,Hw-cv],[-cv-dv/2,yh],[-cv-dv/2+foot,yh]],0,dv);
+   const ys=(z0,z1,s)=>{const n=cnt(z1-z0,s),st=(z1-z0)/n;return Array.from({length:n},(_,i)=>z0+(i+.5)*st)};
+   thin(ys(0,zl,s1),9).forEach(y=>{C.ci('HB',-t+cv+d1/2,y,d1/2,1);C.ci('HB',-cv-d1/2-dv,y,d1/2,1)});thin(ys(zl,Hw,s2),9).forEach(y=>{C.ci('HB',-t+cv+d2/2,y,d2/2,1);C.ci('HB',-cv-d2/2-dv,y,d2/2,1)});
+   C.pl('BB',[[-t+cv,-tb+cv+dh/2],[2*t,-tb+cv+dh/2]],0,dh);C.pl('SOIL',[[0,H],[2*t,H]]);C.tx('TEXT',t,H+C.pm(3),'مستوى الماء','WATER LEVEL',{a:'c',h:2});
+   C.dimV(-t,-tb,0,-8,tb);C.dimV(-t,0,Hw,-8,Hw);C.dimH(-t,0,Hw,5,t);C.dimV(-t,0,zl,-18,zl);
+   CALL(C,F,[['V',-cv-dv/2,Hw-cv,Hw-cv],['R1OUT',-t+cv+d1/2,zl*.5,zl*.5],['R1IN',-cv-d1/2-dv,zl*.8,zl*.8],['R2OUT',-t+cv+d2/2,zl+(Hw-zl)*.4,zl+(Hw-zl)*.4],['BX',2*t,-tb+cv+dh/2,-tb+cv+dh/2]],2*t+C.pm(18),4.6)};
+  const ol=L+2*t,ob=Bw+2*t,plan=C=>{if(circ){C.ci('OUTL',0,0,ol/2,0);C.ci('OUTL',0,0,L/2,0)}else{C.rc('OUTL',-ol/2,-ob/2,ol,ob);C.rc('OUTL',-L/2,-Bw/2,L,Bw)}
+   const rv=circ?L/2+cv+dv/2:0;thin(Array.from({length:Math.ceil(P/sv)},(_,i)=>i),60).forEach((_,i,a)=>{const f=i/a.length;if(circ){C.ci('VB',rv*Math.cos(f*2*PI),rv*Math.sin(f*2*PI),dv*.7,1)}else{const per=P*f,w=L+2*(cv+dv/2),hh=Bw+2*(cv+dv/2),p2=2*(w+hh),u=(per/P)*p2;let x,y;if(u<w){x=-w/2+u;y=-hh/2}else if(u<w+hh){x=w/2;y=-hh/2+(u-w)}else if(u<2*w+hh){x=w/2-(u-w-hh);y=hh/2}else{x=-w/2;y=hh/2-(u-2*w-hh)}C.ci('VB',x,y,dv*.7,1)}});
+   C.dimH(-L/2,L/2,-(circ?ol/2:ob/2),-8,L);if(!circ)C.dimV(ol/2,-Bw/2,Bw/2,8,Bw);C.dimH(L/2,L/2+t,-(circ?ol/2:ob/2),-4,t);
+   CALL(C,F,[['V',circ?rv:(L+2*(cv+dv/2))/2,0,0]],ol/2+C.pm(18),5)};
+  return[{h:44,views:[{name:['مقطع في الجدار والقاعدة','SECTION THROUGH WALL AND BASE'],w:4*t,h:Hw+tb,x0:-t,y0:-tb,px:[34,64],py:[14,14],min:mn,draw:sec}]},
+   {h:48,views:[{name:['المسقط (توزيع الأسياخ الرأسية)','PLAN (VERTICAL BAR LAYOUT)'],w:ol,h:circ?ol:ob,x0:-ol/2,y0:-(circ?ol:ob)/2,px:[22,64],py:[14,16],draw:plan}]}]});
+BM.addOpts('tx',[FB]);
+/* ============================ shear wall ============================ */
+reg('sw','جدار قص مستطيل','Rectangular shear wall',()=>{
+ BM.curK='sw';const O=BM.opts(),W=BM.warn=[],lw=gv('swl',4000),t=gv('swt',250),hw=gv('swh',12000),dv=gv('swdv',12),sv=gv('swsv',200),dh=gv('swdh',12),sh=gv('swsh',200),nc=gv('swn',2)==1?1:2,E=Math.max(2,R(gv('swE',4))),de=gv('swde',20),cv=gv('swcv',40),dt=gv('bm_swtd',10),st=gv('bm_swts',150),stock=O.stock;
+ const ez=Math.max(t,300),lapV=BM.lap(de),X=[];
+ const perRow=Math.max(1,Math.floor((t-2*(cv+dt)-de)/(de+Math.max(25,de*1.5))+1+1e-9)),rows=Math.ceil(E/perRow),pitch=de+Math.max(40,de*1.5);
+ if(rows*pitch>ez)W.push(['أسياخ الطرف لا تتسع في منطقة الطرف؛ قلّل العدد أو كبّر السماكة.','End bars do not fit in the end zone; reduce their number or increase the thickness.']);
+ if(t<2*(cv+dt)+de+dv)W.push(['سماكة الجدار صغيرة جدًا لتسليح الطرف مع الغطاء.','The wall is too thin for the end reinforcement with the cover.']);
+ X.push(KEY(BM.mk({mat:'EB',dir:'',n:2*E,db:de,legs:[[hw+lapV,0]],desc:['أسياخ الأطراف (عنصر الحافة)','End (boundary) bars']}),'E'));
+ const web=lw-2*ez;X.push(KEY(BM.mk({mat:'VB',dir:'',n:nc*cnt1(web,sv),db:dv,legs:[[hw+BM.lap(dv),0]],desc:['رأسي موزع على الطبقات','Distributed vertical bars']}),'V'));
+ const e=Math.max(0,Math.min(12*dh,t-2*cv-2*dh));
+ X.push(KEY(BM.mk({mat:'HB',dir:'',n:nc*cnt1(hw-2*cv,sh),db:dh,legs:[[e,90],[lw-2*cv,0],[e,270]],desc:['أفقي موزع (خطاف داخل حافة الجدار)','Distributed horizontal bars (hooked into the end zones)']}),'H'));
+ const wT=ez-cv-dt,hT=t-2*cv-dt;X.push(KEY(BM.mk({mat:'ST',n:2*(Math.floor(hw/st)+1),db:dt,s:st,legs:BM.rectTie(wT,hT,dt),desc:['كانات الأطراف','End ties']}),'S'));
+ const bars=BM.fin(X,stock,W);
+ return{k:'sw',split:true,lw,t,hw,dv,sv,dh,sh,nc,E,de,cv,dt,st,ez,lapV,perRow,rows,pitch,web,e,wT,hT,bars,W,vol:lw*t*hw/1e9,wmax:mxw(bars),
+  notes:[[`أسياخ الطرف ${E} لكل طرف بقطر ${de} مم داخل منطقة طرف طولها ${ez} مم مع كانات Ø${dt}@${st}.`,`${E} END BARS Ø${de} AT EACH END INSIDE A ${ez} mm END ZONE WITH Ø${dt}@${st} TIES.`],
+   ['الحديد الرأسي يمتد فوق قمة الجدار بطول التراكب؛ الأسياخ الأطول من طول القضيب تُقسَّم بتراكب ACI.','VERTICAL BARS EXTEND ABOVE THE WALL TOP BY THE LAP; BARS LONGER THAN THE STOCK LENGTH ARE SPLIT WITH ACI LAPS.'],
+   ['الحديد الأفقي بخطاف 90° داخل منطقة الطرف. التفاصيل الزلزالية (الفصل 18) غير مشمولة.','HORIZONTAL BARS HOOK 90° INTO THE END ZONES. SEISMIC DETAILING (CH.18) NOT INCLUDED.']]}},
+ (F,mn,part)=>{const {lw,t,hw,dv,sv,dh,sh,nc,E,de,cv,dt,st,ez,perRow,rows,pitch,web,bars}=F;
+  const endPos=(x0,dir)=>{const o=[],xs0=cv+dt+de/2;for(let i=0;i<E;i++){const r=Math.floor(i/perRow),c=i%perRow,n=Math.min(perRow,E-r*perRow),yy=n==1?t/2:cv+dt+de/2+c*((t-2*(cv+dt)-de)/(n-1));o.push([x0+dir*(xs0+r*pitch),yy])}return o};
+  const elev=C=>{C.rc('CONC',0,0,lw,hw);[ez,lw-ez].forEach(x=>C.pl('HIDD',[[x,0],[x,hw]]));
+   thin(lay(cnt1(web,sv),ez,lw-ez),18).forEach(x=>C.pl('VB',[[x,cv],[x,hw]],0,dv));[0,lw].forEach((x,i)=>{const d=i?-1:1;endPos(x,d).forEach(p=>C.pl('EB',[[p[0],cv],[p[0],hw]],0,de))});
+   thin(lay(cnt1(hw-2*cv,sh),cv,hw-cv),30).forEach(y=>C.pl('HB',[[cv,y],[lw-cv,y]],0,dh));
+   C.dimH(0,lw,0,-8,lw);C.dimV(lw,0,hw,8,hw);C.dimH(0,ez,0,-4,ez);C.dimH(lw-ez,lw,0,-4,ez);
+   BM.legend(C,F,[['E','EB',`${E}+${E} Ø${de}`,de],['V','VB',`Ø${dv}@${sv}`,dv],['H','HB',`Ø${dh}@${sh}`,dh],['S','ST',`Ø${dt}@${st}`,dt]],lw+C.pm(6),hw)};
+  const plan=(x0,x1)=>C=>{C.rc('CONC',x0,0,x1-x0,t);
+   const ps=[];[0,lw].forEach((x,i)=>{endPos(x,i?-1:1).forEach(p=>ps.push(p))});
+   [[0],[lw]].forEach((q,i)=>{const xe=q[0],d=i?-1:1,w=ez-cv-dt;if(xe>=x0&&xe<=x1||(i==0&&x0<=ez)||(i==1&&x1>=lw-ez))C.rc('ST',i?lw-cv-dt/2-w:cv+dt/2,cv+dt/2,w,t-2*cv-dt,dt)});
+   ps.filter(p=>p[0]>=x0&&p[0]<=x1).forEach(p=>C.ci('EB',p[0],p[1],de/2,1));
+   lay(cnt1(web,sv),ez,lw-ez).filter(x=>x>=x0&&x<=x1).forEach(x=>{C.ci('VB',x,cv+dh+dv/2,dv/2,1);if(nc==2)C.ci('VB',x,t-cv-dh-dv/2,dv/2,1)});
+   C.pl('HB',[[Math.max(x0,cv),cv+dh/2],[Math.min(x1,lw-cv),cv+dh/2]],0,dh);if(nc==2)C.pl('HB',[[Math.max(x0,cv),t-cv-dh/2],[Math.min(x1,lw-cv),t-cv-dh/2]],0,dh);
+   C.dimH(x0,x1,0,-8,R(x1-x0));C.dimV(x0,0,t,-8,t);if(x0==0)zig(C,x1,0,t);else zig(C,x0,0,t);
+   CALL(C,F,[['E',ps[0][0],ps[0][1],ps[0][1]],['V',lay(cnt1(web,sv),ez,lw-ez).filter(x=>x>=x0&&x<=x1)[0]||x0,cv+dh+dv/2,cv+dh+dv/2],['S',x0+cv,t/2,t/2]].filter(q=>q[1]>=x0&&q[1]<=x1),x1+C.pm(18),5)};
+  const wD=Math.min(lw,Math.max(2*ez+400,1100));
+  const A=[{h:273,views:[{name:['الواجهة','ELEVATION'],w:lw,h:hw,x0:0,y0:0,px:[22,66],py:[14,16],min:mn,draw:elev}]}];
+  const B=[{h:30,views:[{name:['مقطع أفقي (الجدار كاملاً)','PLAN SECTION (FULL WALL)'],w:lw,h:t,x0:0,y0:0,px:[22,62],py:14,minD:BM.pullNeedN?BM.pullNeedN(bars,180,188):0,draw:plan(0,lw)}]},
+   {h:34,views:[{name:['تفصيل منطقة الطرف','END ZONE DETAIL'],w:wD,h:t,x0:0,y0:0,px:[22,62],py:14,draw:plan(0,wD)}]}];
+  return{A,B}});
+{const SW=[N_('bm_swtd','قطر كانات الأطراف Ø','End tie Ø',10,'mm','st'),N_('bm_swts','تباعد كانات الأطراف','End tie spacing',150,'mm','st')];BM.addOpts('sw',SW)}
+/* ============================ piles with cap ============================ */
+reg('pl','بايلات (وغطاء)','Piles with cap',()=>{
+ BM.curK='pl';const O=BM.opts(),W=BM.warn=[],D=gv('hD',500),Lp=gv('hL',15000),hc=gv('hc',500),N=gv('m_N',4),nb=gv('m_nb',8),db=gv('m_db',20),dsp=gv('m_dsp',10),pit=gv('m_pit',100),s=gv('m_s',1500),e=gv('m_e',400),hcap=gv('m_hc',800),nc=gv('m_nc',10),dc=gv('m_dc',16),cv=gv('hcv',75),stock=O.stock;
+ const capX=N==1?0:(N==2?s+2*e:s+2*e),capY=N==1?0:(N==2?2*e:s+2*e),X=[],ld=BM.ld(db),emb=N>1?Math.max(0,Math.min(ld,hcap-cv-2*dc)):BM.lap(db);
+ const Dc=D-2*cv-dsp;if(Dc<=0)W.push(['غطاء البايل كبير؛ لا يتسع اللولب.','The pile cover is too large; the spiral does not fit.']);
+ const cl=pit-dsp;if(cl<25||cl>75)W.push([`التباعد الصافي للولب ${R(cl)} مم خارج المدى 25-75 مم (ACI 25.7.3.1)؛ عدّل الخطوة.`,`Clear spiral spacing ${R(cl)} mm is outside 25-75 mm (ACI 25.7.3.1); change the pitch.`]);
+ if(N>1&&emb<ld)W.push([`سماكة الغطاء لا تكفي لتطوير أسياخ البايل (${ld} مم)؛ استعمل خطافًا أو زد السماكة.`,`Cap thickness is not enough to develop the pile bars (${ld} mm); use hooks or increase the thickness.`]);
+ const bd=(D-2*cv-2*dsp-db),minGap=bd*PI/nb-db;if(minGap<Math.max(40,1.5*db))W.push(['التباعد الصافي بين أسياخ البايل أصغر من الحد الأدنى المسموح.','The clear spacing between pile bars is below the minimum.']);
+ X.push(KEY(BM.mk({mat:'LB',dir:'',n:N*nb,db:db,legs:[[Lp+emb,0]],desc:['حديد البايل الطولي (يمتد داخل الغطاء)','Pile longitudinal bars (extended into the cap)']}),'L'));
+ X.push(KEY(BM.mk({mat:'SP',dir:'',n:N,db:dsp,s:pit,legs:[[BM.spiralLen(Dc,pit,Lp),0]],unroll:true,desc:['لولب البايل (يُقسَّم بتراكب)','Pile spiral (split with laps)']}),'S'));
+ if(N>1){const ek=Math.max(0,Math.min(12*dc,hcap-2*cv));
+  X.push(KEY(BM.mk({mat:'BB',dir:'X',n:nc,db:dc,legs:[[ek,270],[capX-2*cv,0],[ek,90]],desc:['حديد الغطاء السفلي X','Cap bottom bars X']}),'CX'));
+  X.push(KEY(BM.mk({mat:'BT',dir:'Y',n:nc,db:dc,legs:[[ek,270],[capY-2*cv,0],[ek,90]],desc:['حديد الغطاء السفلي Y','Cap bottom bars Y']}),'CY'))}
+ const bars=BM.fin(X,stock,W);
+ return{k:'pl',split:1,D,Lp,hc,N,nb,db,dsp,pit,s,e,hcap,nc,dc,cv,capX,capY,emb,Dc,bars,W,vol:(N*PI/4*D*D*Lp+capX*capY*hcap)/1e9,wmax:mxw(bars),
+  notes:[[N>1?`غطاء ${capX} × ${capY} × ${hcap} مم؛ أسياخ البايل تمتد ${emb} مم داخله، وأسياخ الغطاء السفلية بخطاف 90° لأعلى.`:'بايل منفرد بدون غطاء: الأسياخ تبرز بطول التراكب للعمود.',N>1?`CAP ${capX} x ${capY} x ${hcap} mm; PILE BARS EXTEND ${emb} mm INTO IT; CAP BOTTOM BARS HAVE 90° UP HOOKS.`:'SINGLE PILE WITHOUT CAP: BARS PROJECT BY THE LAP FOR THE COLUMN.'],
+   ['اللولب يُرسم مفرودًا ويُقسَّم على أقصى طول للقضيب بتراكب ACI؛ طوله = لفات × √((πD)² + p²) مع 1.5 لفة إضافية بكل طرف.','THE SPIRAL IS DRAWN UNROLLED AND SPLIT AT THE STOCK LENGTH WITH ACI LAPS; LENGTH = TURNS x √((πD)² + p²) PLUS 1.5 EXTRA TURNS AT EACH END.'],
+   ['الغطاء: حديد سفلي فقط بحسب الإدخال؛ حديد الغطاء العلوي والجانبي غير مشمول. سحب الأسياخ على لوحة منفصلة.','CAP: BOTTOM BARS ONLY FROM THE INPUT; TOP AND SIDE BARS ARE NOT INCLUDED. THE PULL-OUT IS ON A SEPARATE SHEET.']]}},
+ (F,mn)=>{const C_PL=0,{D,Lp,hc,N,nb,db,dsp,pit,s,e,hcap,nc,dc,cv,capX,capY,emb,Dc}=F,win=Math.min(Lp,3000),cx=N==1?D:capX,colH=500,posx=N==1?[0]:(N==2?[-s/2,s/2]:[-s/2,s/2]),posy=N==4?[-s/2,s/2]:[0];
+  const elev=C=>{const x0=-cx/2,pileTop=N==1?0:-hcap;
+   if(N>1)C.rc('CONC',x0,-hcap,capX,hcap);C.rc('OUTL',-hc/2,0,hc,colH);
+   posx.forEach(px=>{C.rc('CONC',px-D/2,pileTop-win,D,win);
+    const r=D/2-cv-dsp-db/2;[-1,1].forEach(q=>C.pl('LB',[[px+q*r,pileTop-win],[px+q*r,N>1?-cv-dc*2:colH*.6]],0,db));
+    for(let y=pileTop-pit;y>pileTop-win;y-=pit)C.pl('SP',[[px-D/2+cv+dsp/2,y],[px+D/2-cv-dsp/2,y]],0,dsp)});
+   if(N>1){C.pl('BB',[[x0+cv,-hcap+cv+dc/2],[x0+capX-cv,-hcap+cv+dc/2]],0,dc);C.pl('BB',[[x0+cv,-hcap+cv+dc/2],[x0+cv,-cv]],0,dc);C.pl('BB',[[x0+capX-cv,-hcap+cv+dc/2],[x0+capX-cv,-cv]],0,dc)}
+   if(N>1){C.dimH(x0,x0+capX,0,5,capX);C.dimV(x0,-hcap,0,-8,hcap)}C.dimV(x0+cx,pileTop-win,pileTop,8,`${R(win)} (L=${Lp})`);C.dimH(posx[0]-D/2,posx[0]+D/2,pileTop-win,-5,D);
+   BM.legend(C,F,[['L','LB',[`${nb} Ø${db} / بايل`,`${nb} Ø${db} / pile`],db],['S','SP',`Ø${dsp}@${pit}`,dsp]].concat(N>1?[['CX','BB','X',dc],['CY','BT','Y',dc]]:[]),x0+cx+C.pm(10),0)};
+  const sec=C=>{C.ci('CONC',0,0,D/2,0);C.ci('SP',0,0,D/2-cv-dsp/2,0);const r=D/2-cv-dsp-db/2;for(let i=0;i<nb;i++){const a=2*PI*i/nb;C.ci('LB',r*Math.cos(a),r*Math.sin(a),db/2,1)}
+   C.dimH(-D/2,D/2,-D/2,-8,D);CALL(C,F,[['L',r*Math.cos(PI/4),r*Math.sin(PI/4),D*.5],['S',D/2-cv-dsp/2,0,-D*.35]],D/2+C.pm(18),5)};
+  const plan=C=>{const x0=-capX/2,y0=-capY/2;C.rc('CONC',x0,y0,capX,capY);posx.forEach(px=>posy.forEach(py=>C.ci('OUTL',px,py,D/2,0)));C.rc('OUTL',-hc/2,-hc/2,hc,hc);
+   thin(lay(nc,y0+cv,y0+capY-cv),12).forEach(y=>C.pl('BBH',[[x0+cv,y],[x0+capX-cv,y]],0,dc));thin(lay(nc,x0+cv,x0+capX-cv),12).forEach(x=>C.pl('BT',[[x,y0+cv],[x,y0+capY-cv]],0,dc));
+   C.dimH(x0,x0+capX,y0,-8,capX);C.dimV(x0+capX,y0,y0+capY,8,capY);if(posx.length>1)C.dimH(posx[0],posx[1],y0+capY,6,s);
+   BM.legend(C,F,[['CX','BBH','X',dc],['CY','BT','Y',dc]],x0+capX+C.pm(14),y0+capY)};
+  const csec=C=>{const x0=-capX/2;C.rc('CONC',x0,0,capX,hcap);C.rc('OUTL',-hc/2,hcap,hc,350);posx.forEach(px=>{C.rc('OUTL',px-D/2,-Math.min(500,D),D,Math.min(500,D))});
+   const ek=Math.max(0,Math.min(12*dc,hcap-2*cv));C.pl('BB',[[x0+cv,cv+dc/2+ek],[x0+cv,cv+dc/2],[x0+capX-cv,cv+dc/2],[x0+capX-cv,cv+dc/2+ek]],0,dc);
+   thin(lay(nc,x0+cv,x0+capX-cv),12).forEach(x=>C.ci('BT',x,cv+dc+dc/2,dc/2,1));
+   C.dimH(x0,x0+capX,0,-8,capX);C.dimV(x0+capX,0,hcap,8,hcap);CALL(C,F,[['CX',x0+capX-cv,cv+dc/2+ek*.5,cv+dc/2+ek*.5],['CY',x0+capX*.7,cv+dc*1.5,cv]],x0+capX+C.pm(22),5)};
+  const A=[{h:273,views:[{name:['الواجهة (غطاء + أعلى البايل)','ELEVATION (CAP + TOP OF PILE)'],w:cx+D+C_PL,h:win+hcap+colH,x0:-cx/2-D/2,y0:-(win+hcap),px:[22,70],py:[14,16],min:mn,draw:elev}]}];
+  const Bv=[{h:N>1?120:273,views:[{name:['مقطع البايل','PILE SECTION'],w:D,h:D,x0:-D/2,y0:-D/2,px:[22,52],py:[14,16],minD:BM.pullNeedN?BM.pullNeedN(F.bars,180,188):0,draw:sec}].concat(N>1?[{name:['مقطع الغطاء','CAP SECTION'],w:capX,h:hcap+350+Math.min(500,D),x0:-capX/2,y0:-Math.min(500,D),px:[22,52],py:[14,16],draw:csec}]:[])}].concat(N>1?[{h:130,views:[{name:['مسقط الغطاء','CAP PLAN'],w:capX,h:capY,x0:-capX/2,y0:-capY/2,px:[22,52],py:[14,16],draw:plan}]}]:[]);
+  return{A,B:Bv}});
+BM.wrapAll();
 })();
 </script>
 </body>
