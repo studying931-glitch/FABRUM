@@ -10044,7 +10044,7 @@ function mesh3dCore(FS){
   const sg=sum<0?-1:1;let top=0;tr.forEach(nz=>{if(nz*sg>1e-9)top+=nz*sg/2});
   const r=x=>Math.round(x*1e4)/1e4;
   const rec=[r((mnx+mxx)/2),r((mny+mxy)/2),r(mnz),r(mxz),open==1?0:Math.abs(sum),open==1?0:top,open,r(mnx),r(mny),r(mxx),r(mxy),sa,'m'];
-  if(top>0&&(mxx-mnx)*(mxy-mny)>1.5*top&&tg.length<=600){const fp=[];tg.forEach((t,i)=>{if(tr[i]*sg>1e-9)fp.push(t.map(v=>Math.round(v*1e3)/1e3))});if(fp.length)rec.push(fp)}
+  if(top>0&&(mxx-mnx)*(mxy-mny)>1.015*top&&tg.length<=8000){const fp=[];tg.forEach((t,i)=>{if(tr[i]*sg>1e-9)fp.push(t.map(v=>Math.round(v*1e3)/1e3))});if(fp.length)rec.push(fp)}
   out.push(rec);});
  return out}
 /* planar face extraction from loose segments (rectangles sharing sides, T-junctions) */
@@ -10563,6 +10563,15 @@ function computeFile(){
   if(s.al&&s.al.sc=='fail')warn.push(P('تعذّرت محاذاة مجسّم الـ3D مع هذا المخطط تلقائيًا (نقطة الأصل مختلفة)؛ أدخل «إزاحة 3D» يدويًا وإلا ستُستعمل القيم الافتراضية.','Could not auto-align the 3D model with this plan (different origin); enter the 3D offset manually or defaults will be used.'));
   const am=Object.keys(s.bdi||{}).filter(n=>s.bdi[n]&&s.bdi[n].amb&&layNames().indexOf(n)>=0);
   if(am.length&&!isNum(s.sb))warn.push(P('الطابق غير محسوم من الـ3D (طوابق متشابهة) للطبقات: '+am.join('، ')+'. اخترت الأقرب، فتأكد منه أو حدّده من قائمة «الطابق من الـ3D».','Storey could not be settled from the 3D model (similar storeys) for layers: '+am.join(', ')+'. The closest was chosen; verify it or set it from the “Storey from 3D” list.'))}
+ /* element marks (C1, B3, ...) and size labels (300x500) from the nearest drawing texts, for the Revit export */
+ try{const MK=/^[A-Za-z؀-ۿ]{1,4}[-_ ]?\d{1,3}[A-Za-z]?$/,DM=/(\d{2,4})\s*[xX×*]\s*(\d{2,4})/;
+  const T0=(DQ.tx||[]).map(t=>{const s=String(t.s||'').replace(/\\P/g,' ').replace(/\s+/g,' ').trim();if(!s||s.length>24)return null;const mm=s.match(DM),lab=mm?[+mm[1],+mm[2]]:null,rest=s.replace(DM,'').replace(/[()\[\]]/g,'').trim();let mk='';if(MK.test(rest))mk=rest.replace(/\s+/g,'');else if(MK.test(s))mk=s.replace(/\s+/g,'');if(!mk&&!lab)return null;return{x:t.x*f+al.ox,y:t.y*f+al.oy,mk:mk,lab:lab}}).filter(Boolean);
+  if(T0.length)mdl.forEach(m=>{if(m.pts&&m.t!==undefined&&m.holes)return;let cx,cy,R,seg=null;
+   if(m.pts){let sx=0,sy=0;m.pts.forEach(p=>{sx+=p[0];sy+=p[1]});cx=sx/m.pts.length;cy=sy/m.pts.length;let a=0;for(let i=0;i<m.pts.length;i++){const p=m.pts[i],q=m.pts[(i+1)%m.pts.length];a+=p[0]*q[1]-q[0]*p[1]}R=Math.max(0.9,Math.sqrt(Math.abs(a)/2)*0.8)}
+   else if(m.x0!==undefined){seg=[m.x0,m.y0,m.x1,m.y1];cx=(m.x0+m.x1)/2;cy=(m.y0+m.y1)/2;R=0.7}else return;
+   const dist=t=>{if(!seg)return Math.hypot(t.x-cx,t.y-cy);const dx=seg[2]-seg[0],dy=seg[3]-seg[1],L2=dx*dx+dy*dy||1e-9;let u=((t.x-seg[0])*dx+(t.y-seg[1])*dy)/L2;u=Math.max(0,Math.min(1,u));return Math.hypot(t.x-(seg[0]+u*dx),t.y-(seg[1]+u*dy))};
+   let bm=null,bl=null,dm=1e9,dl=1e9;T0.forEach(t=>{const dd=dist(t);if(dd>R)return;if(t.mk&&dd<dm){dm=dd;bm=t}if(t.lab&&dd<dl){dl=dd;bl=t}});
+   if(bm)m.mk=bm.mk;if(bl)m.lab=bl.lab})}catch(e){}
  return{rows:rows,stairs:stairs,els:els,warn:warn,mdl:mdl}}
 /* all files of the project */
 let SLABDONE={},USED3=new Set();
@@ -10715,7 +10724,7 @@ R6.dxq=function(){
  out.stairs.forEach(x=>{const c=$('stv|'+x.fid+'|'+ck(x.layer)+'|'+x.i);if(c)c.textContent=F(x.V/x.mult,3)});
  const r=$('dxq_res');if(r)r.innerHTML=resHtml(out);
  paintPreview();bindSvg()};
-const RV_PY="# -*- coding: utf-8 -*-\n# =====================================================================\n# FABRUM -> Revit : builds REAL, editable structural elements\n# (columns, beams, floors/slabs, isolated footings) from the JSON model\n# exported by the FABRUM DXF quantity tool.\n#\n# How to use (Dynamo for Revit):\n#   1. Open a Revit project that has these families LOADED:\n#        - a rectangular Structural Column family  (e.g. M_Concrete-Rectangular-Column)\n#        - a rectangular Structural Framing family (e.g. M_Concrete-Rectangular Beam)\n#        - a rectangular isolated Structural Foundation family (e.g. M_Footing-Rectangular)\n#      (floors need no family, a Floor type is duplicated)\n#   2. In Dynamo: add a \"Python Script\" node, paste this whole file in it.\n#      Give the node ONE input (IN[0]) = the full path of the FABRUM .json file\n#      (use a \"File Path\" node or a \"String\" node).\n#   3. Run. Read the report in the node output.\n# Works with Dynamo Python 2 (IronPython) and Python 3 (CPython). All sizes are\n# taken from the JSON in millimetres. Try it on a COPY of the project first.\n# =====================================================================\nimport clr\nimport json\nimport math\nimport sys\n\nclr.AddReference('RevitAPI')\nclr.AddReference('RevitAPIUI')\nclr.AddReference('RevitServices')\nfrom Autodesk.Revit.DB import *\nfrom Autodesk.Revit.DB.Structure import StructuralType\nfrom RevitServices.Persistence import DocumentManager\nfrom RevitServices.Transactions import TransactionManager\nfrom System.Collections.Generic import List\n\ndoc = DocumentManager.Instance.CurrentDBDocument\nFT = 1.0 / 304.8          # mm -> Revit internal feet\nLOG = []\nSTAT = {'columns': 0, 'beams': 0, 'slabs': 0, 'footings': 0, 'lean': 0, 'walls': 0, 'failed': 0}\n\n\ndef log(msg):\n    LOG.append(str(msg))\n\n\ndef fail(what, ex):\n    STAT['failed'] += 1\n    if len(LOG) < 200:\n        log('FAILED {}: {}'.format(what, ex))\n\n\ndef xyz(x, y, z):\n    return XYZ(x * FT, y * FT, z * FT)\n\n\n# ------------------------------------------------------------ levels\ndef level_elev_mm(lv):\n    return lv.Elevation / FT\n\n\ndef make_levels(model):\n    existing = list(FilteredElementCollector(doc).OfClass(Level).ToElements())\n    out = []\n    for item in model.get('levels', []):\n        e = float(item['elev'])\n        hit = None\n        for lv in existing:\n            if abs(level_elev_mm(lv) - e) < 5.0:\n                hit = lv\n                break\n        if hit is None:\n            try:\n                if hasattr(Level, 'Create'):\n                    hit = Level.Create(doc, e * FT)\n                else:\n                    hit = doc.Create.NewLevel(e * FT)\n                try:\n                    hit.Name = item['name']\n                except Exception:\n                    pass\n                existing.append(hit)\n            except Exception as ex:\n                fail('level ' + str(item.get('name')), ex)\n        if hit is not None:\n            out.append(hit)\n    if not out:\n        out = existing\n    out.sort(key=lambda l: l.Elevation)\n    return out\n\n\ndef level_for(levels, z_mm):\n    best = levels[0]\n    for lv in levels:\n        if level_elev_mm(lv) <= z_mm + 1.0:\n            best = lv\n    return best\n\n\n# ------------------------------------------------------------ types\ndef has_param(sym, names):\n    for n in names:\n        try:\n            if sym.LookupParameter(n) is not None:\n                return True\n        except Exception:\n            pass\n    return False\n\n\ndef first_symbol(cat, prefer, need):\n    syms = list(FilteredElementCollector(doc).OfClass(FamilySymbol).OfCategory(cat).ToElements())\n    if not syms:\n        return None\n    ok = [x for x in syms if has_param(x, need)]\n    pool = ok if ok else syms\n    pick = None\n    for key in prefer:\n        for x in pool:\n            try:\n                nm = (x.FamilyName + ' ' + x.Name).lower()\n            except Exception:\n                nm = ''\n            if key in nm:\n                pick = x\n                break\n        if pick is not None:\n            break\n    if pick is None:\n        pick = pool[0]\n    try:\n        log('Family used for {}: {} : {}'.format(cat, pick.FamilyName, pick.Name))\n    except Exception:\n        pass\n    return pick\n\n\ndef loc_z_mm(inst):\n    try:\n        return inst.Location.Point.Z / FT\n    except Exception:\n        return None\n\n\ndef bb_z_mm(inst):\n    try:\n        bb = inst.get_BoundingBox(None)\n        if bb is None:\n            return None\n        return bb.Min.Z / FT, bb.Max.Z / FT\n    except Exception:\n        return None\n\n\ndef move_z(inst, dz_mm):\n    ElementTransformUtils.MoveElement(doc, inst.Id, XYZ(0, 0, dz_mm * FT))\n\n\ndef set_param(elem, names, value_mm):\n    for n in names:\n        try:\n            p = elem.LookupParameter(n)\n            if p is not None and not p.IsReadOnly:\n                p.Set(value_mm * FT)\n                return True\n        except Exception:\n            pass\n    return False\n\n\nCACHE = {}\n\n\ndef typed_symbol(base, key, dims):\n    # dims: list of (param names, value mm). One duplicated type per unique key.\n    if key in CACHE:\n        return CACHE[key]\n    sym = None\n    try:\n        existing = None\n        for s in FilteredElementCollector(doc).OfClass(FamilySymbol).ToElements():\n            try:\n                if s.FamilyName == base.FamilyName and s.Name == key:\n                    existing = s\n                    break\n            except Exception:\n                pass\n        sym = existing if existing is not None else base.Duplicate(key)\n        ok = True\n        for names, val in dims:\n            if not set_param(sym, names, val):\n                ok = False\n        if not ok:\n            log('Type \"{}\": could not find the size parameters {}; check the family.'.format(\n                key, [d[0][0] for d in dims]))\n        if not sym.IsActive:\n            sym.Activate()\n            doc.Regenerate()\n    except Exception as ex:\n        fail('type ' + key, ex)\n        sym = base\n        try:\n            if not sym.IsActive:\n                sym.Activate()\n        except Exception:\n            pass\n    CACHE[key] = sym\n    return sym\n\n\ndef set_bip(elem, bip, value):\n    try:\n        p = elem.get_Parameter(bip)\n        if p is not None and not p.IsReadOnly:\n            p.Set(value)\n            return True\n    except Exception:\n        pass\n    return False\n\n\n# ------------------------------------------------------------ columns\ndef get_bip_ft(elem, bip):\n    try:\n        p = elem.get_Parameter(bip)\n        if p is not None:\n            return p.AsDouble()\n    except Exception:\n        pass\n    return None\n\n\ndef build_columns(model, levels):\n    base = first_symbol(BuiltInCategory.OST_StructuralColumns, ['rectang', 'concrete'], ['b', 'Width', 'width'])\n    if base is None:\n        log('No Structural Column family is loaded: columns skipped.')\n        return\n    made = []\n    for c in model.get('columns', []):\n        try:\n            b, h = c['b'], c['h']\n            sym = typed_symbol(base, 'FABRUM C {:g}x{:g}'.format(b, h), [(['b', 'Width', 'width'], b), (['h', 'Depth', 'depth'], h)])\n            lb = level_for(levels, c['z0'])\n            lt = level_for(levels, c['z1'] + 60.0)\n            if level_elev_mm(lt) <= level_elev_mm(lb):\n                lt = lb\n            pt = xyz(c['cx'], c['cy'], c['z0'])\n            inst = doc.Create.NewFamilyInstance(pt, sym, lb, StructuralType.Column)\n            set_bip(inst, BuiltInParameter.FAMILY_BASE_LEVEL_PARAM, lb.Id)\n            set_bip(inst, BuiltInParameter.FAMILY_TOP_LEVEL_PARAM, lt.Id)\n            set_bip(inst, BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM, (c['z0'] - level_elev_mm(lb)) * FT)\n            set_bip(inst, BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM, (c['z1'] - level_elev_mm(lt)) * FT)\n            if abs(c.get('ang', 0)) > 0.01:\n                axis = Line.CreateBound(pt, XYZ(pt.X, pt.Y, pt.Z + 1.0))\n                ElementTransformUtils.RotateElement(doc, inst.Id, axis, math.radians(c['ang']))\n            made.append((inst, c))\n            STAT['columns'] += 1\n        except Exception as ex:\n            fail('column at {},{}'.format(c.get('cx'), c.get('cy')), ex)\n    # verify the real vertical extent and correct the offsets when Revit disagrees\n    try:\n        doc.Regenerate()\n        fixed = 0\n        for inst, c in made:\n            z = bb_z_mm(inst)\n            if z is None:\n                continue\n            d0, d1 = c['z0'] - z[0], c['z1'] - z[1]\n            if abs(d0) > 2.0 or abs(d1) > 2.0:\n                o0 = get_bip_ft(inst, BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM)\n                o1 = get_bip_ft(inst, BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM)\n                if o0 is not None and o1 is not None:\n                    set_bip(inst, BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM, o0 + d0 * FT)\n                    set_bip(inst, BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM, o1 + d1 * FT)\n                    fixed += 1\n        if fixed:\n            log('Column heights corrected: {}'.format(fixed))\n    except Exception as ex:\n        log('Column height check skipped: {}'.format(ex))\n\n\n# ------------------------------------------------------------ beams\ndef build_beams(model, levels):\n    base = first_symbol(BuiltInCategory.OST_StructuralFraming, ['rectang', 'concrete'], ['b', 'Width', 'width'])\n    if base is None:\n        log('No Structural Framing family is loaded: beams skipped.')\n        return\n    made = []\n    for b in model.get('beams', []):\n        try:\n            w, d = b['w'], b['d']\n            sym = typed_symbol(base, 'FABRUM B {:g}x{:g}'.format(w, d), [(['b', 'Width', 'width'], w), (['h', 'Depth', 'depth'], d)])\n            lv = level_for(levels, b['z1'])\n            p0 = xyz(b['x0'], b['y0'], b['z1'])\n            p1 = xyz(b['x1'], b['y1'], b['z1'])\n            if p0.DistanceTo(p1) < 0.01:\n                continue\n            inst = doc.Create.NewFamilyInstance(Line.CreateBound(p0, p1), sym, lv, StructuralType.Beam)\n            set_bip(inst, BuiltInParameter.Z_JUSTIFICATION, 0)           # 0 = Top\n            made.append((inst, b))\n            STAT['beams'] += 1\n        except Exception as ex:\n            fail('beam from {},{}'.format(b.get('x0'), b.get('y0')), ex)\n    # make every beam top sit exactly at its target elevation\n    try:\n        doc.Regenerate()\n        fixed = 0\n        for inst, b in made:\n            z = bb_z_mm(inst)\n            if z is None:\n                continue\n            dz = b['z1'] - z[1]\n            if abs(dz) > 1.0:\n                move_z(inst, dz)\n                fixed += 1\n        if fixed:\n            log('Beam elevations corrected: {}'.format(fixed))\n    except Exception as ex:\n        log('Beam elevation check skipped: {}'.format(ex))\n\n\n# ------------------------------------------------------------ floors\ndef signed_area(pts):\n    a = 0.0\n    for i in range(len(pts)):\n        p, q = pts[i], pts[(i + 1) % len(pts)]\n        a += p[0] * q[1] - q[0] * p[1]\n    return a / 2.0\n\n\ndef loop_of(pts, ccw, z=0.0):\n    pts = list(pts)\n    if (signed_area(pts) > 0) != ccw:\n        pts.reverse()\n    cl = CurveLoop()\n    n = len(pts)\n    for i in range(n):\n        a, b = pts[i], pts[(i + 1) % n]\n        if abs(a[0] - b[0]) < 0.5 and abs(a[1] - b[1]) < 0.5:\n            continue\n        cl.Append(Line.CreateBound(xyz(a[0], a[1], z), xyz(b[0], b[1], z)))\n    return cl\n\n\ndef floor_type(thk_mm, prefix):\n    key = '{} {:g}'.format(prefix, thk_mm)\n    if key in CACHE:\n        return CACHE[key]\n    ft = None\n    for t in FilteredElementCollector(doc).OfClass(FloorType).ToElements():\n        try:\n            if t.Name == key:\n                ft = t\n                break\n        except Exception:\n            pass\n    if ft is None:\n        src = None\n        for t in FilteredElementCollector(doc).OfClass(FloorType).ToElements():\n            src = t\n            break\n        if src is None:\n            return None\n        ft = src.Duplicate(key)\n        try:\n            cs = ft.GetCompoundStructure()\n            while cs.LayerCount > 1:\n                cs.DeleteLayer(cs.LayerCount - 1)\n            cs.SetLayerWidth(0, thk_mm * FT)\n            ft.SetCompoundStructure(cs)\n        except Exception as ex:\n            log('Floor type \"{}\": thickness could not be set automatically ({}). Set it by hand.'.format(key, ex))\n    CACHE[key] = ft\n    return ft\n\n\ndef build_slabs(model, levels, items, prefix, stat_key):\n    for s in items:\n        try:\n            ft = floor_type(round(s['t']), prefix)\n            if ft is None:\n                log('No Floor type in the project: slabs skipped.')\n                return\n            lv = level_for(levels, s['z1'])\n            zl = level_elev_mm(lv)\n            loops = [loop_of(s['pts'], True, zl)] + [loop_of(h, False, zl) for h in s.get('holes', [])]\n            if hasattr(Floor, 'Create'):\n                ll = List[CurveLoop]()\n                for l in loops:\n                    ll.Add(l)\n                fl = Floor.Create(doc, ll, ft.Id, lv.Id)\n            else:\n                ca = CurveArray()\n                for c in loops[0]:\n                    ca.Append(c)\n                fl = doc.Create.NewFloor(ca, ft, lv, True)\n            set_bip(fl, BuiltInParameter.FLOOR_HEIGHTABOVELEVEL_PARAM, (s['z1'] - level_elev_mm(lv)) * FT)\n            STAT[stat_key] += 1\n        except Exception as ex:\n            fail('slab', ex)\n\n\n# ------------------------------------------------------------ footings\ndef build_footings(model, levels):\n    base = first_symbol(BuiltInCategory.OST_StructuralFoundation, ['rectang', 'footing'], ['Foundation Thickness', 'Width', 'width'])\n    if base is None:\n        log('No isolated Structural Foundation family is loaded: footings skipped.')\n        return\n    made = []\n    for f in model.get('footings', []):\n        try:\n            b, h, t = f['b'], f['h'], f['t']\n            sym = typed_symbol(base, 'FABRUM F {:g}x{:g}x{:g}'.format(b, h, t), [(['Width', 'width', 'b'], b), (['Length', 'length', 'h'], h), (['Foundation Thickness', 'Thickness', 'Depth'], t)])\n            lv = level_for(levels, f['z1'])\n            pt = xyz(f['cx'], f['cy'], f['z1'])\n            inst = doc.Create.NewFamilyInstance(pt, sym, lv, StructuralType.Footing)\n            if abs(f.get('ang', 0)) > 0.01:\n                axis = Line.CreateBound(pt, XYZ(pt.X, pt.Y, pt.Z + 1.0))\n                ElementTransformUtils.RotateElement(doc, inst.Id, axis, math.radians(f['ang']))\n            made.append((inst, f))\n            STAT['footings'] += 1\n        except Exception as ex:\n            fail('footing at {},{}'.format(f.get('cx'), f.get('cy')), ex)\n    # the footing top must be at z1: compare with the bounding box and move if needed\n    try:\n        doc.Regenerate()\n        fixed = 0\n        for inst, f in made:\n            z = bb_z_mm(inst)\n            if z is None:\n                continue\n            dz = f['z1'] - z[1]\n            if abs(dz) > 1.0:\n                move_z(inst, dz)\n                fixed += 1\n        if fixed:\n            log('Footing elevations corrected: {}'.format(fixed))\n    except Exception as ex:\n        log('Footing elevation check skipped: {}'.format(ex))\n\n\n# ------------------------------------------------------------ walls\ndef wall_type(t_mm):\n    key = 'FABRUM Wall {:g}'.format(t_mm)\n    if key in CACHE:\n        return CACHE[key]\n    wt = None\n    for t in FilteredElementCollector(doc).OfClass(WallType).ToElements():\n        try:\n            if t.Name == key:\n                wt = t\n                break\n        except Exception:\n            pass\n    if wt is None:\n        src = None\n        for t in FilteredElementCollector(doc).OfClass(WallType).ToElements():\n            try:\n                if t.Kind == WallKind.Basic:\n                    src = t\n                    break\n            except Exception:\n                pass\n        if src is None:\n            return None\n        wt = src.Duplicate(key)\n        try:\n            cs = wt.GetCompoundStructure()\n            while cs.LayerCount > 1:\n                cs.DeleteLayer(cs.LayerCount - 1)\n            cs.SetLayerWidth(0, t_mm * FT)\n            wt.SetCompoundStructure(cs)\n        except Exception as ex:\n            log('Wall type \"{}\": thickness could not be set automatically ({}). Set it by hand.'.format(key, ex))\n    CACHE[key] = wt\n    return wt\n\n\ndef build_walls(model, levels):\n    for w in model.get('walls', []):\n        try:\n            wt = wall_type(round(w['t']))\n            if wt is None:\n                log('No basic Wall type in the project: walls skipped.')\n                return\n            lv = level_for(levels, w['z0'])\n            z = level_elev_mm(lv)\n            ln = Line.CreateBound(xyz(w['x0'], w['y0'], z), xyz(w['x1'], w['y1'], z))\n            h = (w['z1'] - w['z0']) * FT\n            off = (w['z0'] - z) * FT\n            wl = Wall.Create(doc, ln, wt.Id, lv.Id, h, off, False, True)\n            set_bip(wl, BuiltInParameter.WALL_KEY_REF_PARAM, 0)   # location line = wall centerline\n            STAT['walls'] += 1\n        except Exception as ex:\n            fail('wall at {},{}'.format(w.get('x0'), w.get('y0')), ex)\n\n\n# ------------------------------------------------------------ main\ndef run(path):\n    with open(path, 'rb') as fh:\n        raw = fh.read()\n    model = json.loads(raw.decode('utf-8'))\n    log('Model: {} columns, {} beams, {} slabs, {} footings, {} lean pieces, {} walls'.format(\n        len(model.get('columns', [])), len(model.get('beams', [])), len(model.get('slabs', [])),\n        len(model.get('footings', [])), len(model.get('lean', [])), len(model.get('walls', []))))\n    TransactionManager.Instance.EnsureInTransaction(doc)\n    try:\n        levels = make_levels(model)\n        if not levels:\n            log('No levels available: nothing built.')\n            return\n        build_footings(model, levels)\n        build_columns(model, levels)\n        build_beams(model, levels)\n        build_walls(model, levels)\n        build_slabs(model, levels, model.get('slabs', []), 'FABRUM Slab', 'slabs')\n        build_slabs(model, levels, model.get('lean', []), 'FABRUM Lean', 'lean')\n    finally:\n        TransactionManager.Instance.TransactionTaskDone()\n    log('CREATED: {}'.format(STAT))\n\n\ntry:\n    _src = IN[0]\n    if isinstance(_src, (list, tuple)):\n        _src = _src[0]\n    run(str(_src))\nexcept Exception as e:\n    log('STOPPED: {}'.format(e))\nOUT = '\\n'.join(LOG)\n";
+const RV_PY="# -*- coding: utf-8 -*-\n# =====================================================================\n# FABRUM -> Revit : builds REAL, editable structural elements\n# (columns, beams, floors/slabs, isolated footings) from the JSON model\n# exported by the FABRUM DXF quantity tool.\n#\n# How to use (Dynamo for Revit):\n#   1. Open a Revit project that has these families LOADED:\n#        - a rectangular Structural Column family  (e.g. M_Concrete-Rectangular-Column)\n#        - a rectangular Structural Framing family (e.g. M_Concrete-Rectangular Beam)\n#        - a rectangular isolated Structural Foundation family (e.g. M_Footing-Rectangular)\n#      (floors need no family, a Floor type is duplicated)\n#   2. In Dynamo: add a \"Python Script\" node, paste this whole file in it.\n#      Give the node ONE input (IN[0]) = the full path of the FABRUM .json file\n#      (use a \"File Path\" node or a \"String\" node).\n#   3. Run. Read the report in the node output.\n# Works with Dynamo Python 2 (IronPython) and Python 3 (CPython). All sizes are\n# taken from the JSON in millimetres. Try it on a COPY of the project first.\n# =====================================================================\nimport clr\nimport json\nimport math\nimport sys\n\nclr.AddReference('RevitAPI')\nclr.AddReference('RevitAPIUI')\nclr.AddReference('RevitServices')\nfrom Autodesk.Revit.DB import *\nfrom Autodesk.Revit.DB.Structure import StructuralType\nfrom RevitServices.Persistence import DocumentManager\nfrom RevitServices.Transactions import TransactionManager\nfrom System.Collections.Generic import List\n\ndoc = DocumentManager.Instance.CurrentDBDocument\nFT = 1.0 / 304.8          # mm -> Revit internal feet\nLOG = []\nSTAT = {'columns': 0, 'beams': 0, 'slabs': 0, 'footings': 0, 'lean': 0, 'walls': 0, 'failed': 0}\n\n\ndef log(msg):\n    LOG.append(str(msg))\n\n\ndef fail(what, ex):\n    STAT['failed'] += 1\n    if len(LOG) < 200:\n        log('FAILED {}: {}'.format(what, ex))\n\n\ndef xyz(x, y, z):\n    return XYZ(x * FT, y * FT, z * FT)\n\n\n# ------------------------------------------------------------ levels\ndef level_elev_mm(lv):\n    return lv.Elevation / FT\n\n\ndef make_levels(model):\n    existing = list(FilteredElementCollector(doc).OfClass(Level).ToElements())\n    out = []\n    for item in model.get('levels', []):\n        e = float(item['elev'])\n        hit = None\n        for lv in existing:\n            if abs(level_elev_mm(lv) - e) < 5.0:\n                hit = lv\n                break\n        if hit is None:\n            try:\n                if hasattr(Level, 'Create'):\n                    hit = Level.Create(doc, e * FT)\n                else:\n                    hit = doc.Create.NewLevel(e * FT)\n                try:\n                    hit.Name = item['name']\n                except Exception:\n                    pass\n                existing.append(hit)\n            except Exception as ex:\n                fail('level ' + str(item.get('name')), ex)\n        if hit is not None:\n            out.append(hit)\n    if not out:\n        out = existing\n    out.sort(key=lambda l: l.Elevation)\n    return out\n\n\ndef level_for(levels, z_mm):\n    best = levels[0]\n    for lv in levels:\n        if level_elev_mm(lv) <= z_mm + 1.0:\n            best = lv\n    return best\n\n\n# ------------------------------------------------------------ types\ndef has_param(sym, names):\n    for n in names:\n        try:\n            if sym.LookupParameter(n) is not None:\n                return True\n        except Exception:\n            pass\n    return False\n\n\ndef first_symbol(cat, prefer, need):\n    syms = list(FilteredElementCollector(doc).OfClass(FamilySymbol).OfCategory(cat).ToElements())\n    if not syms:\n        return None\n    ok = [x for x in syms if has_param(x, need)]\n    pool = ok if ok else syms\n    pick = None\n    for key in prefer:\n        for x in pool:\n            try:\n                nm = (x.FamilyName + ' ' + x.Name).lower()\n            except Exception:\n                nm = ''\n            if key in nm:\n                pick = x\n                break\n        if pick is not None:\n            break\n    if pick is None:\n        pick = pool[0]\n    try:\n        log('Family used for {}: {} : {}'.format(cat, pick.FamilyName, pick.Name))\n    except Exception:\n        pass\n    return pick\n\n\ndef find_round_symbol(cat):\n    for x in FilteredElementCollector(doc).OfClass(FamilySymbol).OfCategory(cat).ToElements():\n        try:\n            nm = (x.FamilyName + ' ' + x.Name).lower()\n        except Exception:\n            nm = ''\n        if ('round' in nm or 'circ' in nm) and has_param(x, ['Diameter', 'b', 'd', 'D']):\n            return x\n    return None\n\n\ndef mark(inst, e):\n    try:\n        if e.get('mk'):\n            set_bip(inst, BuiltInParameter.ALL_MODEL_MARK, str(e['mk']))\n    except Exception:\n        pass\n\n\ndef loc_z_mm(inst):\n    try:\n        return inst.Location.Point.Z / FT\n    except Exception:\n        return None\n\n\ndef bb_z_mm(inst):\n    try:\n        bb = inst.get_BoundingBox(None)\n        if bb is None:\n            return None\n        return bb.Min.Z / FT, bb.Max.Z / FT\n    except Exception:\n        return None\n\n\ndef move_z(inst, dz_mm):\n    ElementTransformUtils.MoveElement(doc, inst.Id, XYZ(0, 0, dz_mm * FT))\n\n\ndef set_param(elem, names, value_mm):\n    for n in names:\n        try:\n            p = elem.LookupParameter(n)\n            if p is not None and not p.IsReadOnly:\n                p.Set(value_mm * FT)\n                return True\n        except Exception:\n            pass\n    return False\n\n\nCACHE = {}\n\n\ndef typed_symbol(base, key, dims):\n    # dims: list of (param names, value mm). One duplicated type per unique key.\n    if key in CACHE:\n        return CACHE[key]\n    sym = None\n    try:\n        existing = None\n        for s in FilteredElementCollector(doc).OfClass(FamilySymbol).ToElements():\n            try:\n                if s.FamilyName == base.FamilyName and s.Name == key:\n                    existing = s\n                    break\n            except Exception:\n                pass\n        sym = existing if existing is not None else base.Duplicate(key)\n        ok = True\n        for names, val in dims:\n            if not set_param(sym, names, val):\n                ok = False\n        if not ok:\n            log('Type \"{}\": could not find the size parameters {}; check the family.'.format(\n                key, [d[0][0] for d in dims]))\n        if not sym.IsActive:\n            sym.Activate()\n            doc.Regenerate()\n    except Exception as ex:\n        fail('type ' + key, ex)\n        sym = base\n        try:\n            if not sym.IsActive:\n                sym.Activate()\n        except Exception:\n            pass\n    CACHE[key] = sym\n    return sym\n\n\ndef set_bip(elem, bip, value):\n    try:\n        p = elem.get_Parameter(bip)\n        if p is not None and not p.IsReadOnly:\n            p.Set(value)\n            return True\n    except Exception:\n        pass\n    return False\n\n\n# ------------------------------------------------------------ columns\ndef get_bip_ft(elem, bip):\n    try:\n        p = elem.get_Parameter(bip)\n        if p is not None:\n            return p.AsDouble()\n    except Exception:\n        pass\n    return None\n\n\ndef build_columns(model, levels):\n    base = first_symbol(BuiltInCategory.OST_StructuralColumns, ['rectang', 'concrete'], ['b', 'Width', 'width'])\n    if base is None:\n        log('No Structural Column family is loaded: columns skipped.')\n        return\n    made = []\n    rbase = None\n    rchecked = False\n    approx = {'round': 0, 'poly': 0}\n    for c in model.get('columns', []):\n        try:\n            b, h = c['b'], c['h']\n            sym = None\n            if c.get('shape') == 'round':\n                if not rchecked:\n                    rbase = find_round_symbol(BuiltInCategory.OST_StructuralColumns)\n                    rchecked = True\n                    if rbase is None:\n                        log('No round column family is loaded: round columns are made square (side = diameter). Load M_Concrete-Round-Column for true circles.')\n                if rbase is not None:\n                    sym = typed_symbol(rbase, 'FABRUM CR D{:g}'.format(c.get('dia', b)), [(['Diameter', 'b', 'd', 'D'], c.get('dia', b))])\n                else:\n                    approx['round'] += 1\n            elif c.get('shape') == 'poly':\n                approx['poly'] += 1\n            if sym is None:\n                sym = typed_symbol(base, 'FABRUM C {:g}x{:g}'.format(b, h), [(['b', 'Width', 'width'], b), (['h', 'Depth', 'depth'], h)])\n            lb = level_for(levels, c['z0'])\n            lt = level_for(levels, c['z1'] + 60.0)\n            if level_elev_mm(lt) <= level_elev_mm(lb):\n                lt = lb\n            pt = xyz(c['cx'], c['cy'], c['z0'])\n            inst = doc.Create.NewFamilyInstance(pt, sym, lb, StructuralType.Column)\n            set_bip(inst, BuiltInParameter.FAMILY_BASE_LEVEL_PARAM, lb.Id)\n            set_bip(inst, BuiltInParameter.FAMILY_TOP_LEVEL_PARAM, lt.Id)\n            set_bip(inst, BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM, (c['z0'] - level_elev_mm(lb)) * FT)\n            set_bip(inst, BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM, (c['z1'] - level_elev_mm(lt)) * FT)\n            if abs(c.get('ang', 0)) > 0.01:\n                axis = Line.CreateBound(pt, XYZ(pt.X, pt.Y, pt.Z + 1.0))\n                ElementTransformUtils.RotateElement(doc, inst.Id, axis, math.radians(c['ang']))\n            mark(inst, c)\n            made.append((inst, c))\n            STAT['columns'] += 1\n        except Exception as ex:\n            fail('column at {},{}'.format(c.get('cx'), c.get('cy')), ex)\n    if approx['poly']:\n        log('{} non-rectangular columns were made with their bounding rectangle (the IFC keeps the exact shape).'.format(approx['poly']))\n    # verify the real vertical extent and correct the offsets when Revit disagrees\n    try:\n        doc.Regenerate()\n        fixed = 0\n        for inst, c in made:\n            z = bb_z_mm(inst)\n            if z is None:\n                continue\n            d0, d1 = c['z0'] - z[0], c['z1'] - z[1]\n            if abs(d0) > 2.0 or abs(d1) > 2.0:\n                o0 = get_bip_ft(inst, BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM)\n                o1 = get_bip_ft(inst, BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM)\n                if o0 is not None and o1 is not None:\n                    set_bip(inst, BuiltInParameter.FAMILY_BASE_LEVEL_OFFSET_PARAM, o0 + d0 * FT)\n                    set_bip(inst, BuiltInParameter.FAMILY_TOP_LEVEL_OFFSET_PARAM, o1 + d1 * FT)\n                    fixed += 1\n        if fixed:\n            log('Column heights corrected: {}'.format(fixed))\n    except Exception as ex:\n        log('Column height check skipped: {}'.format(ex))\n\n\n# ------------------------------------------------------------ beams\ndef build_beams(model, levels):\n    base = first_symbol(BuiltInCategory.OST_StructuralFraming, ['rectang', 'concrete'], ['b', 'Width', 'width'])\n    if base is None:\n        log('No Structural Framing family is loaded: beams skipped.')\n        return\n    made = []\n    for b in model.get('beams', []):\n        try:\n            w, d = b['w'], b['d']\n            sym = typed_symbol(base, 'FABRUM B {:g}x{:g}'.format(w, d), [(['b', 'Width', 'width'], w), (['h', 'Depth', 'depth'], d)])\n            lv = level_for(levels, b['z1'])\n            p0 = xyz(b['x0'], b['y0'], b['z1'])\n            p1 = xyz(b['x1'], b['y1'], b['z1'])\n            if p0.DistanceTo(p1) < 0.01:\n                continue\n            inst = doc.Create.NewFamilyInstance(Line.CreateBound(p0, p1), sym, lv, StructuralType.Beam)\n            set_bip(inst, BuiltInParameter.Z_JUSTIFICATION, 0)           # 0 = Top\n            mark(inst, b)\n            made.append((inst, b))\n            STAT['beams'] += 1\n        except Exception as ex:\n            fail('beam from {},{}'.format(b.get('x0'), b.get('y0')), ex)\n    # make every beam top sit exactly at its target elevation\n    try:\n        doc.Regenerate()\n        fixed = 0\n        for inst, b in made:\n            z = bb_z_mm(inst)\n            if z is None:\n                continue\n            dz = b['z1'] - z[1]\n            if abs(dz) > 1.0:\n                move_z(inst, dz)\n                fixed += 1\n        if fixed:\n            log('Beam elevations corrected: {}'.format(fixed))\n    except Exception as ex:\n        log('Beam elevation check skipped: {}'.format(ex))\n\n\n# ------------------------------------------------------------ floors\ndef signed_area(pts):\n    a = 0.0\n    for i in range(len(pts)):\n        p, q = pts[i], pts[(i + 1) % len(pts)]\n        a += p[0] * q[1] - q[0] * p[1]\n    return a / 2.0\n\n\ndef loop_of(pts, ccw, z=0.0):\n    pts = list(pts)\n    if (signed_area(pts) > 0) != ccw:\n        pts.reverse()\n    cl = CurveLoop()\n    n = len(pts)\n    for i in range(n):\n        a, b = pts[i], pts[(i + 1) % n]\n        if abs(a[0] - b[0]) < 0.5 and abs(a[1] - b[1]) < 0.5:\n            continue\n        cl.Append(Line.CreateBound(xyz(a[0], a[1], z), xyz(b[0], b[1], z)))\n    return cl\n\n\ndef floor_type(thk_mm, prefix):\n    key = '{} {:g}'.format(prefix, thk_mm)\n    if key in CACHE:\n        return CACHE[key]\n    ft = None\n    for t in FilteredElementCollector(doc).OfClass(FloorType).ToElements():\n        try:\n            if t.Name == key:\n                ft = t\n                break\n        except Exception:\n            pass\n    if ft is None:\n        src = None\n        for t in FilteredElementCollector(doc).OfClass(FloorType).ToElements():\n            src = t\n            break\n        if src is None:\n            return None\n        ft = src.Duplicate(key)\n        try:\n            cs = ft.GetCompoundStructure()\n            while cs.LayerCount > 1:\n                cs.DeleteLayer(cs.LayerCount - 1)\n            cs.SetLayerWidth(0, thk_mm * FT)\n            ft.SetCompoundStructure(cs)\n        except Exception as ex:\n            log('Floor type \"{}\": thickness could not be set automatically ({}). Set it by hand.'.format(key, ex))\n    CACHE[key] = ft\n    return ft\n\n\ndef build_slabs(model, levels, items, prefix, stat_key):\n    for s in items:\n        try:\n            ft = floor_type(round(s['t']), prefix)\n            if ft is None:\n                log('No Floor type in the project: slabs skipped.')\n                return\n            lv = level_for(levels, s['z1'])\n            zl = level_elev_mm(lv)\n            loops = [loop_of(s['pts'], True, zl)] + [loop_of(h, False, zl) for h in s.get('holes', [])]\n            if hasattr(Floor, 'Create'):\n                ll = List[CurveLoop]()\n                for l in loops:\n                    ll.Add(l)\n                fl = Floor.Create(doc, ll, ft.Id, lv.Id)\n            else:\n                ca = CurveArray()\n                for c in loops[0]:\n                    ca.Append(c)\n                fl = doc.Create.NewFloor(ca, ft, lv, True)\n            set_bip(fl, BuiltInParameter.FLOOR_HEIGHTABOVELEVEL_PARAM, (s['z1'] - level_elev_mm(lv)) * FT)\n            STAT[stat_key] += 1\n        except Exception as ex:\n            fail('slab', ex)\n\n\n# ------------------------------------------------------------ footings\ndef build_footings(model, levels):\n    base = first_symbol(BuiltInCategory.OST_StructuralFoundation, ['rectang', 'footing'], ['Foundation Thickness', 'Width', 'width'])\n    if base is None:\n        log('No isolated Structural Foundation family is loaded: footings skipped.')\n        return\n    made = []\n    for f in model.get('footings', []):\n        try:\n            b, h, t = f['b'], f['h'], f['t']\n            sym = typed_symbol(base, 'FABRUM F {:g}x{:g}x{:g}'.format(b, h, t), [(['Width', 'width', 'b'], b), (['Length', 'length', 'h'], h), (['Foundation Thickness', 'Thickness', 'Depth'], t)])\n            lv = level_for(levels, f['z1'])\n            pt = xyz(f['cx'], f['cy'], f['z1'])\n            inst = doc.Create.NewFamilyInstance(pt, sym, lv, StructuralType.Footing)\n            if abs(f.get('ang', 0)) > 0.01:\n                axis = Line.CreateBound(pt, XYZ(pt.X, pt.Y, pt.Z + 1.0))\n                ElementTransformUtils.RotateElement(doc, inst.Id, axis, math.radians(f['ang']))\n            mark(inst, f)\n            made.append((inst, f))\n            STAT['footings'] += 1\n        except Exception as ex:\n            fail('footing at {},{}'.format(f.get('cx'), f.get('cy')), ex)\n    # the footing top must be at z1: compare with the bounding box and move if needed\n    try:\n        doc.Regenerate()\n        fixed = 0\n        for inst, f in made:\n            z = bb_z_mm(inst)\n            if z is None:\n                continue\n            dz = f['z1'] - z[1]\n            if abs(dz) > 1.0:\n                move_z(inst, dz)\n                fixed += 1\n        if fixed:\n            log('Footing elevations corrected: {}'.format(fixed))\n    except Exception as ex:\n        log('Footing elevation check skipped: {}'.format(ex))\n\n\n# ------------------------------------------------------------ walls\ndef wall_type(t_mm):\n    key = 'FABRUM Wall {:g}'.format(t_mm)\n    if key in CACHE:\n        return CACHE[key]\n    wt = None\n    for t in FilteredElementCollector(doc).OfClass(WallType).ToElements():\n        try:\n            if t.Name == key:\n                wt = t\n                break\n        except Exception:\n            pass\n    if wt is None:\n        src = None\n        for t in FilteredElementCollector(doc).OfClass(WallType).ToElements():\n            try:\n                if t.Kind == WallKind.Basic:\n                    src = t\n                    break\n            except Exception:\n                pass\n        if src is None:\n            return None\n        wt = src.Duplicate(key)\n        try:\n            cs = wt.GetCompoundStructure()\n            while cs.LayerCount > 1:\n                cs.DeleteLayer(cs.LayerCount - 1)\n            cs.SetLayerWidth(0, t_mm * FT)\n            wt.SetCompoundStructure(cs)\n        except Exception as ex:\n            log('Wall type \"{}\": thickness could not be set automatically ({}). Set it by hand.'.format(key, ex))\n    CACHE[key] = wt\n    return wt\n\n\ndef build_walls(model, levels):\n    for w in model.get('walls', []):\n        try:\n            wt = wall_type(round(w['t']))\n            if wt is None:\n                log('No basic Wall type in the project: walls skipped.')\n                return\n            lv = level_for(levels, w['z0'])\n            z = level_elev_mm(lv)\n            ln = Line.CreateBound(xyz(w['x0'], w['y0'], z), xyz(w['x1'], w['y1'], z))\n            h = (w['z1'] - w['z0']) * FT\n            off = (w['z0'] - z) * FT\n            wl = Wall.Create(doc, ln, wt.Id, lv.Id, h, off, False, True)\n            set_bip(wl, BuiltInParameter.WALL_KEY_REF_PARAM, 0)   # location line = wall centerline\n            STAT['walls'] += 1\n        except Exception as ex:\n            fail('wall at {},{}'.format(w.get('x0'), w.get('y0')), ex)\n\n\n# ------------------------------------------------------------ main\ndef run(path):\n    with open(path, 'rb') as fh:\n        raw = fh.read()\n    model = json.loads(raw.decode('utf-8'))\n    log('Model: {} columns, {} beams, {} slabs, {} footings, {} lean pieces, {} walls'.format(\n        len(model.get('columns', [])), len(model.get('beams', [])), len(model.get('slabs', [])),\n        len(model.get('footings', [])), len(model.get('lean', [])), len(model.get('walls', []))))\n    TransactionManager.Instance.EnsureInTransaction(doc)\n    try:\n        levels = make_levels(model)\n        if not levels:\n            log('No levels available: nothing built.')\n            return\n        build_footings(model, levels)\n        build_columns(model, levels)\n        build_beams(model, levels)\n        build_walls(model, levels)\n        build_slabs(model, levels, model.get('slabs', []), 'FABRUM Slab', 'slabs')\n        build_slabs(model, levels, model.get('lean', []), 'FABRUM Lean', 'lean')\n    finally:\n        TransactionManager.Instance.TransactionTaskDone()\n    log('CREATED: {}'.format(STAT))\n\n\ntry:\n    _src = IN[0]\n    if isinstance(_src, (list, tuple)):\n        _src = _src[0]\n    run(str(_src))\nexcept Exception as e:\n    log('STOPPED: {}'.format(e))\nOUT = '\\n'.join(LOG)\n";
 /* ================= Revit / IFC model export =================
    Uses out.mdl (metres, 3D model space) -> normalised model in mm -> IFC2X3 / JSON (+ Dynamo script) */
 function rvHull(P){const p=P.map(a=>[a[0],a[1]]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);if(p.length<3)return p;
@@ -10738,42 +10747,294 @@ function rvRect(pts){const H=rvHull(rvClean(pts));if(H.length<3)return null;let 
  return{b:b,h:h,cx:cx,cy:cy,ang:ang,fit:Math.abs(rvArea(H))/best.ar}}
 const rvmm=v=>Math.round(v*1e4)/10;                       /* m -> mm, 0.1 mm */
 const rvPts=P=>rvClean(P).map(p=>[rvmm(p[0]),rvmm(p[1])]);
+function rvNamedLevels(){
+ const P0=PS(),out=[],seen=new Set(),NUM=/^-?\d+([.,]\d+)?$/;
+ P0.ord.forEach(id=>{const f=P0.files[id];if(!f||f.inc===false||!DQS[id])return;const tx=DQS[id].tx||[];
+  for(let i=0;i+1<tx.length;i++){const a=tx[i],b=tx[i+1];if(!/lev|elev|storey|story|منسوب|طابق|مستوى/i.test(a.l||''))continue;
+   const nm=String(a.s||'').trim(),nv=String(b.s||'').trim().replace(',','.');if(!nm||nm.length>32||NUM.test(nm)||!NUM.test(nv))continue;
+   let v=parseFloat(nv);if(!isFinite(v))continue;if(Math.abs(v)<60)v*=1000;const key=Math.round(v);if(seen.has(key))continue;seen.add(key);out.push({name:nm,elev:v})}});
+ return out.sort((a,b)=>a.elev-b.elev)}
+function rvKey(m,cnt){let c;
+ if(m.pts&&m.pts.length){let sx=0,sy=0;m.pts.forEach(p=>{sx+=p[0];sy+=p[1]});c=[sx/m.pts.length,sy/m.pts.length,m.z0]}
+ else c=[(m.x0+m.x1)/2,(m.y0+m.y1)/2,m.z1];
+ const q=v=>String(Math.round(v*100)).replace('-','m');let k=(m.fid||0)+'_'+m.k+'_'+q(c[0])+'_'+q(c[1])+'_'+q(c[2]);
+ if(m.x0!==undefined&&!m.pts)k+='_'+q(Math.hypot(m.x1-m.x0,m.y1-m.y0));
+ cnt[k]=(cnt[k]||0)+1;return cnt[k]>1?k+'_'+cnt[k]:k}
+function rvShape(pts){ /* round / poly / rect classification of a footprint, metres */
+ const P=rvClean(pts);if(P.length<3)return{s:'rect'};let sx=0,sy=0;P.forEach(p=>{sx+=p[0];sy+=p[1]});const cx=sx/P.length,cy=sy/P.length,rs=P.map(p=>Math.hypot(p[0]-cx,p[1]-cy)),rm=rs.reduce((a,b)=>a+b,0)/rs.length;
+ if(P.length>=10&&rm>0&&Math.max.apply(null,rs.map(r=>Math.abs(r-rm)))/rm<0.04)return{s:'round',d:2*rm,cx:cx,cy:cy};
+ return{s:'poly'}}
+const rvNum=v=>v!==undefined&&v!==null&&v!==''&&isFinite(+v);
+function rvApply(e,o,kind){ /* user edits on top of the extracted element */
+ if(!o)return e;
+ if(kind=='col'||kind=='ftg'){if(rvNum(o.b)){e.b=+o.b;if(e.shape=='round')e.dia=+o.b;else e.shape='rect'}if(rvNum(o.h)){e.h=+o.h;if(e.shape=='round'){e.shape='rect'}else e.shape='rect'}
+  if(e.shape=='rect'&&(rvNum(o.b)||rvNum(o.h)))delete e.pts;
+  if(rvNum(o.cx))e.cx=+o.cx;if(rvNum(o.cy))e.cy=+o.cy;if(rvNum(o.ang))e.ang=+o.ang;if(rvNum(o.z0))e.z0=+o.z0;if(rvNum(o.z1))e.z1=+o.z1;if(kind=='ftg')e.t=e.z1-e.z0}
+ else if(kind=='beam'){if(rvNum(o.w))e.w=+o.w;if(rvNum(o.d))e.d=+o.d;if(rvNum(o.z1))e.z1=+o.z1;e.z0=e.z1-e.d}
+ else if(kind=='wall'){if(rvNum(o.t))e.t=+o.t;if(rvNum(o.z0))e.z0=+o.z0;if(rvNum(o.z1))e.z1=+o.z1}
+ else{if(rvNum(o.z1))e.z1=+o.z1;if(rvNum(o.t))e.t=+o.t;e.z0=e.z1-e.t}
+ if(o.mk!==undefined&&o.mk!=='')e.mk=String(o.mk);return e}
+
+/* ---------------- smart audit: 3D cross-check, confidence per element, warnings ---------------- */
+
+/* cut a rectilinear footprint (3D solid, metres) into rectangles [x0,y0,x1,y1]: union of the top triangles, strip by strip */
+function rvDecomp(c){rvDecomp.why='';const T=c.fp,E=1e-3;
+ if(!T||!T.length){const r=[c.x0,c.y0,c.x1,c.y1];return(r[2]-r[0]>E&&r[3]-r[1]>E)?[r]:null}
+ if(T.length>1500){rvDecomp.why='big';return null}
+ const ys=[];T.forEach(t=>{ys.push(t[1],t[3],t[5])});ys.sort((a,b)=>a-b);const Y=[];ys.forEach(y=>{if(!Y.length||y-Y[Y.length-1]>E)Y.push(y)});
+ const ints=y=>{const I=[];T.forEach(t=>{const mn=Math.min(t[1],t[3],t[5]),mx=Math.max(t[1],t[3],t[5]);if(y<=mn+1e-9||y>=mx-1e-9)return;const xs=[];for(let i=0;i<3;i++){const a=i*2,b=((i+1)%3)*2,y0=t[a+1],y1=t[b+1];if((y0<y&&y1>=y)||(y1<y&&y0>=y))xs.push(t[a]+(t[b]-t[a])*(y-y0)/(y1-y0))}if(xs.length>=2)I.push([Math.min.apply(null,xs),Math.max.apply(null,xs)])});
+  I.sort((p,q)=>p[0]-q[0]);const U=[];I.forEach(v=>{const l=U[U.length-1];if(l&&v[0]<=l[1]+E)l[1]=Math.max(l[1],v[1]);else U.push(v.slice())});return U};
+ const out=[],open={};let area=0;
+ for(let i=0;i+1<Y.length;i++){const ya=Y[i],yb=Y[i+1];if(yb-ya<E)continue;const A=ints(ya+(yb-ya)*.25),B=ints(ya+(yb-ya)*.75);
+  if(A.length!=B.length||A.some((v,k)=>Math.abs(v[0]-B[k][0])>E||Math.abs(v[1]-B[k][1])>E)){rvDecomp.why='diag';return null}
+  const now={};A.forEach(v=>{if(v[1]-v[0]<E)return;const key=Math.round(v[0]*1000)+'|'+Math.round(v[1]*1000),o=open[key];if(o&&Math.abs(o[3]-ya)<E){o[3]=yb;now[key]=o}else{const r=[v[0],ya,v[1],yb];out.push(r);now[key]=r}});
+  Object.keys(open).forEach(k=>delete open[k]);Object.assign(open,now)}
+ out.forEach(r=>{area+=(r[2]-r[0])*(r[3]-r[1])});
+ if(!out.length||(c.ta>0&&area<0.6*c.ta)){rvDecomp.why='area '+area.toFixed(2)+' vs '+(c.ta||0).toFixed(2);return null}
+ return out}
+function rvRmBox(m){const q=a=>rvmm(a);let cx=0,cy=0,n=0,x0,y0,x1,y1;
+ if(m.pts&&m.pts.length){m.pts.forEach(p=>{cx+=p[0];cy+=p[1];n++});cx/=n;cy/=n;x0=cx;y0=cy;x1=cx;y1=cy}
+ else{x0=m.x0;y0=m.y0;x1=m.x1;y1=m.y1;cx=(x0+x1)/2;cy=(y0+y1)/2}
+ return{k:m.k,cx:q(cx),cy:q(cy),x0:q(x0),y0:q(y0),x1:q(x1),y1:q(y1),z0:q(m.z0!=null?m.z0:(m.z1||0)-(m.d||0)),z1:q(m.z1||0)}}
+function rvAudit(mo){
+ const P0=PS(),RE=P0.rve||{},W=[],cnt={hi:0,md:0,lo:0};mo.warns=W;mo.notes.only3d=0;
+ const typical=mo.notes.typical>0,C=(typeof C3C!='undefined'&&C3C)?C3C:[];
+ const S=C.filter(c=>c.open!==1&&c.vo>0).map(c=>{const dx=c.x1-c.x0,dy=c.y1-c.y0,dz=c.z1-c.z0,box=c.vo/Math.max(dx*dy*dz,1e-9);
+  return{_c:c,l:c.l,id:c.id,vo:c.vo,x0:rvmm(c.x0),y0:rvmm(c.y0),x1:rvmm(c.x1),y1:rvmm(c.y1),z0:rvmm(c.z0),z1:rvmm(c.z1),box:box}});
+ const RM=mo._rm||[];delete mo._rm;
+ const inb=(x,y,c,e)=>x>=c.x0-e&&x<=c.x1+e&&y>=c.y0-e&&y<=c.y1+e,zov=(a0,a1,b0,b1)=>Math.min(a1,b1)-Math.max(a0,b0);
+ /* storey bands covered by the included plan files */
+ const bands=[];[].concat(mo.columns,mo.beams,mo.slabs,mo.walls,mo.footings).forEach(e=>{if(e.src!='manual')bands.push([Math.min(e.z0,e.z1),Math.max(e.z0,e.z1)])});
+ bands.sort((a,b)=>a[0]-b[0]);const bm=[];bands.forEach(b=>{const l=bm[bm.length-1];if(l&&b[0]<=l[1]+100)l[1]=Math.max(l[1],b[1]);else bm.push(b.slice())});
+ const inBand=c=>bm.some(b=>(c.z0+c.z1)/2>=b[0]-100&&(c.z0+c.z1)/2<=b[1]+100);
+ const add=(k,e,c,src)=>{const id='a3_'+k+'_'+Math.round((c.x0+c.x1)/2)+'_'+Math.round((c.y0+c.y1)/2)+'_'+Math.round(c.z0),o=RE[id]||null;
+  if(o&&o.off){mo.notes.removed++;return false}
+  const f=P0.files[c.id];Object.assign(e,{id:id,layer:c.l,file:f?f.fn:'',src:src||'3d-only',mult:1,fid:c.id,raw:k,mk:'',lab:null,only3d:1});
+  rvApply(e,o,k);(({col:mo.columns,ftg:mo.footings,beam:mo.beams,wall:mo.walls})[k]).push(e);if((src||'3d-only')=='3d-only')mo.notes.only3d++;return true};
+ const rmHit=(k,cx,cy,z0,z1)=>RM.some(r=>(r.k==k||(k=='beam'&&r.k=='wall')||(k=='wall'&&r.k=='beam'))&&Math.abs(r.cx-cx)<250&&Math.abs(r.cy-cy)<250&&zov(r.z0,r.z1,z0,z1)>0);
+ let complex=0;
+ if(S.length&&!typical){
+  /* columns */
+  S.filter(c=>/col|عمود|اعمدة|أعمدة/i.test(c.l)&&inBand(c)).forEach(c=>{
+   const cx=(c.x0+c.x1)/2,cy=(c.y0+c.y1)/2,h=c.z1-c.z0;
+   if(mo.columns.some(q=>inb(q.cx,q.cy,c,60)&&zov(c.z0,c.z1,q.z0,q.z1)>=0.3*h)||rmHit('col',cx,cy,c.z0,c.z1))return;
+   if(c.box<0.85){complex++;return}
+   add('col',{b:Math.round(c.x1-c.x0),h:Math.round(c.y1-c.y0),cx:cx,cy:cy,ang:0,z0:c.z0,z1:c.z1,shape:'rect'},c)});
+  /* footings (thick pieces on the foundation layer) */
+  S.filter(c=>/foot|found|fndn|ftg|قاعد|قواعد|اساس|أساس/i.test(c.l)&&c.z1-c.z0>=300&&inBand(c)).forEach(c=>{
+   const cx=(c.x0+c.x1)/2,cy=(c.y0+c.y1)/2;
+   if(mo.footings.some(q=>inb(q.cx,q.cy,c,60)&&zov(c.z0,c.z1,q.z0,q.z1)>0.3*(c.z1-c.z0))||rmHit('ftg',cx,cy,c.z0,c.z1))return;
+   if(c.box<0.85){complex++;return}
+   add('ftg',{b:Math.round(c.x1-c.x0),h:Math.round(c.y1-c.y0),cx:cx,cy:cy,ang:0,z0:c.z0,z1:c.z1,shape:'rect',t:c.z1-c.z0},c)});
+  /* beams and ribs: covered when existing beams/walls run along most of the solid; rings and L-shapes are cut into straight pieces */
+  const lin=mo.beams.concat(mo.walls),cover=(c,arr)=>{const dx=c.x1-c.x0,dy=c.y1-c.y0,L=Math.max(dx,dy);if(!L)return 0;let tot=0;arr.forEach(q=>{const ql=Math.hypot(q.x1-q.x0,q.y1-q.y0);if(ql<1||zov(c.z0,c.z1,q.z0,q.z1)<=0)return;let ins=0;const n=16;for(let i=0;i<n;i++)if(inb(q.x0+(q.x1-q.x0)*(i+.5)/n,q.y0+(q.y1-q.y0)*(i+.5)/n,c,120))ins++;tot+=ql*ins/n});return tot/L};
+  const pieces=c=>{const o=c._c;if(!o||!o.fp)return null;const R=rvDecomp(o);if(!R||!R.length)return null;return R.map(r=>Object.assign({},c,{x0:rvmm(r[0]),y0:rvmm(r[1]),x1:rvmm(r[2]),y1:rvmm(r[3]),box:1,piece:1}))};
+  S.filter(c=>/beam|جسر|جسور/i.test(c.l)&&inBand(c)).forEach(c0=>{
+   const dx0=c0.x1-c0.x0,dy0=c0.y1-c0.y0,isBox=c0.box>=0.85&&Math.max(dx0,dy0)/Math.max(Math.min(dx0,dy0),1)>=2.5;
+   const ps=isBox?[c0]:pieces(c0);
+   if(!ps){if(cover(c0,lin)<0.3)complex++;return}
+   ps.forEach(c=>{
+    const dx=c.x1-c.x0,dy=c.y1-c.y0,L=Math.max(dx,dy),w=Math.min(dx,dy),d=c.z1-c.z0;if(!L)return;
+    if(cover(c,lin)>=0.3)return;
+    const mx=(c.x0+c.x1)/2,my=(c.y0+c.y1)/2;if(rmHit('beam',mx,my,c.z0,c.z1))return;
+    if(w<50||w>700||d<50||d>1500||L<w*0.99){complex++;return}
+    const hor=dx>=dy;
+    add('beam',{w:Math.round(w),d:Math.round(d),x0:hor?c.x0:mx,y0:hor?my:c.y0,x1:hor?c.x1:mx,y1:hor?my:c.y1,z0:c.z0,z1:c.z1,rib:(w<=180&&d<=180)?1:0},c)})});
+  /* walls: a wall solid that reaches the slab top is a wall fused with its beam in the 3D model; split it at the beam depth read from the storey */
+  const WS=S.filter(c=>/wall|جدار|جدران|حائط/i.test(c.l)&&inBand(c)),slabTops=mo.slabs.map(s=>s.z1),nearSlab=z=>slabTops.some(t=>Math.abs(t-z)<=60);
+  const topsAt={};WS.forEach(c=>{const dx=c.x1-c.x0,dy=c.y1-c.y0;if(c.box<0.8||Math.max(dx,dy)/Math.max(Math.min(dx,dy),1)<2||nearSlab(c.z1))return;const kz=Math.round(c.z0/50);(topsAt[kz]=topsAt[kz]||[]).push(Math.round(c.z1/50)*50)});
+  const typTop=z0=>{const a=topsAt[Math.round(z0/50)]||[],n={};a.forEach(t=>n[t]=(n[t]||0)+1);let best=null,bn=0;Object.keys(n).forEach(t=>{if(n[t]>bn){bn=n[t];best=+t}});return best};
+  const ASM={fused:0,fullWall:0};
+  WS.forEach(c0=>{
+   const dx0=c0.x1-c0.x0,dy0=c0.y1-c0.y0,isBox=c0.box>=0.8&&Math.max(dx0,dy0)/Math.max(Math.min(dx0,dy0),1)>=2;
+   const ps=isBox?[c0]:pieces(c0);
+   if(!ps){if(cover(c0,mo.walls)<0.3)complex++;return}
+   ps.forEach(c=>{
+    const dx=c.x1-c.x0,dy=c.y1-c.y0,L=Math.max(dx,dy),w=Math.min(dx,dy),h=c.z1-c.z0;if(!L)return;
+    let tot=0;mo.walls.forEach(q=>{const ql=Math.hypot(q.x1-q.x0,q.y1-q.y0);if(ql<1||zov(c.z0,c.z1,q.z0,q.z1)<=0.3*h)return;let ins=0;const n=16;for(let i=0;i<n;i++)if(inb(q.x0+(q.x1-q.x0)*(i+.5)/n,q.y0+(q.y1-q.y0)*(i+.5)/n,c,120))ins++;tot+=ql*ins/n});
+    if(tot/L>=0.3)return;
+    const mx=(c.x0+c.x1)/2,my=(c.y0+c.y1)/2;if(rmHit('wall',mx,my,c.z0,c.z1))return;
+    if(w<50||w>600||h<1000||L<w*0.99){complex++;return}
+    const vr=Math.round(Math.min(1,c0.box)*100)/100;
+    const hor=dx>=dy,X0=hor?c.x0:mx,Y0=hor?my:c.y0,X1=hor?c.x1:mx,Y1=hor?my:c.y1;
+    const sl=mo.slabs.find(s=>Math.abs(s.z1-c.z1)<=60&&s.z0<c.z1-50),wt=typTop(c.z0);
+    if(sl&&wt!=null&&sl.z0-wt>=150&&sl.z0-wt<=1200&&wt-c.z0>=800){
+     add('wall',{t:Math.round(w),x0:X0,y0:Y0,x1:X1,y1:Y1,z0:c.z0,z1:wt,vr:vr},c,'3d-split');
+     const bt=cover(Object.assign({},c,{z0:wt,z1:sl.z0}),mo.beams.filter(q=>!q.rib));
+     if(bt<0.7){const cb=Object.assign({},c,{z0:wt,z1:sl.z0});add('beam',{w:Math.round(w),d:Math.round(sl.z0-wt),x0:X0,y0:Y0,x1:X1,y1:Y1,z0:wt,z1:sl.z0,rib:0},cb,'3d-split')}
+     ASM.fused++;return}
+    if(sl)ASM.fullWall++;
+    add('wall',{t:Math.round(w),x0:X0,y0:Y0,x1:X1,y1:Y1,z0:c.z0,z1:c.z1,vr:vr},c)})});
+  mo.notes.fused=ASM.fused;mo.notes.fullWall=ASM.fullWall}
+
+ /* stair-like groups: several short parallel boxes with a regular pitch that rest on nothing are steps drawn on the beam layer */
+ mo.stairs=[];
+ {const dsg=(x,y,q)=>{const dx=q.x1-q.x0,dy=q.y1-q.y0,l2=dx*dx+dy*dy;if(l2<1)return 1e9;let t=((x-q.x0)*dx+(y-q.y0)*dy)/l2;t=Math.max(0,Math.min(1,t));return Math.hypot(q.x0+t*dx-x,q.y0+t*dy-y)};
+  const base=(x,y,e)=>mo.columns.some(c=>{const r=Math.max(c.b,c.h)/2+150+e.w/2;return Math.abs(x-c.cx)<=r&&Math.abs(y-c.cy)<=r})||mo.walls.some(q=>dsg(x,y,q)<=q.t/2+150&&q.z1>=e.z0-250&&q.z0<e.z1)||mo.beams.some(q=>q!==e&&q.src!='3d-only'&&!q.rib&&dsg(x,y,q)<=q.w/2+150&&Math.abs(q.z1-e.z1)<=300);
+  const free=mo.beams.filter(e=>e.src=='3d-only'&&!e.rib&&!(base(e.x0,e.y0,e)&&base(e.x1,e.y1,e))),groups={};
+  free.forEach(e=>{const hor=Math.abs(e.y1-e.y0)<Math.abs(e.x1-e.x0),k=[hor?'h':'v',Math.round(e.z0/20),Math.round(e.z1/20),Math.round((hor?Math.min(e.x0,e.x1):Math.min(e.y0,e.y1))/200)].join('|');(groups[k]=groups[k]||[]).push(e)});
+  const drop=new Set();Object.keys(groups).forEach(k=>{const G=groups[k];if(G.length<4)return;const hor=k[0]=='h',pos=G.map(e=>hor?(e.y0+e.y1)/2:(e.x0+e.x1)/2).sort((a,b)=>a-b),gp=[];for(let i=1;i<pos.length;i++)gp.push(pos[i]-pos[i-1]);const mean=gp.reduce((a,b)=>a+b,0)/gp.length;if(mean<=0)return;const sd=Math.sqrt(gp.reduce((a,b)=>a+(b-mean)*(b-mean),0)/gp.length);if(sd/mean>0.3)return;
+   G.forEach(e=>drop.add(e));const xs=[].concat(G.map(e=>e.x0),G.map(e=>e.x1)),ys=[].concat(G.map(e=>e.y0),G.map(e=>e.y1));mo.stairs.push({n:G.length,x0:Math.min.apply(null,xs),x1:Math.max.apply(null,xs),y0:Math.min.apply(null,ys),y1:Math.max.apply(null,ys),z0:G[0].z0,z1:G[0].z1,ids:G.map(e=>e.id)})});
+  if(drop.size){mo.beams=mo.beams.filter(e=>!drop.has(e));mo.notes.only3d-=drop.size}}
+ /* ---- confidence + reasons ---- */
+ const warn={};const wp=(code,e)=>{(warn[code]=warn[code]||[]).push(e.id)};
+ const EACH=[['col',mo.columns],['ftg',mo.footings],['beam',mo.beams],['wall',mo.walls],['slab',mo.slabs],['lean',mo.lean]];
+ const sup=(x,y,w)=>mo.columns.some(c=>{const r=Math.max(c.b,c.h)/2+150+(w||0)/2;return Math.abs(x-c.cx)<=r&&Math.abs(y-c.cy)<=r})
+  ||mo.walls.some(q=>{const dx=q.x1-q.x0,dy=q.y1-q.y0,l2=dx*dx+dy*dy;if(l2<1)return false;let t=((x-q.x0)*dx+(y-q.y0)*dy)/l2;t=Math.max(0,Math.min(1,t));return Math.hypot(q.x0+t*dx-x,q.y0+t*dy-y)<=q.t/2+150})
+  ||mo.beams.some(q=>{if(q.rib)return false;const dx=q.x1-q.x0,dy=q.y1-q.y0,l2=dx*dx+dy*dy;if(l2<1)return false;let t=((x-q.x0)*dx+(y-q.y0)*dy)/l2;t=Math.max(0,Math.min(1,t));return Math.hypot(q.x0+t*dx-x,q.y0+t*dy-y)<=q.w/2+150});
+ EACH.forEach(([k,arr])=>arr.forEach(e=>{const R=[];
+  if(e.src=='3d-only'){R.push('only3d')}else if(e.src=='3d-split'){R.push('fused')}
+  else if(e.src=='def'&&C.length)R.push('no3d');
+  else if(e.src=='def')R.push('noH');
+  if((e.mult||1)>1)R.push('typ');
+  if(e.shape=='poly')R.push('approx');
+  if(e.lab&&(k=='col'||k=='ftg')){const a=e.lab[0],b=e.lab[1],okL=(Math.abs(a-e.b)<=20&&Math.abs(b-e.h)<=20)||(Math.abs(a-e.h)<=20&&Math.abs(b-e.b)<=20);if(!okL){R.push('label');wp('label',e)}}
+  if(k=='col'&&(Math.min(e.b,e.h)<150||Math.max(e.b,e.h)>1500))R.push('odd');
+  if(k=='beam'&&!e.rib&&(e.w<100||e.w>800||e.d<150||e.d>1500))R.push('odd');
+  if(k=='ftg'&&(e.t<200||Math.max(e.b,e.h)>6000))R.push('odd');
+  if(k=='slab'&&(e.t<80||e.t>600))R.push('odd');
+  e.cr=R;
+  const lo=R.includes('approx')||R.includes('label')||R.includes('odd');
+  e.cf=lo?'lo':(R.length?'md':'hi');if(e.src=='manual'){e.cf='hi';e.cr=[]}
+  cnt[e.cf]++;
+  if(R.includes('only3d'))wp('only3d',e);if(R.includes('fused'))wp('fused',e);if(R.includes('no3d')||R.includes('noH'))wp('no3d',e);if(R.includes('odd'))wp('odd',e);if(R.includes('approx'))wp('approx',e);if(R.includes('typ'))wp('typ',e)}));
+ /* structural continuity: bottom columns need a footing, footings need a column */
+ if(mo.footings.length&&mo.columns.length){
+  mo.columns.forEach(c=>{if(c.src=='manual'||c.src=='def')return;
+   const below=mo.columns.some(q=>q!==c&&Math.abs(q.cx-c.cx)<150&&Math.abs(q.cy-c.cy)<150&&Math.abs(q.z1-c.z0)<150);if(below)return;
+   const lowest=Math.min.apply(null,mo.columns.map(q=>q.z0));if(c.z0>lowest+1500)return;
+   const f=mo.footings.some(q=>Math.abs(c.cx-q.cx)<=q.b/2+80&&Math.abs(c.cy-q.cy)<=q.h/2+80||Math.abs(c.cx-q.cx)<=q.h/2+80&&Math.abs(c.cy-q.cy)<=q.b/2+80);
+   if(!f){wp('noftg',c);if(c.cf=='hi'){c.cf='md'}c.cr.push('noftg')}});
+  mo.footings.forEach(f=>{if(f.src=='manual')return;
+   const c=mo.columns.some(q=>Math.abs(q.cx-f.cx)<=Math.max(f.b,f.h)/2+80&&Math.abs(q.cy-f.cy)<=Math.max(f.b,f.h)/2+80);
+   if(!c){wp('ftgcol',f);if(f.cf=='hi')f.cf='md';f.cr.push('ftgcol')}})}
+ /* duplicates: same kind, same place, same size */
+ EACH.slice(0,2).forEach(([k,arr])=>{const seen={};arr.forEach(e=>{const key=Math.round(e.cx/50)+'|'+Math.round(e.cy/50)+'|'+Math.round(e.z0/100)+'|'+Math.round(e.b/20)+'|'+Math.round(e.h/20);if(seen[key]){wp('dup',e);e.cf='lo';e.cr.push('dup')}else seen[key]=1})});
+ {const seen={};mo.beams.forEach(e=>{const key=[Math.round(e.x0/50),Math.round(e.y0/50),Math.round(e.x1/50),Math.round(e.y1/50),Math.round(e.z1/100)].join('|');if(seen[key]){wp('dup',e);e.cf='lo';e.cr.push('dup')}else seen[key]=1})}
+
+ /* ---- connectivity: what every beam, wall and column rests on ---- */
+ const dseg=(x,y,q)=>{const dx=q.x1-q.x0,dy=q.y1-q.y0,l2=dx*dx+dy*dy;if(l2<1)return 1e9;let t=((x-q.x0)*dx+(y-q.y0)*dy)/l2;t=Math.max(0,Math.min(1,t));return Math.hypot(q.x0+t*dx-x,q.y0+t*dy-y)};
+ const pip=(x,y,pts)=>{let ins=false;for(let i=0,j=pts.length-1;i<pts.length;j=i++){if((pts[i][1]>y)!=(pts[j][1]>y)&&x<(pts[j][0]-pts[i][0])*(y-pts[i][1])/(pts[j][1]-pts[i][1])+pts[i][0])ins=!ins}return ins};
+ const supAt=(x,y,e)=>{
+  const X=e.rib?300:0;
+  const c=mo.columns.find(c=>{const r=Math.max(c.b,c.h)/2+150+X+e.w/2;return Math.abs(x-c.cx)<=r&&Math.abs(y-c.cy)<=r&&zov(c.z0,c.z1,e.z0,e.z1)>-150});if(c)return['C',c.id];
+  const w=mo.walls.find(q=>dseg(x,y,q)<=q.t/2+150+X&&q.z1>=e.z0-250&&q.z0<e.z1);if(w)return['W',w.id];
+  const b=mo.beams.find(q=>q!==e&&!q.rib&&dseg(x,y,q)<=q.w/2+150+X&&Math.abs(q.z1-e.z1)<=300);if(b)return['B',b.id];
+  return null};
+ const CN={beamBoth:0,beamOne:0,beamNone:0,ribOK:0,ribBad:0,wallBase:0,wallNoBase:0,wallTop:0,wallNoTop:0,colFtg:0,colCol:0,colNone:0,nWall:0,nBeam:0,nRib:0,nCol:0};
+ mo.beams.forEach(e=>{const a=supAt(e.x0,e.y0,e),b=supAt(e.x1,e.y1,e);e.sup=[a,b];const n=(a?1:0)+(b?1:0);if(!e.rib&&n<2&&mo.columns.length){wp('nosup',e);e.cr.push('nosup');if(e.cf=='hi')e.cf='md'}
+  if(e.rib){CN.nRib++;if(n==2)CN.ribOK++;else CN.ribBad++}else{CN.nBeam++;if(n==2)CN.beamBoth++;else if(n==1)CN.beamOne++;else CN.beamNone++}});
+ mo.walls.forEach(w=>{CN.nWall++;const P3=[0.2,0.5,0.8].map(t=>[w.x0+(w.x1-w.x0)*t,w.y0+(w.y1-w.y0)*t]);
+  const base=()=>{for(const [x,y] of P3){const b=mo.beams.find(q=>!q.rib&&Math.abs(q.z1-w.z0)<=150&&dseg(x,y,q)<=q.w/2+150);if(b)return['B',b.id];
+    const f=mo.footings.find(q=>Math.abs(q.z1-w.z0)<=150&&Math.abs(x-q.cx)<=Math.max(q.b,q.h)/2&&Math.abs(y-q.cy)<=Math.max(q.b,q.h)/2);if(f)return['F',f.id];
+    const s=mo.slabs.find(q=>Math.abs(q.z1-w.z0)<=150&&pip(x,y,q.pts));if(s)return['S',s.id];
+    const q=mo.walls.find(q=>q!==w&&Math.abs(q.z1-w.z0)<=150&&dseg(x,y,q)<=q.t/2+150);if(q)return['W',q.id]}return null};
+  const top=()=>{for(const [x,y] of P3){const b=mo.beams.find(q=>!q.rib&&Math.abs(q.z0-w.z1)<=150&&dseg(x,y,q)<=q.w/2+150);if(b)return['B',b.id];
+    const s=mo.slabs.find(q=>Math.abs(q.z0-w.z1)<=150&&pip(x,y,q.pts));if(s)return['S',s.id]}return null};
+  w.on=base();w.top=top();if(w.on)CN.wallBase++;else{CN.wallNoBase++;wp('wallbase',w);w.cr.push('wallbase')}if(w.top)CN.wallTop++;else{CN.wallNoTop++;wp('walltop',w);w.cr.push('walltop')}});
+ mo.columns.forEach(c=>{CN.nCol++;const f=mo.footings.find(q=>Math.abs(c.cx-q.cx)<=q.b/2+80&&Math.abs(c.cy-q.cy)<=q.h/2+80||Math.abs(c.cx-q.cx)<=q.h/2+80&&Math.abs(c.cy-q.cy)<=q.b/2+80);
+  const k=mo.columns.find(q=>q!==c&&Math.abs(q.cx-c.cx)<150&&Math.abs(q.cy-c.cy)<150&&Math.abs(q.z1-c.z0)<150);
+  c.on=f?['F',f.id]:k?['C',k.id]:null;if(f)CN.colFtg++;else if(k)CN.colCol++;else CN.colNone++});
+ /* ---- 3D volume cross-check ---- */
+ const rep=mo.report={verify:[],conn:CN,asm:[],unres:[]};
+ {const sv=f=>S.filter(f).reduce((a,c)=>a+c.vo,0),sum=(arr,f)=>arr.reduce((a,e)=>a+f(e),0);
+  const colV=e=>(e.shape=='round'?Math.PI*e.dia*e.dia/4:(e.shape=='poly'&&e.pts?Math.abs(rvArea(e.pts)):e.b*e.h))*(e.z1-e.z0)/1e9,
+   ftgV=e=>(e.shape=='poly'&&e.pts?Math.abs(rvArea(e.pts)):e.b*e.h)*e.t/1e9,
+   bmV=e=>Math.hypot(e.x1-e.x0,e.y1-e.y0)*e.w*e.d/1e9,wlV=e=>Math.hypot(e.x1-e.x0,e.y1-e.y0)*e.t*(e.z1-e.z0)/1e9,
+   slV=e=>(Math.abs(rvArea(e.pts))-(e.holes||[]).reduce((a,h)=>a+Math.abs(rvArea(h)),0))*e.t/1e9;
+  if(S.length){const rows=[
+   ['col',sv(c=>/col|عمود|اعمدة|أعمدة/i.test(c.l)&&inBand(c)),sum(mo.columns,colV)],
+   ['ftg',sv(c=>/foot|found|fndn|ftg|قاعد|قواعد|اساس|أساس/i.test(c.l)&&c.z1-c.z0>=300&&inBand(c)),sum(mo.footings,ftgV)],
+   ['beam',sv(c=>/beam|جسر|جسور/i.test(c.l)&&inBand(c)),sum(mo.beams.filter(e=>e.src!='3d-split'),bmV)],
+   ['wall',sv(c=>/wall|جدار|جدران|حائط/i.test(c.l)&&inBand(c)),sum(mo.walls,wlV)+sum(mo.beams.filter(e=>e.src=='3d-split'),bmV)],
+   ['slab',sv(c=>/flor|slab|بلاط|سقف/i.test(c.l)&&c.vo*1e9/Math.max((c.x1-c.x0)*(c.y1-c.y0),1)>=60&&inBand(c)),sum(mo.slabs,slV)]];
+   rows.forEach(r=>{if(r[1]>0.001)rep.verify.push({k:r[0],solid:Math.round(r[1]*100)/100,model:Math.round(r[2]*100)/100,pct:Math.round(r[2]/r[1]*1000)/10})})}}
+ /* ---- assumptions and what could not be read ---- */
+ {const A=(code,n)=>{if(n>0)rep.asm.push({code:code,n:n})},U=(code,n,v)=>{if(n>0)rep.unres.push({code:code,n:n,v:v})};
+  const all=[].concat(mo.columns,mo.beams,mo.slabs,mo.walls,mo.footings,mo.lean);
+  A('asLevels',mo.levels.filter(l=>/^FABRUM/.test(l.name)).length);
+  A('asHeight',all.filter(e=>e.src=='def').length);
+  A('asFused',mo.notes.fused||0);A('asFullWall',mo.notes.fullWall||0);
+  A('asOnly3d',mo.notes.only3d||0);A('asRib',mo.beams.filter(e=>e.rib).length);
+  A('asApprox',mo.notes.approx||0);A('asTyp',mo.notes.typical||0);A('asDup',mo.notes.dupSkipped||0);
+  A('asMark',all.filter(e=>e.mk&&e.src!='manual').length);
+  A('asUnits',Object.keys(P0.files).filter(i=>P0.files[i].inc!==false&&P0.files[i].u=='auto').length);
+  A('asOrigin',1);
+  U('unStairs',C.filter(c=>/str|stair|درج/i.test(c.l)).length);U('unStairBeams',mo.stairs.reduce((a,s)=>a+s.n,0));
+  U('unComplex',complex);
+  U('unOpenMesh',C.filter(c=>c.open===1).length);
+  U('unBlocks',C.filter(c=>/flor|slab|بلاط/i.test(c.l)&&c.z1-c.z0<=0.2&&c.ta<20).length);
+  U('unBand',S.filter(c=>/col|beam|wall|عمود|جسر|جدار|foot|fndn|found/i.test(c.l)&&!inBand(c)).length);
+  {const wr=rep.verify.find(r=>r.k=='wall'),ex=wr?Math.max(0,wr.model-wr.solid):0;U('unOpenings',1,ex>0.5?Math.round(ex*10)/10:0)}U('unRebar',1)}
+ cnt.hi=cnt.md=cnt.lo=0;EACH.forEach(([k,arr])=>arr.forEach(e=>{cnt[e.cf]++}));mo.notes.cf=cnt;mo.notes.complex3d=complex;
+ const SEV={wallbase:2,walltop:0,fused:1,dup:2,nosup:2,noftg:2,ftgcol:1,label:2,odd:1,approx:1,only3d:0,no3d:1,typ:0};
+ Object.keys(warn).forEach(code=>{W.push({code:code,sev:SEV[code]||1,n:warn[code].length,ids:warn[code].slice(0,400)})});
+ if(mo.notes.dupSkipped)W.push({code:'dupfile',sev:2,n:mo.notes.dupSkipped,ids:[]});
+ if(complex)W.push({code:'complex3d',sev:1,n:complex,ids:[]});
+ if(RM.length||mo.notes.removed)void 0;
+ W.sort((a,b)=>b.sev-a.sev||b.n-a.n)}
 function rvModel(out){
- const M=out.mdl||[],mo={project:(PS().pn||'FABRUM'),format:'FABRUM-REVIT-1',units:'mm',levels:[],columns:[],beams:[],slabs:[],lean:[],footings:[],walls:[],notes:{approx:0,typical:0,skipped:0}};
+ const P0=PS(),M0=out.mdl||[],M=M0.filter(m=>{const f=P0.files[m.fid];return!(f&&f.dup&&!f.dupKeep)}),RE=P0.rve||{},mo={project:(P0.pn||'FABRUM'),format:'FABRUM-REVIT-2',units:'mm',levels:[],columns:[],beams:[],slabs:[],lean:[],footings:[],walls:[],notes:{approx:0,typical:0,skipped:0,round:0,poly:0,removed:0,edited:0,manual:0}};
+ mo.notes.dupSkipped=M0.length-M.length;mo._rm=[];
  let zs=[];try{zs=levels3().slice()}catch(e){}
  if(zs.length<2){const Z=[];M.forEach(m=>{if(m.k=='col'){Z.push(m.z0,m.z1)}else if(m.k=='slab'||m.k=='beam')Z.push(m.z1)});Z.sort((a,b)=>a-b);zs=[];Z.forEach(z=>{const q=zs[zs.length-1];if(q===undefined||z-q>0.15)zs.push(z)})}
  zs.sort((a,b)=>a-b);if(!zs.length)zs=[0];
- {const nz=zs.map(rvmm);if(!nz.some(z=>Math.abs(z)<60)){nz.push(0);nz.sort((a,b)=>a-b)}
-  mo.levels=nz.map(z=>({name:'FABRUM '+(z>=0?'+':'')+(z/1000).toFixed(2),elev:z}))}
- const meta=m=>({layer:m.layer||'',file:m.fn||'',src:m.src||'',mult:m.mult||1,fid:m.fid,raw:m.k});
- const PTK=['col','ftg','slab','lean'],LNK=['beam','wall'];mo.notes.badrole=0;
+ {const nm=rvNamedLevels(),fin=nm.map(l=>({name:l.name,elev:Math.round(l.elev*10)/10}));
+  zs.map(rvmm).forEach(z=>{if(!nm.some(n=>Math.abs(n.elev-z)<200))fin.push({name:'FABRUM '+(z>=0?'+':'')+(z/1000).toFixed(2),elev:z})});
+  if(!fin.some(l=>Math.abs(l.elev)<60))fin.push({name:'FABRUM +0.00',elev:0});
+  fin.sort((a,b)=>a.elev-b.elev);const LO=P0.rvlo||{},names={};
+  fin.forEach(l=>{l.auto=Math.round(l.elev);const o=LO[l.auto];if(o){if(rvNum(o.elev))l.elev=+o.elev;if(o.name)l.name=String(o.name)}});
+  fin.sort((a,b)=>a.elev-b.elev);fin.forEach(l=>{names[l.name]=(names[l.name]||0)+1;if(names[l.name]>1)l.name+=' ('+Math.round(l.elev)+')'});
+  mo.levels=fin}
+ const meta=m=>({layer:m.layer||'',file:m.fn||'',src:m.src||'',mult:m.mult||1,fid:m.fid,raw:m.k,mk:m.mk||'',lab:m.lab||null});
+ const PTK=['col','ftg','slab','lean'],LNK=['beam','wall'],cnt={};mo.notes.badrole=0;
  M.forEach(m=>{
   if((m.mult||1)>1)mo.notes.typical++;
-  let k=m.k;const rv=((((PS().rvr||{})[m.fid])||{})[ck(m.layer||'')])||'';
-  if(rv==='skip')return;
-  if(rv){if(PTK.includes(k)&&PTK.includes(rv))k=rv;else if(LNK.includes(k)&&LNK.includes(rv))k=rv;else mo.notes.badrole++}
+  const id=rvKey(m,cnt),o=RE[id]||null;let k=m.k;
+  const rv=((((P0.rvr||{})[m.fid])||{})[ck(m.layer||'')])||'';
+  if(rv==='skip'||(o&&o.off)){if(o&&o.off)mo.notes.removed++;mo._rm.push(rvRmBox(m));return}
+  const want=(o&&o.k)||rv;
+  if(want){if(PTK.includes(k)&&PTK.includes(want))k=want;else if(LNK.includes(k)&&LNK.includes(want))k=want;else mo.notes.badrole++}
+  if(o&&Object.keys(o).some(q=>q!='off'&&o[q]!==''&&o[q]!==undefined))mo.notes.edited++;
+  let e=null;
   if(k=='col'||k=='ftg'){
    const r=rvRect(m.pts||[]);if(!r){mo.notes.skipped++;return}
-   if(r.fit<0.9)mo.notes.approx++;
-   const e=Object.assign({b:rvmm(r.b),h:rvmm(r.h),cx:rvmm(r.cx),cy:rvmm(r.cy),ang:Math.round(r.ang*100)/100,z0:rvmm(m.z0),z1:rvmm(m.z1)},meta(m));
+   const sh=rvShape(m.pts||[]);
+   e=Object.assign({id:id,b:rvmm(r.b),h:rvmm(r.h),cx:rvmm(r.cx),cy:rvmm(r.cy),ang:Math.round(r.ang*100)/100,z0:rvmm(m.z0),z1:rvmm(m.z1),shape:'rect'},meta(m));
+   if(sh.s=='round'){e.shape='round';e.dia=rvmm(sh.d);e.b=e.h=e.dia;e.cx=rvmm(sh.cx);e.cy=rvmm(sh.cy);e.ang=0;mo.notes.round++}
+   else if(r.fit<0.93){e.shape='poly';e.pts=rvPts(m.pts);mo.notes.poly++;mo.notes.approx++}
+   if(k=='ftg')e.t=e.z1-e.z0;
+   rvApply(e,o,k);
    if(e.z1-e.z0<5||e.b<5||e.h<5){mo.notes.skipped++;return}
-   if(k=='col')mo.columns.push(e);else{e.t=e.z1-e.z0;mo.footings.push(e)}
+   (k=='col'?mo.columns:mo.footings).push(e)
   }else if(k=='beam'){
    const w=m.w,d=m.d!=null?m.d:(m.z1-m.z0);
-   const e=Object.assign({w:rvmm(w),d:rvmm(d),x0:rvmm(m.x0),y0:rvmm(m.y0),x1:rvmm(m.x1),y1:rvmm(m.y1),z0:rvmm(m.z1-d),z1:rvmm(m.z1)},meta(m));
+   e=Object.assign({id:id,w:rvmm(w),d:rvmm(d),x0:rvmm(m.x0),y0:rvmm(m.y0),x1:rvmm(m.x1),y1:rvmm(m.y1),z0:rvmm(m.z1-d),z1:rvmm(m.z1)},meta(m));rvApply(e,o,k);
    if(Math.hypot(e.x1-e.x0,e.y1-e.y0)<5||e.w<5||e.d<5){mo.notes.skipped++;return}
    mo.beams.push(e)
   }else if(k=='wall'){
-   const e=Object.assign({t:rvmm(m.w),x0:rvmm(m.x0),y0:rvmm(m.y0),x1:rvmm(m.x1),y1:rvmm(m.y1),z0:rvmm(m.z0),z1:rvmm(m.z1)},meta(m));
+   e=Object.assign({id:id,t:rvmm(m.w),x0:rvmm(m.x0),y0:rvmm(m.y0),x1:rvmm(m.x1),y1:rvmm(m.y1),z0:rvmm(m.z0),z1:rvmm(m.z1)},meta(m));rvApply(e,o,k);
    if(Math.hypot(e.x1-e.x0,e.y1-e.y0)<5||e.t<5||e.z1-e.z0<5){mo.notes.skipped++;return}
    mo.walls.push(e)
   }else if(k=='slab'||k=='lean'){
    const pts=rvPts(m.pts||[]);if(pts.length<3||Math.abs(rvArea(pts))<1){mo.notes.skipped++;return}
    const t=m.t!=null?m.t:(m.z1-m.z0);
-   const e=Object.assign({pts:pts,holes:(m.holes||[]).map(rvPts).filter(h=>h.length>=3),t:rvmm(t),z0:rvmm(m.z0),z1:rvmm(m.z1)},meta(m));
+   e=Object.assign({id:id,pts:pts,holes:(m.holes||[]).map(rvPts).filter(h=>h.length>=3),t:rvmm(t),z0:rvmm(m.z0),z1:rvmm(m.z1)},meta(m));rvApply(e,o,k);
    if(e.t<5){mo.notes.skipped++;return}
    (k=='lean'?mo.lean:mo.slabs).push(e)
   }});
+ /* elements added by hand */
+ (P0.rvx||[]).forEach(x=>{const id='x'+x.n,o=RE[id]||null;if(o&&o.off){mo.notes.removed++;return}
+  const base={id:id,layer:P0.rvxl||'manual',file:'',src:'manual',mult:1,fid:0,raw:x.k,mk:x.mk||'',lab:null,manual:1},k=x.k;let e;
+  if(k=='col'||k=='ftg'){e=Object.assign(base,{b:+x.b,h:+x.h,cx:+x.cx,cy:+x.cy,ang:+x.ang||0,z0:+x.z0,z1:+x.z1,shape:'rect'});if(k=='ftg')e.t=e.z1-e.z0}
+  else if(k=='beam'){e=Object.assign(base,{w:+x.w,d:+x.d,x0:+x.x0,y0:+x.y0,x1:+x.x1,y1:+x.y1,z1:+x.z1,z0:+x.z1-(+x.d)})}
+  else if(k=='wall'){e=Object.assign(base,{t:+x.t,x0:+x.x0,y0:+x.y0,x1:+x.x1,y1:+x.y1,z0:+x.z0,z1:+x.z1})}
+  else{const hb=+x.b/2,hh=+x.h/2,c=+x.cx,d=+x.cy;e=Object.assign(base,{pts:[[c-hb,d-hh],[c+hb,d-hh],[c+hb,d+hh],[c-hb,d+hh]],holes:[],t:+x.t,z1:+x.z1,z0:+x.z1-(+x.t)})}
+  rvApply(e,o,k);mo.notes.manual++;
+  const ok=['col','ftg'].includes(k)?(e.b>0&&e.h>0&&e.z1>e.z0):k=='beam'?(e.w>0&&e.d>0&&Math.hypot(e.x1-e.x0,e.y1-e.y0)>0):k=='wall'?(e.t>0&&e.z1>e.z0&&Math.hypot(e.x1-e.x0,e.y1-e.y0)>0):(e.b>0&&e.h>0&&e.t>0||e.pts);
+  if(!ok){mo.notes.skipped++;return}
+  ({col:mo.columns,ftg:mo.footings,beam:mo.beams,wall:mo.walls,slab:mo.slabs,lean:mo.lean})[k].push(e)});
+ try{rvAudit(mo)}catch(x){mo.warns=mo.warns||[];if(window.console)console.warn('rvAudit',x)}
  return mo}
 /* ---------------- IFC2X3 writer ---------------- */
 const IFCCH='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$';
@@ -10808,16 +11069,22 @@ function ifcBuild(mo){
  const rect=(xd,yd)=>add('IFCRECTANGLEPROFILEDEF(.AREA.,$,'+zero2()+','+ifcN(xd)+','+ifcN(yd)+')');
  const poly=P=>add('IFCPOLYLINE(('+P.concat([P[0]]).map(p=>pt(p[0],p[1])).join(',')+'))');
  const ccw=(P,want)=>(rvArea(P)>0)==want?P:P.slice().reverse();
+ const prof=e=>{if(e.shape=='round')return add('IFCCIRCLEPROFILEDEF(.AREA.,$,'+zero2()+','+ifcN(e.dia/2)+')');
+  if(e.shape=='poly'&&e.pts&&e.pts.length>=3)return add('IFCARBITRARYCLOSEDPROFILEDEF(.AREA.,$,'+poly(ccw(e.pts.map(p=>[p[0]-e.cx,p[1]-e.cy]),true))+')');
+  return rect(e.b,e.h)};
+ const rot=e=>e.shape=='rect'||e.shape===undefined?e.ang*Math.PI/180:0;
+ const mkn=(e,s)=>(e.mk?e.mk+' ':'')+s;
+ const dimn=e=>e.shape=='round'?'Ø'+fmt(e.dia):fmt(e.b)+'x'+fmt(e.h);
  const pset=(el,e,sti)=>{const pv=(n,v)=>add('IFCPROPERTYSINGLEVALUE('+ifcS(n)+',$,IFCLABEL('+ifcS(v)+'),$)'),
-  ps=[pv('Layer',e.layer),pv('File',e.file),pv('Level',st[sti].l.name)];if((e.mult||1)>1)ps.push(pv('Typical floors',e.mult));
+  ps=[pv('Layer',e.layer),pv('File',e.file),pv('Level',st[sti].l.name)];if(e.mk)ps.push(pv('Mark',e.mk));if(e.lab)ps.push(pv('Drawing label',e.lab[0]+'x'+e.lab[1]));if((e.mult||1)>1)ps.push(pv('Typical floors',e.mult));if(e.sup){const sl=s=>s?({C:'Column ',W:'Wall ',B:'Beam '}[s[0]]||'')+s[1]:'none';ps.push(pv('Support at start',sl(e.sup[0])),pv('Support at end',sl(e.sup[1])))}if(e.on||e.top){const sl=s=>s?({F:'Footing ',S:'Slab ',B:'Beam ',W:'Wall ',C:'Column '}[s[0]]||'')+s[1]:'none';if(e.on!==undefined)ps.push(pv('Rests on',sl(e.on)));if(e.top!==undefined)ps.push(pv('Beam or slab above',sl(e.top)))}if(e.vr!==undefined&&e.vr<0.97)ps.push(pv('Solid volume ratio (openings not cut)',e.vr));if(e.cf)ps.push(pv('Confidence',e.cf=='hi'?'High':e.cf=='md'?'Check':'Low'));if(e.src=='3d-only')ps.push(pv('Source','3D model only'));
   const p=add('IFCPROPERTYSET('+G()+','+oh+",'FABRUM',$,("+ps.join(',')+'))');add('IFCRELDEFINESBYPROPERTIES('+G()+','+oh+',$,$,('+el+'),'+p+')')};
  const put=(cls,name,e,zRef,placement,shp,extra)=>{const k=lvOf(zRef),el=add(cls+'('+G()+','+oh+','+ifcS(name)+',$,$,'+placement(st[k])+','+shp+',$'+(extra?','+extra:'')+')');st[k].els.push(el);pset(el,e,k);return el};
  const fmt=v=>+(+v).toFixed(1);
- mo.columns.forEach(e=>{const nm='C '+fmt(e.b)+'x'+fmt(e.h),a=e.ang*Math.PI/180;
-  put('IFCCOLUMN',nm,e,e.z0,s=>add('IFCLOCALPLACEMENT('+s.pl+','+ax3(pt(e.cx,e.cy,e.z0-s.l.elev),dir(0,0,1),dir(Math.cos(a),Math.sin(a),0))+')'),shape(solid(rect(e.b,e.h),e.z1-e.z0)))});
- mo.footings.forEach(e=>{const nm='F '+fmt(e.b)+'x'+fmt(e.h)+'x'+fmt(e.t),a=e.ang*Math.PI/180;
-  put('IFCFOOTING',nm,e,e.z0,s=>add('IFCLOCALPLACEMENT('+s.pl+','+ax3(pt(e.cx,e.cy,e.z0-s.l.elev),dir(0,0,1),dir(Math.cos(a),Math.sin(a),0))+')'),shape(solid(rect(e.b,e.h),e.t)),'.PAD_FOOTING.')});
- mo.beams.forEach(e=>{const dx=e.x1-e.x0,dy=e.y1-e.y0,Ln=Math.hypot(dx,dy),nm='B '+fmt(e.w)+'x'+fmt(e.d);
+ mo.columns.forEach(e=>{const nm=mkn(e,'C '+dimn(e)),a=rot(e);
+  put('IFCCOLUMN',nm,e,e.z0,s=>add('IFCLOCALPLACEMENT('+s.pl+','+ax3(pt(e.cx,e.cy,e.z0-s.l.elev),dir(0,0,1),dir(Math.cos(a),Math.sin(a),0))+')'),shape(solid(prof(e),e.z1-e.z0)))});
+ mo.footings.forEach(e=>{const nm=mkn(e,'F '+dimn(e)+'x'+fmt(e.t)),a=rot(e);
+  put('IFCFOOTING',nm,e,e.z0,s=>add('IFCLOCALPLACEMENT('+s.pl+','+ax3(pt(e.cx,e.cy,e.z0-s.l.elev),dir(0,0,1),dir(Math.cos(a),Math.sin(a),0))+')'),shape(solid(prof(e),e.t)),'.PAD_FOOTING.')});
+ mo.beams.forEach(e=>{const dx=e.x1-e.x0,dy=e.y1-e.y0,Ln=Math.hypot(dx,dy),nm=mkn(e,'B '+fmt(e.w)+'x'+fmt(e.d));
   put('IFCBEAM',nm,e,e.z1-1,s=>add('IFCLOCALPLACEMENT('+s.pl+','+ax3(pt(e.x0,e.y0,e.z1-e.d/2-s.l.elev),dir(dx/Ln,dy/Ln,0),dir(0,0,1))+')'),shape(solid(rect(e.d,e.w),Ln)))});
  mo.walls.forEach(e=>{const dx=e.x1-e.x0,dy=e.y1-e.y0,Ln=Math.hypot(dx,dy),nm='W '+fmt(e.t);
   put('IFCWALL',nm,e,e.z0,s=>add('IFCLOCALPLACEMENT('+s.pl+','+ax3(pt((e.x0+e.x1)/2,(e.y0+e.y1)/2,e.z0-s.l.elev),dir(0,0,1),dir(dx/Ln,dy/Ln,0))+')'),shape(solid(rect(Ln,e.t),e.z1-e.z0)))});
@@ -10830,7 +11097,7 @@ function ifcBuild(mo){
  return 'ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION((\'ViewDefinition [CoordinationView]\'),\'2;1\');\nFILE_NAME(\'FABRUM.ifc\',\''+d+'\',(\'FABRUM\'),(\'FABRUM\'),\'FABRUM\',\'FABRUM DXF quantity tool\',\'\');\nFILE_SCHEMA((\'IFC2X3\'));\nENDSEC;\nDATA;\n'+L.join('\n')+'\nENDSEC;\nEND-ISO-10303-21;\n'}
 function rvSummary(mo){return mo.columns.length+' '+P('عمود','columns')+' · '+mo.beams.length+' '+P('جسر','beams')+' · '+mo.slabs.length+' '+P('بلاطة','slabs')+' · '+mo.footings.length+' '+P('قاعدة','footings')+' · '+mo.walls.length+' '+P('جدار','walls')+' · '+mo.lean.length+' '+P('خرسانة نظافة','lean')}
 function rvName(ext){return fname(ext).replace(P('كميات','quantities'),P('ريفت','Revit'))}
-window.FABRUM_RV={model:rvModel,ifc:ifcBuild,rect:rvRect};
+window.FABRUM_RV={model:rvModel,ifc:ifcBuild,rect:rvRect,decomp:rvDecomp,why:()=>rvDecomp.why};
 /* ================= standalone page: DXF -> Revit ================= */
 const RVR={col:['عمود','Column','#1f4e79'],ftg:['قاعدة','Footing','#8a6d3b'],slab:['بلاطة','Slab','#c9b98a'],lean:['خرسانة نظافة','Lean concrete','#e3d8b8'],beam:['جسر','Beam','#2a7ab0'],wall:['جدار','Wall','#7a7a7a']};
 const RVPTS=['col','ftg','slab','lean'],RVLNS=['beam','wall'];
@@ -10838,6 +11105,7 @@ function rvEach(mo,fn){
  mo.footings.forEach(e=>fn('ftg',e,e.z0));mo.columns.forEach(e=>fn('col',e,e.z0));mo.beams.forEach(e=>fn('beam',e,e.z1-1));
  mo.walls.forEach(e=>fn('wall',e,e.z0));mo.slabs.forEach(e=>fn('slab',e,e.z1-1));mo.lean.forEach(e=>fn('lean',e,e.z1-1))}
 function rvLvIdx(mo,z){let k=0;mo.levels.forEach((l,i)=>{if(l.elev<=z+5)k=i});return k}
+function rvHi(id){const P0=PS();return !!((P0.rvs&&P0.rvs[id])||P0.rvhl===id)}
 function rvPlan(mo,sel){
  const it=[];rvEach(mo,(k,e,z)=>{if(sel===''||sel==null||rvLvIdx(mo,z)==+sel)it.push([k,e])});
  if(!it.length)return '';
@@ -10847,9 +11115,9 @@ function rvPlan(mo,sel){
  const W=Math.max(1,x1-x0),H=Math.max(1,y1-y0),pad=Math.max(W,H)*0.03,mn=Math.max(W,H)/700;
  const f=v=>(+v).toFixed(0),ord=['lean','slab','ftg','wall','beam','col'];let g='';
  ord.forEach(kk=>{const col=RVR[kk][2];it.forEach(([k,e])=>{if(k!=kk)return;
-  if(k=='col'||k=='ftg'){g+=`<polygon points='${rc(e).map(p=>f(p[0])+','+f(p[1])).join(' ')}' fill='${col}' fill-opacity='${k=='ftg'?.45:.95}' stroke='${col}' stroke-width='1' vector-effect='non-scaling-stroke'/>`}
-  else if(k=='beam'||k=='wall'){g+=`<line x1='${f(e.x0)}' y1='${f(e.y0)}' x2='${f(e.x1)}' y2='${f(e.y1)}' stroke='${col}' stroke-opacity='${k=='wall'?.9:.75}' stroke-width='${f(Math.max(k=='beam'?e.w:e.t,mn))}'/>`}
-  else{const d=[e.pts].concat(e.holes||[]).map(r=>'M'+r.map(p=>f(p[0])+' '+f(p[1])).join('L')+'Z').join('');g+=`<path d='${d}' fill='${col}' fill-opacity='${k=='lean'?.35:.4}' fill-rule='evenodd' stroke='${col}' stroke-width='1' vector-effect='non-scaling-stroke'/>`}})});
+  if(k=='col'||k=='ftg'){const hs=rvHi(e.id);g+=`<polygon data-rvid='${e.id}' points='${rc(e).map(p=>f(p[0])+','+f(p[1])).join(' ')}' fill='${hs?'#e8710a':col}' fill-opacity='${hs?1:k=='ftg'?.45:.95}' stroke='${hs?'#e8710a':col}' stroke-width='${hs?3:1}' vector-effect='non-scaling-stroke' style='cursor:pointer'/>`}
+  else if(k=='beam'||k=='wall'){const hs=rvHi(e.id);g+=`<line data-rvid='${e.id}' x1='${f(e.x0)}' y1='${f(e.y0)}' x2='${f(e.x1)}' y2='${f(e.y1)}' stroke='${hs?'#e8710a':col}' stroke-opacity='${hs?1:k=='wall'?.9:.75}' stroke-width='${f(Math.max(k=='beam'?e.w:e.t,mn)*(hs?1.4:1))}' style='cursor:pointer'/>`}
+  else{const d=[e.pts].concat(e.holes||[]).map(r=>'M'+r.map(p=>f(p[0])+' '+f(p[1])).join('L')+'Z').join('');const hs=rvHi(e.id);g+=`<path data-rvid='${e.id}' d='${d}' fill='${hs?'#e8710a':col}' fill-opacity='${hs?.55:k=='lean'?.35:.4}' fill-rule='evenodd' stroke='${hs?'#e8710a':col}' stroke-width='${hs?3:1}' vector-effect='non-scaling-stroke' style='cursor:pointer'/>`}})});
  return `<svg xmlns='http://www.w3.org/2000/svg' direction='ltr' viewBox='${f(x0-pad)} ${f(-(y1+pad))} ${f(W+2*pad)} ${f(H+2*pad)}' style='display:block;width:100%;height:min(52vh,460px);background:#fff'><g transform='scale(1,-1)'>${g}</g></svg>`}
 const RVSK=/^0$|dim|text|txt|hatch|defpoint|grid|axis|axes|title|note|anno|ملاحظ|نص|أبعاد|ابعاد|محور|view|frame|border|sheet|door|window|باب|ابواب|أبواب|شباك|شبابيك|نافذة|نوافذ|stair|درج|سلم/i;
 function rvMissing(){const P0=PS();return P0.ord.filter(id=>P0.files[id]&&P0.files[id].inc!==false&&!DQS[id])}
@@ -10863,6 +11131,13 @@ function rvCompute(){
   Object.keys(R).forEach(key=>{const role=R[key];if(!role||role=='skip')return;const d=rvModeOf(role);if(!d)return;const c=f.cfg[key];
    if(!c){f.cfg[key]=Object.assign({},d);added.push([f.cfg,key]);return}
    if(['col','vol','twin'].indexOf(c.m)>=0)return;saved.push([c,Object.assign({},c)]);Object.assign(c,d)})});
+ /* smart automatic types for layers nobody assigned: by name, then by geometry */
+ const cur0=P0.cur;
+ P0.ord.forEach(id=>{const f=P0.files[id];if(!f||f.inc===false||f.role=='3d'||!DQS[id])return;f.cfg=f.cfg||{};const R=P0.rvr[id]||{};useFile(id);const fc=fac();
+  Object.keys(f.ls||{}).forEach(nm=>{const key=ck(nm);if(R[key])return;const c=f.cfg[key];if(c&&['col','vol','twin'].indexOf(c.m)>=0)return;
+   const role=rvGuess(nm,f.ls[nm],fc);if(!role)return;const d=rvModeOf(role);if(!d)return;
+   if(!c){f.cfg[key]=Object.assign({},d);added.push([f.cfg,key])}else{saved.push([c,Object.assign({},c)]);Object.assign(c,d)}})});
+ useFile(cur0);
  let out;try{out=computeAll()}finally{saved.forEach(([c,o])=>{Object.keys(c).forEach(k=>{if(!(k in o))delete c[k]});Object.assign(c,o)});added.forEach(([cf,k])=>{delete cf[k]})}
  if(saved.length||added.length){try{computeAll()}catch(e){}}
  return out}
@@ -10923,8 +11198,8 @@ const lvsel=`<label class='dqp'>${T('عرض الطابق','Show level')}<select 
  ${prev}
  ${!n&&P0.ord.length?NT('لم تُستخرج عناصر إنشائية. تأكد أن عندك ملف مخطط 2D فيه طبقات الأعمدة أو الجسور أو البلاطات أو القواعد، وأن الملف «داخل الحساب»، وأن الوحدة صحيحة. ملف 3D وحده لا يكفي؛ ارفع معه المخطط 2D واضبط نوع حساب الطبقات من أداة «استخراج الكميات من مخطط الأوتوكاد».','No structural elements were extracted. Make sure you have a 2D plan with column, beam, slab or footing layers, that the file is Included and that its unit is right. A 3D file alone is not enough; upload the 2D plan with it and set the layer calculations in the “Quantities from an AutoCAD drawing” tool.'):''}
  ${n?`<div class='box'><h3>${T('النموذج المستخرج','Extracted model')}</h3><p class='nt'>${rvSummary(mo)}</p>
- ${wn.map(x=>`<p class='nt' style='color:#8a4b00'>⚠ ${esc(x)}</p>`).join('')}
- <h3>${T('المناسيب','Levels')}</h3><div class='tbl'><table class='sm'><thead><tr><th>${T('الاسم','Name')}</th><th>${T('المنسوب (م)','Elevation (m)')}</th><th>${T('عدد العناصر','Elements')}</th></tr></thead><tbody>${mo.levels.map((l,i)=>`<tr><td>${esc(l.name)}</td><td>${F(l.elev/1000,3)}</td><td>${lvCnt[i]}</td></tr>`).join('')}</tbody></table></div>
+ ${wn.map(x=>`<p class='nt' style='color:#8a4b00'>⚠ ${esc(x)}</p>`).join('')}</div>${rvAuditBox(mo)}${rvRepBox(mo)}<div class='box'>
+ <h3>${T('المناسيب','Levels')}</h3>${NT('الأسماء والمناسيب تُقرأ تلقائيًا من نصوص الرسم (مثل Level 2 ثم 3900) ومن أعلى وأسفل العناصر. عدّل الاسم أو المنسوب (مم) كما تريد قبل التصدير.','Names and elevations are read from the drawing texts (such as Level 2 then 3900) and from the element tops and bottoms. Edit a name or elevation (mm) before exporting.')}<div class='tbl'><table class='sm'><thead><tr><th>${T('الاسم','Name')}</th><th>${T('المنسوب (مم)','Elevation (mm)')}</th><th>${T('عدد العناصر','Elements')}</th></tr></thead><tbody>${mo.levels.map((l,i)=>{const o=((P0.rvlo=P0.rvlo||{})[l.auto]=P0.rvlo[l.auto]||{});return `<tr><td><input type='text' style='width:150px' data-s6='dxq|rvlo.${l.auto}.name' data-re='1' value='${esc(l.name)}'></td><td><input type='number' step='any' data-t='n' style='width:100px' data-s6='dxq|rvlo.${l.auto}.elev' data-re='1' value='${esc(l.elev)}'></td><td>${lvCnt[i]}</td></tr>`}).join('')}</tbody></table></div>
  <h3>${T('نوع كل طبقة بريفت','Revit type of each layer')}</h3>${NT('الأداة تحدد نوع العنصر من اسم الطبقة وطريقة حسابها. غيّر النوع هنا إذا أخطأت، أو اختر «تجاهل» لاستبعاد الطبقة.','The tool decides the element type from the layer name and calculation. Change the type here if it guessed wrong, or choose Skip to leave a layer out.')}
  <div class='xb'><button type='button' data-a6='dxq|rvsg'>✨ ${T('اقتراح تلقائي للطبقات غير المحددة','Auto-suggest types for unassigned layers')}</button></div>
  <p>${[['ch','ارتفاع العمود الافتراضي (م)','Default column height (m)'],['ft','سماكة القاعدة (م)','Footing thickness (m)'],['st','سماكة البلاطة (مم)','Slab thickness (mm)'],['bd','عمق الجسر (م)','Beam depth (m)'],['wh','ارتفاع الجدار (م)','Wall height (m)'],['ln','سماكة النظافة (مم)','Lean concrete (mm)']].map(q=>`<label class='dqp'>${T(q[1],q[2])}<input type='number' step='any' data-t='n' style='width:70px' data-s6='dxq|rvd.${q[0]}' data-re='1' value='${esc(rvD()[q[0]])}'></label>`).join('')}</p>
@@ -10932,6 +11207,7 @@ const lvsel=`<label class='dqp'>${T('عرض الطابق','Show level')}<select 
  <div class='tbl'><table class='sm'><thead><tr><th>${T('الملف','File')}</th><th>${T('الطبقة','Layer')}</th><th>${T('النوع','Type')}</th><th>${T('العناصر','Elements')}</th></tr></thead><tbody>${lt.rows.join('')}</tbody></table></div>
  ${lt.un?NT('الطبقات المعلَّمة «غير مستخدمة» لم تُستخرج منها عناصر. اختر لكل طبقة نوعها بريفت (عمود، جسر، بلاطة…) أو اضغط «اقتراح تلقائي». هذه الاختيارات خاصة بأداة ريفت ولا تغيّر أداة الكميات.','Layers marked Not used gave no elements. Choose a Revit type for each one (column, beam, slab…) or press Auto-suggest. These choices belong to the Revit tool and do not change the quantity tool.'):''}
  </div>`:''}
+ ${P0.ord.length||(P0.rvx||[]).length?rvEditor(mo,sel):''}
  <div class='box'><h3>${T('التصدير','Export')}</h3><div class='xb'><button type='button' data-a6='dxq|ifc'>🏗 ${T('ملف IFC (يُفتح بريفت مباشرة)','IFC file (opens straight in Revit)')}</button><button type='button' data-a6='dxq|rvj'>🏗 ${T('نموذج ريفت JSON','Revit model JSON')}</button><button type='button' data-a6='dxq|rvp'>🏗 ${T('سكربت Dynamo','Dynamo script')}</button></div>
  <h3>${T('الطريقة الأولى: IFC','Route 1: IFC')}</h3>${NT('في ريفت: ملف ← فتح ← IFC (أو ربط IFC لإبقاء المشروع منفصلًا). تظهر العناصر بمواقعها ومناسيبها كمجسّمات للمراجعة والتنسيق، ولا تُعدَّل بارامتريًا.','In Revit: File, Open, IFC (or Link IFC to keep your project separate). Elements appear in place and at level as solids for review and coordination; they are not parametric.')}
  <h3>${T('الطريقة الثانية: عناصر ريفت أصلية بسكربت Dynamo','Route 2: native Revit elements with a Dynamo script')}</h3>
@@ -10943,7 +11219,13 @@ const lvsel=`<label class='dqp'>${T('عرض الطابق','Show level')}<select 
  <details class='box' style='margin-top:10px'><summary><b>${T('شرح مفصل: كيف يتحول المخطط إلى ريفت ولماذا قد يختلف','Detailed guide: how a drawing becomes a Revit model and why results may differ')}</b></summary>
  <h3>${T('1) ماذا تستخرج الأداة','1) What the tool extracts')}</h3>
  <ul class='nt'>
- <li>${T('الأعمدة والقواعد: من الأشكال المغلقة في طبقاتها. يُقرَّب كل شكل إلى أصغر مستطيل يحيط به (العرض والعمق وزاوية الدوران). ارتفاع العمود ومنسوبه من ملف الـ3D إن وُجد، وسماكة القاعدة كذلك.','Columns and footings: from the closed shapes on their layers. Each shape is approximated by its smallest bounding rectangle (width, depth and rotation). Column height and level, and footing thickness, come from the 3D file when there is one.')}</li>
+ <li>${T('الأعمدة والقواعد: من الأشكال المغلقة في طبقاتها وتؤخذ كما هي: المستطيل يبقى مستطيلاً بزاوية دورانه، والدائرة عمودًا دائريًا (قطر)، والشكل الخاص (L أو T أو متعدد الأضلاع) يُصدَّر بمقطعه الحقيقي في IFC وبأصغر مستطيل محيط في Dynamo. ارتفاع العمود ومنسوبه من ملف الـ3D إن وُجد، وسماكة القاعدة كذلك.','Columns and footings: from the closed shapes on their layers, taken as drawn: a rectangle stays a rectangle with its rotation, a circle becomes a round column (diameter), and a special shape (L, T or polygon) is exported with its true profile in IFC and as its smallest bounding rectangle in Dynamo. Column height and level come from the 3D file when present, as does footing thickness.')}</li>
+ <li>${T('العلامات (Mark) والمقاسات: يقرأ المحرك أقرب نص إلى كل عنصر (مثل C1 أو B2) ويضعه علامةً له، وإذا كان بجانبه مقاس مكتوب (مثل 30x50) يحفظه كلافتة ويقارنه بالمقاس المرسوم. وإذا وُجدت طبقة اسمها يحوي «Level» أو «منسوب» وفيها نص اسم الطابق يليه نص رقم المنسوب، تُستعمل كأسماء للطوابق.','Marks and sizes: the engine reads the nearest text to each element (such as C1 or B2) and uses it as its Mark; if a written size sits next to it (such as 30x50) it is kept as a label and compared with the drawn size. If a layer whose name contains “Level” or “منسوب” holds a storey-name text followed by an elevation number text, those are used as the storey names.')}</li>
+ <li>${T('الجدران والجسور: تُقرأ كلٌّ على حدة وتُربط ببعضها. الجدار المدمج مع جسره في المجسّم (قطعة واحدة حتى أسفل البلاطة) يُفصل إلى جدار وجسر عند أعلى الجدران المعتاد في الطابق، والجدران المركّبة (حلقات وزوايا) تُقطّع إلى أجزاء مستقيمة. لكل جسر مسندان (عمود أو جدار أو جسر)، ولكل جدار ما يستند عليه وما فوقه، ولكل عمود قاعدته؛ وكلها تُكتب في خصائص IFC وJSON.','Walls and beams: each is read on its own and linked to the others. A wall fused with its beam in the 3D model (one piece up to the slab) is split into a wall and a beam at the storey’s usual wall top, and composite walls (rings and corners) are cut into straight parts. Every beam gets two supports (column, wall or beam), every wall what it rests on and what is above it, and every column its footing; all are written into the IFC and JSON properties.')}</li>
+ <li>${T('تقرير التحويل: يبيّن ما قرأته الأداة حسب الطابق، ومقارنة أحجام كل فئة بالمجسّم 3D، والاتصال الإنشائي، والفرضيات التي افترضتها، وما لا تستطيع قراءته (الدرج، فتحات الأبواب والنوافذ، قطع معقدة). يمكن تنزيله ملفًا ليرافق ملف ريفت.','Conversion report: shows what the tool read by level, a volume comparison of each class with the 3D model, the structural connections, the assumptions it made and what it cannot read (stairs, door and window openings, complex pieces). It can be downloaded as a file to go with the Revit file.')}</li>
+ <li>${T('التدقيق مع المجسّم 3D: تقارن الأداة كل عنصر في الرسم بالمجسّم، وما وُجد في المجسّم ولا يظهر في الرسم (قاعدة ناقصة، جسر أرضي بلا خطوط، جسور هوردي، جدران) يُضاف كما هو ويُعلَّم «من المجسّم فقط». القطع المعقدة (مائلة أو غير صندوقية) لا تُضاف تلقائيًا وتُذكر في التنبيهات.','Checking against the 3D model: the tool compares every drawn element with the 3D model, and anything found in the 3D model but missing from the drawing (a missing footing, ground beams without lines, hordy ribs, walls) is added as it is and marked “3D model only”. Complex pieces (inclined or not box-like) are not added automatically and are listed in the remarks.')}</li>
+ <li>${T('درجة الثقة: 🟢 مؤكد (مطابق للمجسّم)، 🟡 يحتاج مراجعة (ارتفاع افتراضي، من المجسّم فقط، جسر بلا مسند، عمود بلا قاعدة)، 🔴 ضعيف (مقاس لا يطابق النص المكتوب، مقاس غير معتاد، شكل تقريبي، عنصر مكرر). الملفان المتطابقان في المحتوى يُستبعد الثاني من تصدير ريفت مع تنبيه.','Confidence: 🟢 confirmed (matches the 3D model), 🟡 review (default height, 3D model only, beam without support, column without footing), 🔴 weak (size differs from the written label, unusual size, approximate shape, duplicate element). Of two files identical in content, the second is left out of the Revit export with a notice.')}</li>
+ <li>${T('التعديل: في «العناصر وتعديلها» يمكنك تغيير نوع أي عنصر أو مقاسه أو منسوبه أو علامته، وتحديد عدة عناصر وتعديلها دفعة واحدة، واستبعاد عنصر أو إرجاعه، وإضافة عنصر يدويًا. تُحفظ التعديلات مع المشروع وتدخل في IFC وJSON وDynamo.','Editing: in “Elements and editing” you can change any element’s type, size, level or Mark, select several elements and edit them together, remove or restore an element, and add one by hand. Edits are saved with the project and go into the IFC, JSON and Dynamo outputs.')}</li>
  <li>${T('الجسور: من خطين متوازيين (أو خط واحد مع ملف 3D). يصبح كل جسر خط محور بعرض وعمق، وأعلى الجسر عند منسوبه المقروء من الـ3D.','Beams: from two parallel lines (or one line with a 3D file). Each beam becomes an axis line with a width and depth; its top sits at the level read from the 3D file.')}</li>
  <li>${T('البلاطات وخرسانة النظافة: من الأشكال المغلقة أو من الـ3D، مع الفتحات الداخلية (درج، مصعد) كفتحات في البلاطة.','Slabs and lean concrete: from closed shapes or the 3D file, with inner openings (stairs, lifts) kept as openings in the slab.')}</li>
  <li>${T('الجدران: من الطبقات المحسوبة جدرانًا، بالسماكة والارتفاع من الرسم أو الـ3D.','Walls: from layers measured as walls, with thickness and height from the drawing or the 3D file.')}</li>
@@ -10985,20 +11267,20 @@ function rv3Set(mo,sel){rv3S.mo=mo;rv3S.sel=sel;rv3S.faces=null}
 function rv3Build(){
  const mo=rv3S.mo,sel=rv3S.sel,F=[];if(!mo)return F;
  const shade=(hex,f)=>{const c=parseInt(hex.slice(1),16),r=c>>16,g=(c>>8)&255,b=c&255,m=f<1?0:255,t=Math.abs(1-f);return 'rgb('+Math.round(r+(m-r)*t)+','+Math.round(g+(m-g)*t)+','+Math.round(b+(m-b)*t)+')'};
- const prism=(bot,z0,z1,kind,alpha)=>{ /* bot: ring of [x,y] CCW; faces: top and sides */
-  const n=bot.length,col=RVR[kind][2],top=bot.map(p=>[p[0],p[1],z1]);
+ const prism=(bot,z0,z1,kind,alpha,hi)=>{ /* bot: ring of [x,y] CCW; faces: top and sides */
+  const n=bot.length,col=hi?'#e8710a':RVR[kind][2],top=bot.map(p=>[p[0],p[1],z1]);
   F.push({v:top,c:shade(col,1.12),a:alpha,l:1,o:kind=='lean'||kind=='slab'?0:1});
   for(let i=0;i<n;i++){const j=(i+1)%n,a=bot[i],b=bot[j],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,nx=dy/L,ny=-dx/L,f=0.78+0.22*(nx*0.6+ny*-0.8);
    F.push({v:[[a[0],a[1],z0],[b[0],b[1],z0],[b[0],b[1],z1],[a[0],a[1],z1]],c:shade(col,f),a:alpha,l:0,o:kind=='lean'||kind=='slab'?0:1})}};
- const rect=(e,k)=>{const a=e.ang*Math.PI/180,c=Math.cos(a),s=Math.sin(a),hb=e.b/2,hh=e.h/2;return [[-hb,-hh],[hb,-hh],[hb,hh],[-hb,hh]].map(p=>[e.cx+p[0]*c-p[1]*s,e.cy+p[0]*s+p[1]*c])};
+ const rect=(e,k)=>{if(e.shape=='round'){const r=e.dia/2;return Array.from({length:16},(_,i)=>[e.cx+r*Math.cos(i*Math.PI/8),e.cy+r*Math.sin(i*Math.PI/8)])}const a=e.ang*Math.PI/180,c=Math.cos(a),s=Math.sin(a),hb=e.b/2,hh=e.h/2;return [[-hb,-hh],[hb,-hh],[hb,hh],[-hb,hh]].map(p=>[e.cx+p[0]*c-p[1]*s,e.cy+p[0]*s+p[1]*c])};
  const seg=(e,w)=>{const dx=e.x1-e.x0,dy=e.y1-e.y0,L=Math.hypot(dx,dy)||1,nx=-dy/L*w/2,ny=dx/L*w/2;return [[e.x0-nx,e.y0-ny],[e.x1-nx,e.y1-ny],[e.x1+nx,e.y1+ny],[e.x0+nx,e.y0+ny]]};
  rvEach(mo,(k,e,z)=>{if(sel!==''&&sel!=null&&rvLvIdx(mo,z)!=+sel)return;
-  if(k=='col')prism(rect(e),e.z0,e.z1,k,1);
-  else if(k=='ftg')prism(rect(e),e.z0,e.z1,k,1);
-  else if(k=='beam')prism(seg(e,e.w),e.z1-e.d,e.z1,k,1);
-  else if(k=='wall')prism(seg(e,e.t),e.z0,e.z1,k,1);
+  const hi=rvHi(e.id);
+  if(k=='col'||k=='ftg')prism(e.shape=='poly'&&e.pts?(()=>{const r=e.pts.slice();if(rvArea(r)<0)r.reverse();return r})():rect(e),e.z0,e.z1,k,1,hi);
+  else if(k=='beam')prism(seg(e,e.w),e.z1-e.d,e.z1,k,1,hi);
+  else if(k=='wall')prism(seg(e,e.t),e.z0,e.z1,k,1,hi);
   else{const ring=e.pts.slice();if(rvArea(ring)<0)ring.reverse();
-   const top=ring.map(p=>[p[0],p[1],e.z1]);F.push({v:top,c:shade(RVR[k][2],1.05),a:k=='lean'?.45:.5,l:1,o:0,holes:(e.holes||[]).map(hh=>hh.map(p=>[p[0],p[1],e.z1]))});
+   const top=ring.map(p=>[p[0],p[1],e.z1]);F.push({v:top,c:shade(rvHi(e.id)?'#e8710a':RVR[k][2],1.05),a:rvHi(e.id)?.8:k=='lean'?.45:.5,l:1,o:0,holes:(e.holes||[]).map(hh=>hh.map(p=>[p[0],p[1],e.z1]))});
    for(let i=0;i<ring.length;i++){const j=(i+1)%ring.length,a=ring[i],b=ring[j];F.push({v:[[a[0],a[1],e.z0],[b[0],b[1],e.z0],[b[0],b[1],e.z1],[a[0],a[1],e.z1]],c:shade(RVR[k][2],.85),a:.4,l:0,o:0})}}});
  let x0=1e18,y0=1e18,z0=1e18,x1=-1e18,y1=-1e18,z1=-1e18;
  F.forEach(f=>f.v.forEach(p=>{if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1];if(p[2]<z0)z0=p[2];if(p[2]>z1)z1=p[2]}));
@@ -11029,6 +11311,129 @@ function rv3Bind(){const cv=document.getElementById('rv3');if(!cv||cv._b)return;
  cv.addEventListener('wheel',e=>{e.preventDefault();rv3S.zoom=Math.max(.3,Math.min(8,rv3S.zoom*(e.deltaY<0?1.15:1/1.15)));rv3Sched()},{passive:false})}
 R6.dxr=function(){if(document.getElementById('dxq_svg')){paintPreview();bindSvg()}if(document.getElementById('rv3')){rv3Bind();rv3Draw()}};
 window.addEventListener('resize',()=>{if(document.getElementById('rv3'))rv3Sched()});
+/* ---------------- element editor ---------------- */
+const RVPAGE=40;
+function rvAll(mo){const a=[];rvEach(mo,(k,e,z)=>a.push({k:k,e:e,z:z}));return a}
+function rvFam(k){return RVPTS.includes(k)?RVPTS:RVLNS}
+
+const RVW={only3d:[0,'موجود في مجسّم 3D ولا يظهر في المخطط 2D؛ أُخذ كما هو من المجسّم','Present in the 3D model but not in the 2D plan; taken as it is from the 3D model'],
+ no3d:[1,'لا يقابله مجسّم 3D فاعتُمد ارتفاعه ومنسوبه الافتراضي: راجع المنسوب','No 3D match, so its default height and level were used: check the level'],
+ complex3d:[1,'قطع في مجسّم 3D شكلها معقد (مائلة أو غير صندوقية) لم تُضَف تلقائيًا؛ أضفها يدويًا إن لزم','3D pieces with a complex shape (inclined or not box-like) were not added automatically; add them by hand if needed'],
+ nosup:[2,'جسر طرفه أو طرفاه بلا مسند (عمود أو جدار أو جسر): تحقق من موضعه','Beam with an end that has no support (column, wall or beam): check its position'],
+ noftg:[2,'عمود سفلي بلا قاعدة تحته','Bottom column without a footing under it'],
+ ftgcol:[1,'قاعدة بلا عمود فوقها','Footing without a column above it'],
+ label:[2,'مقاس العنصر لا يطابق المقاس المكتوب بجانبه في الرسم','The element size does not match the size written beside it in the drawing'],
+ odd:[1,'مقاس غير معتاد (صغير أو كبير جدًا): راجعه','Unusual size (very small or very large): review it'],
+ approx:[1,'شكل خاص: يُقرَّب في Dynamo وIFC يحفظ شكله الحقيقي','Special shape: approximated in Dynamo; the IFC keeps the true shape'],
+ dup:[2,'عنصران متطابقان في المكان نفسه: أحدهما مكرر، أو أن الطابقين بنفس المنسوب فحدّد منسوب كل طابق','Two identical elements in the same place: one is a duplicate, or two floors share the same level, so set each floor’s level'],
+ noH:[1,'لا يوجد ملف 3D: الارتفاع والمنسوب افتراضيان من إعدادات الملف، راجعهما','No 3D file: height and level are the file defaults, review them'],
+ wallbase:[2,'جدار لا شيء تحته (قاعدة أو جسر أو بلاطة): تحقق من منسوبه','Wall with nothing under it (footing, beam or slab): check its level'],
+ walltop:[0,'جدار بلا جسر أو بلاطة فوقه (قد يكون حاجزًا أو سور)','Wall with no beam or slab above it (it may be a parapet or fence)'],
+ fused:[1,'جدار مدمج مع جسر في المجسّم: فُصل إلى جدار وجسر عند عمق الجسر المعتاد بالطابق','Wall fused with its beam in the 3D model: split into a wall and a beam at the storey’s usual beam depth'],
+ typ:[0,'يمثل طوابق متكررة ويُصدَّر مرة واحدة','Stands for repeated floors and is exported once'],
+ dupfile:[2,'ملف مطابق لملف آخر في المحتوى فاستُبعد من التصدير (يمكنك تضمينه من بطاقة الملف)','A file identical in content to another file was left out of the export (you can include it from the file card)']};
+const RVCF={hi:['🟢','مؤكد','Confirmed'],md:['🟡','يحتاج مراجعة','Review'],lo:['🔴','ضعيف','Weak']};
+function rvAuditBox(mo){const P0=PS(),W=mo.warns||[],cn=(mo.notes&&mo.notes.cf)||{hi:0,md:0,lo:0},cur=P0.rvcf||'',wc=P0.rvwc||'';
+ const chips=['hi','md','lo'].map(k=>`<button type='button' data-rvop='rvcf' data-rvx='${k}' style='margin:2px;${cur==k?'background:#1f4e79;color:#fff':''}'>${RVCF[k][0]} ${P(RVCF[k][1],RVCF[k][2])}: <b>${cn[k]||0}</b></button>`).join('');
+ const rows=W.map(w=>{const d=RVW[w.code]||[1,w.code,w.code];const ic=d[0]>=2?'🔴':d[0]==1?'🟡':'ℹ️';
+  return `<tr><td>${ic}</td><td>${P(d[1],d[2])}</td><td><b>${w.n}</b></td><td>${w.ids&&w.ids.length?`<button type='button' data-rvop='rvwf' data-rvx='${w.code}'${wc==w.code?" style='background:#1f4e79;color:#fff'":''}>${wc==w.code?P('إلغاء الفلتر','Clear filter'):P('عرض','Show')}</button>`:''}${w.code=='dupfile'?Object.keys(P0.files).filter(i=>P0.files[i].dup).map(i=>`<button type='button' data-rvop='rvdup' data-rvx='${i}'>${P('تضمين ','Include ')}${esc(P0.files[i].fn)}</button>`).join(''):''}</td></tr>`}).join('');
+ return `<div class='box'><h3>${T('تدقيق النموذج','Model audit')}</h3>${NT('تقارن الأداة الرسم 2D بمجسّم 3D، وتفحص كل عنصر: وجود مسند للجسر وقاعدة للعمود وتطابق المقاس مع النص المكتوب وتكرار العناصر. لكل عنصر درجة ثقة تظهر في جدول العناصر وتدخل في IFC وJSON.','The tool compares the 2D drawing with the 3D model and checks every element: a support for each beam, a footing for each column, the size against the written label, and duplicates. Each element gets a confidence level shown in the elements table and written to the IFC and JSON.')}
+ <div class='xb'>${chips}${cur?`<button type='button' data-rvop='rvcf' data-rvx=''>${P('إلغاء الفلتر','Clear filter')}</button>`:''}</div>
+ ${rows?`<div class='tbl'><table class='sm'><thead><tr><th></th><th>${T('الملاحظة','Remark')}</th><th>${T('العدد','Count')}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:`<p class='nt'>✔ ${P('لا ملاحظات: كل العناصر متسقة.','No remarks: all elements are consistent.')}</p>`}</div>`}
+
+const RVAS={asLevels:['مناسيب مُشتقة من قمم وقيعان العناصر وليست من نص مكتوب بالرسم، وسُمّيت FABRUM ±x. عدّل الأسماء والمناسيب من جدول المناسيب.','Levels derived from the tops and bottoms of the elements, not from a written text, and named FABRUM ±x. Edit the names and elevations in the levels table.'],
+ asHeight:['عنصر بلا مجسّم 3D مقابل: ارتفاعه ومنسوبه من إعدادات الملف (افتراضي). صحّح منسوب الطابق وارتفاعه.','Elements without a matching 3D solid: their height and level come from the file settings (default). Correct the floor level and height.'],
+ asFused:['جدار مدمج مع جسر في المجسّم (قطعة واحدة حتى أسفل البلاطة): فُصل إلى جدار وجسر عند أعلى الجدران المعتاد في الطابق، وعمق الجسر من هذا المنسوب حتى أسفل البلاطة.','Wall fused with its beam in the 3D model (one piece up to the slab): split into a wall and a beam at the usual wall top of the storey; the beam depth runs from that level to the underside of the slab.'],
+ asFullWall:['جدار يصل أسفل البلاطة ولم يوجد ارتفاع جدران معتاد لفصل الجسر عنه فبقي جدارًا كاملًا.','Wall reaching the slab with no usual wall height found to split a beam off, so it stays a full wall.'],
+ asOnly3d:['عنصر لا يظهر في المخطط 2D فأُخذ من المجسّم كما هو (المقطع الصندوقي كما هو، والقطع المركّبة قُطّعت إلى أجزاء مستقيمة).','Element missing from the 2D plan, taken from the 3D model as it is (box sections as they are; composite pieces cut into straight parts).'],
+ asRib:['جسر هوردي (ضلع) بمقطعه من المجسّم؛ يُنشأ كجسر صغير.','Hordy rib with its section from the 3D model; created as a small beam.'],
+ asApprox:['عنصر غير مستطيل: IFC يحفظ مقطعه الحقيقي، وفي Dynamo يُقرَّب إلى أصغر مستطيل يحيط به.','Non-rectangular element: the IFC keeps its true section; in Dynamo it is approximated by its smallest bounding rectangle.'],
+ asTyp:['عنصر يمثل طوابق متكررة ويُصدَّر مرة واحدة؛ انسخه بريفت.','Element standing for repeated floors, exported once; copy it in Revit.'],
+ asDup:['عنصر استُبعد لأن ملفه نسخة طبق الأصل من ملف آخر.','Element left out because its file is an exact copy of another file.'],
+ asMark:['عنصر أخذ علامته (Mark) من أقرب نص في الرسم؛ قد يخطئ إن وقع النص بين عنصرين.','Element whose Mark was taken from the nearest text in the drawing; it can be wrong when the text lies between two elements.'],
+ asUnits:['ملف وحدته «تلقائي»: خُمّنت الوحدة (م أو سم أو مم) من أبعاد الرسم؛ تحقق منها في بطاقة الملف.','File whose unit is “automatic”: the unit (m, cm or mm) was guessed from the drawing size; check it in the file card.'],
+ asOrigin:['الإحداثيات هي إحداثيات الرسم نفسها بلا إحداثيات مشتركة؛ ضع نقطة الأساس بريفت عند الحاجة.','Coordinates are the drawing’s own, with no shared coordinates; set the base point in Revit if needed.']};
+const RVUN={unStairs:['قطعة درج لم تُصدَّر: الدرج غير مدعوم بعد.','Stair piece not exported: stairs are not supported yet.'],
+ unStairBeams:['قطعة على طبقة الجسور تبدو درجات سلّم (متوازية ومنتظمة الخطوة وبلا مسند) فاستُبعدت من الجسور؛ الدرج غير مدعوم بعد.','Pieces on the beam layer that look like stair steps (parallel, regular pitch, resting on nothing) were taken out of the beams; stairs are not supported yet.'],
+ unComplex:['قطعة 3D شكلها معقد (مائلة أو منحنية) ولم تُضَف؛ أضفها يدويًا من «إضافة عنصر».','3D piece with a complex shape (inclined or curved) not added; add it by hand with “Add an element”.'],
+ unOpenMesh:['قطعة 3D مفتوحة (غير مغلقة) لا يُحسب حجمها فتُركت.','Open (not closed) 3D piece whose volume cannot be computed, so it was left out.'],
+ unBlocks:['قطعة بلاطة رفيعة صغيرة المساحة (مثل بلوكات الهوردي) لم تُصدَّر.','Thin slab pieces of small area (such as hordy blocks) not exported.'],
+ unBand:['قطعة 3D خارج نطاق الطوابق المضمَّنة لم تُصدَّر.','3D piece outside the included storeys, not exported.'],
+ unOpenings:['فتحات الأبواب والنوافذ لا تُقطع من الجدران لأن الأداة لا تعرف مواضعها.','Door and window openings are not cut from the walls because the tool does not know where they are.'],
+ unRebar:['حديد التسليح والتشطيبات والمرافق (MEP) ليست ضمن التحويل.','Reinforcement, finishes and MEP are not part of the conversion.']};
+const RVTY=[['col','أعمدة','Columns'],['ftg','قواعد','Footings'],['beam','جسور','Beams'],['wall','جدران','Walls'],['slab','بلاطات','Slabs'],['lean','نظافة','Lean']];
+function rvRepData(mo){const R=mo.report||{verify:[],conn:{},asm:[],unres:[]},cnt=mo.levels.map(()=>({col:0,ftg:0,beam:0,wall:0,slab:0,lean:0}));
+ rvEach(mo,(k,e,z)=>{const i=rvLvIdx(mo,z);if(cnt[i]&&cnt[i][k]!==undefined)cnt[i][k]++});return{R:R,cnt:cnt}}
+function rvRepTables(mo,html){const {R,cnt}=rvRepData(mo),C=R.conn||{},pc=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+ const th=a=>'<th>'+a+'</th>',tb=(h,rows)=>`<div class='tbl'><table class='sm'><thead><tr>${h.map(th).join('')}</tr></thead><tbody>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')}</tbody></table></div>`;
+ const lv=tb([P('الطابق','Level'),P('المنسوب (مم)','Elevation (mm)')].concat(RVTY.map(t=>P(t[1],t[2]))),mo.levels.map((l,i)=>[esc(l.name),Math.round(l.elev)].concat(RVTY.map(t=>cnt[i][t[0]]||'')))).replace(/<tr><td>[^<]*<\/td><td>[^<]*<\/td>(<td><\/td>)+<\/tr>/g,'');
+ const vr=R.verify.length?tb([P('الفئة','Class'),P('حجم المجسّم (م³)','3D volume (m³)'),P('حجم النموذج (م³)','Model volume (m³)'),P('النسبة','Ratio'),P('ملاحظة','Note')],R.verify.map(v=>{const t=RVTY.find(x=>x[0]==v.k),note=v.k=='wall'&&v.pct>100.5?P('أكبر لأن الفتحات لم تُقطع','Larger because openings are not cut'):v.pct<99.5?P('ناقص: قطع معقدة أو مفتوحة لم تُضَف','Short: complex or open pieces not added'):v.pct>100.5?((R.unres.some(u=>u.code=='unOpenMesh'))?P('أكبر لأن قطعة 3D مفتوحة لا يُحسب حجمها في المقارنة','Larger because an open 3D piece has no computable volume in the comparison'):P('أكبر قليلًا من المجسّم','Slightly above the 3D model')):P('مطابق','Matches');return[P(t[1],t[2]),v.solid,v.model,'<b>'+v.pct+'%</b>',note]})):`<p class='nt'>${P('لا يوجد ملف 3D للمقارنة: لا يمكن التحقق من الأحجام.','No 3D file to compare with: the volumes cannot be verified.')}</p>`;
+ const cn=tb([P('الاتصال الإنشائي','Structural connection'),P('العدد','Count'),P('النسبة','Share')],[
+  [P('جسور مسنودة من الطرفين','Beams supported at both ends'),C.beamBoth+' / '+C.nBeam,pc(C.beamBoth,C.nBeam)],
+  [P('جسور بمسند واحد فقط أو بلا مسند','Beams with one end or no support'),(C.beamOne+C.beamNone)+'',pc(C.beamOne+C.beamNone,C.nBeam)],
+  [P('جسور هوردي موصولة بمسندين','Hordy ribs resting at both ends'),C.ribOK+' / '+C.nRib,pc(C.ribOK,C.nRib)],
+  [P('جدران لها قاعدة تستند عليها','Walls with something under them'),C.wallBase+' / '+C.nWall,pc(C.wallBase,C.nWall)],
+  [P('جدران عليها جسر أو بلاطة','Walls with a beam or slab above'),C.wallTop+' / '+C.nWall,pc(C.wallTop,C.nWall)],
+  [P('أعمدة على قاعدة أو عمود','Columns on a footing or column'),(C.colFtg+C.colCol)+' / '+C.nCol,pc(C.colFtg+C.colCol,C.nCol)]]);
+ const as=R.asm.length?'<ul class="nt">'+R.asm.map(a=>{const d=RVAS[a.code]||[a.code,a.code];return '<li><b>'+a.n+'</b> — '+esc(P(d[0],d[1]))+'</li>'}).join('')+'</ul>':'';
+ const un=R.unres.length?'<ul class="nt">'+R.unres.map(a=>{const d=RVUN[a.code]||[a.code,a.code];return '<li>'+(a.code=='unOpenings'||a.code=='unRebar'?'':'<b>'+a.n+'</b> — ')+esc(P(d[0],d[1]))+(a.v?' '+esc(P('حجم الجدران يزيد عن المجسّم بنحو '+a.v+' م³.','The wall volume is about '+a.v+' m³ above the 3D model.')):'')+'</li>'}).join('')+'</ul>':'';
+ return{lv:lv,vr:vr,cn:cn,as:as,un:un}}
+function rvRepBox(mo){const t=rvRepTables(mo);
+ return `<div class='box'><h3>${T('تقرير التحويل','Conversion report')}</h3>${NT('هذا ملخص ما فعلته الأداة: ما قرأته، وكيف طابقته مع المجسّم 3D، وما افترضته، وما لم تستطع قراءته. يمكنك تنزيله ملفًا مع ملف ريفت.','A summary of what the tool did: what it read, how it checked it against the 3D model, what it assumed and what it could not read. You can download it as a file next to the Revit file.')}
+ <h4>${T('ما قُرئ حسب الطابق','What was read, by level')}</h4>${t.lv}
+ <h4>${T('التحقق من المجسّم 3D (مقارنة الأحجام)','Check against the 3D model (volumes)')}</h4>${t.vr}
+ <h4>${T('الاتصال الإنشائي','Structural connections')}</h4>${t.cn}
+ ${t.as?`<h4>${T('الفرضيات التي افترضتها الأداة','Assumptions made by the tool')}</h4>${t.as}`:''}
+ <h4>${T('ما لا تستطيع الأداة قراءته أو افتراضه','What the tool cannot read or assume')}</h4>${t.un}
+ <div class='xb'><button type='button' data-a6='dxq|rvrep'>📄 ${T('تنزيل التقرير (HTML)','Download the report (HTML)')}</button></div></div>`}
+function rvRepHtml(mo){const t=rvRepTables(mo),W=mo.warns||[];const css='body{font-family:system-ui,Segoe UI,Tahoma,sans-serif;max-width:900px;margin:20px auto;padding:0 14px;line-height:1.7;color:#222}table{border-collapse:collapse;width:100%;margin:8px 0}th,td{border:1px solid #ccc;padding:4px 8px;text-align:start;font-size:14px}th{background:#f1ece0}h1{font-size:22px}h4{margin:18px 0 4px}';
+ const wr=W.length?'<ul>'+W.map(w=>{const d=RVW[w.code]||[1,w.code,w.code];return '<li><b>'+w.n+'</b> — '+esc(P(d[1],d[2]))+'</li>'}).join('')+'</ul>':'<p>'+P('لا ملاحظات.','No remarks.')+'</p>';
+ const cn=(mo.notes&&mo.notes.cf)||{hi:0,md:0,lo:0};
+ return '<!doctype html><html lang="'+(EN()?'en':'ar')+'" dir="'+(EN()?'ltr':'rtl')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FABRUM</title><style>'+css+'</style></head><body><h1>'+esc(P('تقرير تحويل المخططات إلى ريفت','DXF to Revit conversion report'))+' — '+esc(mo.project||'')+'</h1><p>'+new Date().toISOString().slice(0,10)+' · FABRUM</p>'+
+  '<p>🟢 '+cn.hi+' · 🟡 '+cn.md+' · 🔴 '+cn.lo+' ('+esc(P('مؤكد · يحتاج مراجعة · ضعيف','confirmed · review · weak'))+')</p>'+
+  '<h4>'+esc(P('ما قُرئ حسب الطابق','What was read, by level'))+'</h4>'+t.lv+'<h4>'+esc(P('التحقق من المجسّم 3D','Check against the 3D model'))+'</h4>'+t.vr+'<h4>'+esc(P('الاتصال الإنشائي','Structural connections'))+'</h4>'+t.cn+
+  '<h4>'+esc(P('ملاحظات التدقيق','Audit remarks'))+'</h4>'+wr+(t.as?'<h4>'+esc(P('الفرضيات','Assumptions'))+'</h4>'+t.as:'')+'<h4>'+esc(P('ما لم تستطع الأداة قراءته أو افتراضه','What the tool could not read or assume'))+'</h4>'+t.un+'</body></html>'}
+function rvDot(e){const c=RVCF[e.cf||'hi'],tip=(e.cr||[]).map(x=>{const d=RVW[x];return d?P(d[1],d[2]):x}).join(' | ');return `<span title='${esc(tip||P(c[1],c[2]))}' style='cursor:help'>${c[0]}</span>`}
+function rvFilter(mo){const P0=PS(),sel=P0.rvlv==null?'':P0.rvlv,ft=P0.rvft||'',q=(P0.rvq||'').toLowerCase(),cf=P0.rvcf||'',wc=P0.rvwc||'',wi=wc?new Set(((mo.warns||[]).find(w=>w.code==wc)||{ids:[]}).ids):null;
+ return rvAll(mo).filter(x=>(sel===''||sel==null||rvLvIdx(mo,x.z)==+sel)&&(!ft||x.k==ft)&&(!cf||(x.e.cf||'hi')==cf)&&(!wi||wi.has(x.e.id))&&(!q||((x.e.mk||'')+' '+(x.e.layer||'')).toLowerCase().indexOf(q)>=0))}
+function rvEditor(mo,sel){
+ const P0=PS(),all=rvAll(mo),ft=P0.rvft||'',S0=P0.rvs||{};
+ let L=rvFilter(mo);
+ const pages=Math.max(1,Math.ceil(L.length/RVPAGE)),pg=Math.min(P0.rvpg||0,pages-1),rows=L.slice(pg*RVPAGE,pg*RVPAGE+RVPAGE);
+ const nsel=Object.keys(S0).filter(k=>S0[k]).length,nrem=Object.keys(P0.rve||{}).filter(k=>P0.rve[k]&&P0.rve[k].off).length;
+ const num=(id,f,v,w)=>{(P0.rve=P0.rve||{})[id]=P0.rve[id]||{};return `<input type='number' step='any' data-t='n' style='width:${w||64}px;min-width:0' data-s6='dxq|rve.${id}.${f}' data-re='1' value='${esc(Math.round(v*10)/10)}'>`};
+ const row=x=>{const e=x.e,k=x.k,id=e.id;(P0.rve=P0.rve||{})[id]=P0.rve[id]||{};
+  const tsel=`<select data-s6='dxq|rve.${id}.k' data-re='1'>${rvFam(k).map(o=>`<option value='${o}'${o==k?' selected':''}>${P(RVR[o][0],RVR[o][1])}</option>`).join('')}</select>`;
+  let sz='',zz='';
+  if(k=='col'||k=='ftg'){sz=e.shape=='round'?'Ø '+num(id,'b',e.b):num(id,'b',e.b)+' × '+num(id,'h',e.h)+(e.shape=='poly'?' <small>('+P('شكل خاص','custom')+')</small>':'');zz=num(id,'z0',e.z0)+' → '+num(id,'z1',e.z1)}
+  else if(k=='beam'){sz=num(id,'w',e.w)+' × '+num(id,'d',e.d);zz=P('الأعلى ','top ')+num(id,'z1',e.z1)}
+  else if(k=='wall'){sz=P('سماكة ','t ')+num(id,'t',e.t);zz=num(id,'z0',e.z0)+' → '+num(id,'z1',e.z1)}
+  else{const ar=(Math.abs(rvArea(e.pts))-(e.holes||[]).reduce((a,h)=>a+Math.abs(rvArea(h)),0))/1e6;sz=P('سماكة ','t ')+num(id,'t',e.t)+' <small>'+F(ar,1)+P(' م²',' m²')+'</small>';zz=P('الأعلى ','top ')+num(id,'z1',e.z1)}
+  const lab=e.lab?`<small title='${P('مقاس اللافتة في الرسم','Size label in the drawing')}'> ${e.lab[0]}×${e.lab[1]}</small>`:'';
+  const mk=`<input type='text' style='width:64px;min-width:0' data-s6='dxq|rve.${id}.mk' data-re='1' value='${esc(e.mk||'')}'>`;
+  const on=!!S0[id],fo=P0.rvhl===id;
+  return `<tr${fo?" style='outline:2px solid #e8710a'":''}><td><input type='checkbox' data-rvop='rvk' data-rvx='${id}'${on?' checked':''}></td><td>${tsel}</td><td>${mk}${lab}</td><td>${rvDot(e)}</td><td><small>${esc(e.layer||'')}${e.manual?' ✎':''}</small></td><td>${sz}</td><td>${zz}</td><td><button type='button' data-rvop='rvf' data-rvx='${id}' title='${P('إبراز في المعاينة','Highlight in the preview')}'>◎</button><button type='button' data-rvop='rvdel' data-rvx='${id}' title='${P('استبعاد','Remove')}'>✕</button></td></tr>`};
+ const bi=(id,lab,w)=>`<label class='dqp'>${lab}<input type='number' step='any' id='${id}' style='width:${w||64}px;min-width:0'></label>`;
+ const typeOpts=RVPTS.concat(RVLNS).map(o=>`<option value='${o}'>${P(RVR[o][0],RVR[o][1])}</option>`).join('');
+ return `<div class='box'><h3>${T('العناصر وتعديلها','Elements and editing')}</h3>${NT('كل عنصر مأخوذ من الرسم كما هو. عدّل أي رقم أو نوع أو اللافتة (Mark)، أو استبعد العنصر. يمكنك تحديد عدة عناصر وتعديلها دفعة واحدة، أو الضغط على العنصر في مسقط النموذج لتحديده. التعديلات محفوظة مع المشروع وتدخل في IFC وJSON.','Every element is taken from the drawing as it is. Edit any number, type or Mark, or remove the element. Select several elements and edit them together, or click an element in the model plan to select it. Edits are saved with the project and go into the IFC and JSON.')}
+ <div class='xb'><label class='dqp'>${T('النوع','Type')}<select data-s6='dxq|rvft' data-re='1'><option value=''>${P('الكل','All')}</option>${Object.keys(RVR).map(o=>`<option value='${o}'${ft==o?' selected':''}>${P(RVR[o][0],RVR[o][1])}</option>`).join('')}</select></label>
+ <label class='dqp'>${T('بحث','Search')}<input type='text' style='width:110px;min-width:0' data-s6='dxq|rvq' data-re='1' value='${esc(P0.rvq||'')}'></label>
+ ${lvsel0(mo,sel)}</div>
+ ${all.length?`<div class='xb'><button type='button' data-a6='dxq|rvsa'>${T('تحديد الكل بالفلتر','Select all in filter')}</button><button type='button' data-a6='dxq|rvsn'>${T('إلغاء التحديد','Clear selection')}</button><span class='nt'>${T('المحدد: ','Selected: ')}<b>${nsel}</b> · ${T('المعروض: ','Shown: ')}${L.length}/${all.length}</span></div>
+ ${nsel?`<div class='box' style='background:rgba(232,113,10,.08)'><b>${T('تعديل المحدد دفعة واحدة','Edit the selection together')}</b><br>
+ <label class='dqp'>${T('النوع','Type')}<select id='rvb_k'><option value=''>—</option>${typeOpts}</select></label>${bi('rvb_b',P('عرض/قطر','b / Ø'))}${bi('rvb_h',P('عمق (عمود)','h (column)'))}${bi('rvb_w',P('عرض الجسر','beam w'))}${bi('rvb_d',P('عمق الجسر','beam d'))}${bi('rvb_t',P('سماكة','t'))}${bi('rvb_z0',P('منسوب الأسفل','z0'))}${bi('rvb_z1',P('منسوب الأعلى','z1'))}
+ <div class='xb'><button type='button' data-a6='dxq|rvb'>✔ ${T('تطبيق','Apply')}</button><button type='button' data-a6='dxq|rvbd'>✕ ${T('استبعاد المحدد','Remove selected')}</button><button type='button' data-a6='dxq|rvbr'>↺ ${T('إرجاع المحدد للأصل','Reset selected')}</button></div>${NT('الحقول الفارغة لا تتغير. العرض والعمق والسماكة تُطبَّق على ما يناسبها فقط (الأعمدة والقواعد، الجسور، الجدران والبلاطات).','Empty fields stay unchanged. Width, depth and thickness apply only to elements they suit (columns and footings, beams, walls and slabs).')}</div>`:''}
+ <div class='tbl'><table class='sm'><thead><tr><th></th><th>${T('النوع','Type')}</th><th>Mark</th><th>${T('الثقة','Conf.')}</th><th>${T('الطبقة','Layer')}</th><th>${T('المقاس (مم)','Size (mm)')}</th><th>${T('المنسوب (مم)','Level (mm)')}</th><th></th></tr></thead><tbody>${rows.map(row).join('')}</tbody></table></div>
+ <div class='xb'><button type='button' data-a6='dxq|rvpg|${pg-1}'${pg<=0?' disabled':''}>‹</button><span class='nt'>${pg+1} / ${pages}</span><button type='button' data-a6='dxq|rvpg|${pg+1}'${pg>=pages-1?' disabled':''}>›</button>${nrem?`<button type='button' data-a6='dxq|rvres'>↺ ${T('استعادة المستبعد ('+nrem+')','Restore removed ('+nrem+')')}</button>`:''}</div>`:NT('لا عناصر لعرضها. ارفع ملفات، أو أضف عناصر يدويًا بالأسفل.','Nothing to show. Upload files, or add elements by hand below.')}
+ <details><summary><b>${T('➕ إضافة عنصر يدويًا','➕ Add an element by hand')}</b></summary>
+ <p><label class='dqp'>${T('النوع','Type')}<select id='rva_k'>${typeOpts}</select></label><label class='dqp'>Mark<input type='text' id='rva_mk' style='width:70px;min-width:0'></label></p>
+ <p>${bi('rva_x','X (مم) / X')}${bi('rva_y','Y (مم) / Y')}${bi('rva_x1','X2 '+P('(جسر/جدار)','(beam/wall)'))}${bi('rva_y1','Y2 '+P('(جسر/جدار)','(beam/wall)'))}</p>
+ <p>${bi('rva_b',P('عرض/قطر','b / w'))}${bi('rva_h',P('عمق','h / d'))}${bi('rva_t',P('سماكة (جدار/بلاطة/قاعدة)','t (wall/slab/footing)'),80)}${bi('rva_ang',P('دوران°','angle°'))}${bi('rva_z0',P('منسوب الأسفل','z0'))}${bi('rva_z1',P('منسوب الأعلى','z1'))}</p>
+ ${NT('العمود والقاعدة: X وY مركز العنصر وعرض × عمق. الجسر: X,Y بداية وX2,Y2 نهاية وعرض × عمق ومنسوب الأعلى. الجدار: بداية ونهاية وسماكة ومنسوبان. البلاطة: مركز وعرض × عمق وسماكة ومنسوب الأعلى. كل الأرقام بالمليمتر بإحداثيات النموذج.','Column and footing: X,Y is the centre, with width × depth. Beam: X,Y start and X2,Y2 end, width × depth and the top level. Wall: start, end, thickness and two levels. Slab: centre, width × depth, thickness and top level. All numbers in millimetres in model coordinates.')}
+ <div class='xb'><button type='button' data-a6='dxq|rvadd'>➕ ${T('أضف','Add')}</button></div></details></div>`}
+function lvsel0(mo,sel){return `<label class='dqp'>${T('الطابق','Level')}<select data-s6='dxq|rvlv' data-re='1'><option value=''>${P('كل الطوابق','All levels')}</option>${mo.levels.map((l,i)=>`<option value='${i}'${String(sel)===String(i)?' selected':''}>${esc(l.name)}</option>`).join('')}</select></label>`}
+/* pick an element by clicking it in the model plan */
+document.addEventListener('click',e=>{const q=e.target&&e.target.closest?e.target.closest('[data-rvop]'):null;if(q){A6.dxq(q.getAttribute('data-rvop'),q.getAttribute('data-rvx'));return}const t=e.target&&e.target.closest?e.target.closest('[data-rvid]'):null;if(!t)return;const id=t.getAttribute('data-rvid'),P0=PS();P0.rvs=P0.rvs||{};P0.rvs[id]=!P0.rvs[id];P0.rvhl=P0.rvs[id]?id:null;rr6();toast6(P0.rvs[id]?P('حُدّد العنصر؛ عدّله من جدول العناصر','Element selected; edit it in the elements table'):P('أُلغي تحديد العنصر','Element deselected'))});
 /* ---------------- exports ---------------- */
 function title(){return (PS().pn?PS().pn+' — ':'')+P('كميات من مخططات DXF','Quantities from DXF drawings')}
 function fname(ext){const b=(PS().pn||'DXF').replace(/[\\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim().slice(0,40);return 'FABRUM '+b+' '+P('كميات','quantities')+' '+new Date().toISOString().slice(0,10)+'.'+ext}
@@ -11069,6 +11474,23 @@ function sheets(out){
 function csvStr(out){const rows=out.rows,m=[head()].concat(matrix(rows)),tt=totRow(rows),tot=['',P('المجموع','Total'),'','',''].concat(tt.map((x,j)=>r2(x,DEC[j])));m.push(tot);if((out.blk||[]).length){m.push([]);m.push(['',P('جدران بلوك من الـ3D (خارج مجموع الخرسانة)','Block walls from 3D (not in the concrete total)')]);const bm=matrix(out.blk);bm.forEach(x=>m.push(x));m.push(['',P('المجموع','Total'),'','','',r2(sum(out.blk,'L'),DEC[0]),r2(sum(out.blk,'A'),DEC[1]),r2(sum(out.blk,'V'),DEC[2]),r2(sum(out.blk,'N'),0)])}return '﻿'+m.map(r=>r.map(c=>{c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\r\n')}
 function prHtml(out){
  return `<h3>${esc(PS().pn||'')}</h3><p>${P('الملفات: ','Files: ')}${PS().ord.map(i=>esc(PS().files[i].fn)).join(' ، ')}</p>`+resHtml(out)}
+
+function rvDeliver(name,data,mime){
+ const old=document.getElementById('rvdl');if(old){try{URL.revokeObjectURL(old.getAttribute('data-u'))}catch(e){}old.remove()}
+ let url='';const blob=new Blob([data],{type:mime});try{url=URL.createObjectURL(blob)}catch(e){}
+ const kb=Math.max(1,Math.round(blob.size/1024)),box=document.createElement('div');box.id='rvdl';box.setAttribute('data-u',url);
+ box.style.cssText='position:fixed;left:8px;right:8px;bottom:70px;z-index:99999;max-width:520px;margin:0 auto;background:#fffdf5;border:2px solid #1f6f8b;border-radius:14px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:14px;line-height:1.7';
+ box.innerHTML="<b>"+P('الملف جاهز: ','File ready: ')+"</b><span dir='ltr'>"+esc(name)+"</span> <small>("+kb+" KB)</small><div style='margin:8px 0;display:flex;flex-wrap:wrap;gap:8px'>"+
+  "<a id='rvdl_a' style='padding:8px 12px;border-radius:10px;background:#1f6f8b;color:#fff;text-decoration:none'>⬇ "+P('تنزيل','Download')+"</a>"+
+  "<button type='button' id='rvdl_s' style='padding:8px 12px;border-radius:10px'>📤 "+P('مشاركة / حفظ','Share / Save')+"</button>"+
+  "<button type='button' id='rvdl_c' style='padding:8px 12px;border-radius:10px'>📋 "+P('نسخ المحتوى','Copy content')+"</button>"+
+  "<button type='button' id='rvdl_x' style='padding:8px 12px;border-radius:10px'>✕</button></div>"+
+  "<small>"+P('إذا لم يظهر الملف في التنزيلات فالمتصفح الذي تفتح به الصفحة يمنع التنزيل التلقائي: اضغط «تنزيل» أو «مشاركة»، أو افتح الصفحة بمتصفح عادي (Chrome أو Safari) بدل المعاينة داخل التطبيق.','If the file does not appear in your downloads, this browser blocks automatic downloads: press “Download” or “Share”, or open the page in a regular browser (Chrome or Safari) instead of an in-app preview.')+"</small>";
+ document.body.appendChild(box);const a=box.querySelector('#rvdl_a');if(url){a.href=url;a.download=name}else a.style.display='none';
+ box.querySelector('#rvdl_x').onclick=()=>{try{URL.revokeObjectURL(url)}catch(e){}box.remove()};
+ box.querySelector('#rvdl_c').onclick=async()=>{try{await navigator.clipboard.writeText(String(data));toast6(P('نُسخ المحتوى؛ الصقه في ملف نصي واحفظه بامتداد ','Content copied; paste it into a text file and save it as ')+name.split('.').pop())}catch(e){const t=document.createElement('textarea');t.value=String(data);t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();let ok=false;try{ok=document.execCommand('copy')}catch(x){}t.remove();toast6(ok?P('نُسخ المحتوى','Content copied'):P('تعذّر النسخ في هذا المتصفح','Copy is not available in this browser'))}};
+ box.querySelector('#rvdl_s').onclick=async()=>{try{const f=new File([blob],name,{type:mime});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:name});else if(navigator.share)await navigator.share({title:name,text:String(data).slice(0,200000)});else toast6(P('المشاركة غير متاحة هنا؛ استعمل «تنزيل» أو «نسخ المحتوى»','Sharing is not available here; use Download or Copy'))}catch(e){if(!e||e.name!='AbortError')toast6(P('تعذّرت المشاركة؛ استعمل «تنزيل» أو «نسخ المحتوى»','Sharing failed; use Download or Copy'))}};
+ return xSave(name,data,mime)}
 A6.dxq=function(op,i){
  const s=S(),P0=PS();
  if(op=='foc'){const n=layNames()[i];s.foc=s.foc==n?'':n;paintPreview();return}
@@ -11077,24 +11499,55 @@ A6.dxq=function(op,i){
   P0.ord.forEach(id=>{const f=P0.files[id];if(!f||f.inc===false||f.role=='3d'||!DQS[id])return;useFile(id);const fc=fac(),R=P0.rvr[id]=P0.rvr[id]||{};
    Object.keys(f.ls||{}).forEach(nm=>{const key=ck(nm);if(have.has(id+'|'+nm)||R[key])return;const r=rvGuess(nm,f.ls[nm],fc);if(r){R[key]=r;n++}})});
   useFile(cur);sv6();rr6();toast6(n?P('اقتُرح نوع لـ '+n+' طبقة؛ راجعها قبل التصدير','Suggested a type for '+n+' layer(s); review them before exporting'):P('لم أجد طبقات يمكن اقتراح نوع لها','No layers to suggest a type for'));return}
+ if(op=='rvcf'){const P0=PS();P0.rvcf=(P0.rvcf==i||!i)?'':i;P0.rvpg=0;sv6();rr6();return}
+ if(op=='rvwf'){const P0=PS();P0.rvwc=P0.rvwc==i?'':i;P0.rvpg=0;sv6();rr6();return}
+ if(op=='rvrep'){const mo=rvModel(rvCompute());rvDeliver(rvName('html').replace(/\.html$/,' تقرير.html'),rvRepHtml(mo),'text/html;charset=utf-8').then(ok=>{if(ok)toast6(P('تم تجهيز التقرير','Report ready'))});return}
+ if(op=='rvdup'){const P0=PS(),f=P0.files[i];if(f){f.dupKeep=!f.dupKeep;sv6();rr6()}return}
+ if(/^rv(k|f|del|sa|sn|b|bd|br|pg|res|add)$/.test(op)){const P0=PS();P0.rvs=P0.rvs||{};P0.rve=P0.rve||{};
+  const mo=()=>rvModel(rvCompute()),selIds=()=>Object.keys(P0.rvs).filter(k=>P0.rvs[k]),done=m=>{sv6();rr6();if(m)toast6(m)};
+  if(op=='rvk'){if(P0.rvs[i])delete P0.rvs[i];else P0.rvs[i]=true;done();return}
+  if(op=='rvf'){P0.rvhl=P0.rvhl===i?null:i;if(!P0.rvtab||P0.rvtab=='dwg')P0.rvtab='plan';done();return}
+  if(op=='rvdel'){if(/^x/.test(i))P0.rvx=(P0.rvx||[]).filter(x=>'x'+x.n!=i);else(P0.rve[i]=P0.rve[i]||{}).off=true;delete P0.rvs[i];if(P0.rvhl===i)P0.rvhl=null;done();return}
+  if(op=='rvsa'){rvFilter(mo()).forEach(x=>{P0.rvs[x.e.id]=true});done();return}
+  if(op=='rvsn'){P0.rvs={};P0.rvhl=null;done();return}
+  if(op=='rvpg'){P0.rvpg=Math.max(0,+i||0);done();return}
+  if(op=='rvres'){Object.keys(P0.rve).forEach(k=>{if(P0.rve[k])delete P0.rve[k].off});done(P('أُعيد المستبعد','Removed elements restored'));return}
+  if(op=='rvbd'){const ids=selIds();ids.forEach(id=>{if(/^x/.test(id))P0.rvx=(P0.rvx||[]).filter(x=>'x'+x.n!=id);else(P0.rve[id]=P0.rve[id]||{}).off=true});P0.rvs={};P0.rvhl=null;done(P('استُبعد '+ids.length+' عنصر','Removed '+ids.length+' element(s)'));return}
+  if(op=='rvbr'){const ids=selIds();ids.forEach(id=>{delete P0.rve[id]});done(P('أُرجع '+ids.length+' عنصر للأصل','Reset '+ids.length+' element(s)'));return}
+  if(op=='rvb'){const g=id=>{const e=document.getElementById(id);return e&&e.value!==''&&isFinite(+e.value)?+e.value:null},ks=document.getElementById('rvb_k'),nk=ks?ks.value:'';
+   const v={b:g('rvb_b'),h:g('rvb_h'),w:g('rvb_w'),d:g('rvb_d'),t:g('rvb_t'),z0:g('rvb_z0'),z1:g('rvb_z1')},ids=new Set(selIds());let n=0;
+   rvAll(mo()).forEach(x=>{const id=x.e.id;if(!ids.has(id))return;const o=P0.rve[id]=P0.rve[id]||{},k=x.k,pt=(k=='col'||k=='ftg');let ch=false;
+    if(nk&&rvFam(k).includes(nk)&&nk!=k){o.k=nk;ch=true}
+    if(pt){['b','h','z0'].forEach(q=>{if(v[q]!==null){o[q]=v[q];ch=true}})}
+    if(k=='beam'){['w','d'].forEach(q=>{if(v[q]!==null){o[q]=v[q];ch=true}})}
+    if(k=='wall'||k=='slab'||k=='lean'){if(v.t!==null){o.t=v.t;ch=true}}
+    if(k=='wall'&&v.z0!==null){o.z0=v.z0;ch=true}
+    if(v.z1!==null){o.z1=v.z1;ch=true}if(ch)n++});
+   done(P('عُدّل '+n+' عنصر','Edited '+n+' element(s)'));return}
+  if(op=='rvadd'){const g=id=>{const e=document.getElementById(id);return e&&e.value!==''&&isFinite(+e.value)?+e.value:null},k=document.getElementById('rva_k').value,mk=document.getElementById('rva_mk').value;
+   const x={k:k,mk:mk,cx:g('rva_x'),cy:g('rva_y'),x0:g('rva_x'),y0:g('rva_y'),x1:g('rva_x1'),y1:g('rva_y1'),b:g('rva_b'),h:g('rva_h'),w:g('rva_b'),d:g('rva_h'),t:g('rva_t'),ang:g('rva_ang')||0,z0:g('rva_z0'),z1:g('rva_z1')};
+   const need={col:['cx','cy','b','h','z0','z1'],ftg:['cx','cy','b','h','z0','z1'],beam:['x0','y0','x1','y1','w','d','z1'],wall:['x0','y0','x1','y1','t','z0','z1'],slab:['cx','cy','b','h','t','z1'],lean:['cx','cy','b','h','t','z1']}[k]||[];
+   const miss=need.filter(q=>x[q]===null);if(miss.length){toast6(P('أكمل الحقول: ','Fill in: ')+miss.join(' ، '));return}
+   P0.rvx=P0.rvx||[];P0.rvxn=(P0.rvxn||0)+1;x.n=P0.rvxn;if(k=='ftg')x.t=x.z1-x.z0;P0.rvx.push(x);done(P('أُضيف العنصر','Element added'));return}
+ }
  if(op=='rvtab'){PS().rvtab=i;sv6();rr6();return}
  if(op=='r3'){if(i=='in')rv3S.zoom=Math.min(8,rv3S.zoom*1.25);else if(i=='out')rv3S.zoom=Math.max(.3,rv3S.zoom/1.25);else{rv3S.zoom=1;rv3S.yaw=-0.7;rv3S.pitch=0.55}rv3Sched();return}
  if(op=='zi'){zoom(1/1.4);return}
  if(op=='zo'){zoom(1.4);return}
  if(op=='fit'){if(DQ){fit();setVB()}return}
  if(op=='sel'){if(P0.files[i]){useFile(i);if(DQ&&S().twU!=unitKey())twAll();rr6()}return}
- if(op=='del'){const j=P0.ord.indexOf(i);if(j<0)return;P0.ord.splice(j,1);delete P0.files[i];delete DQS[i];P0.rb.rows=P0.rb.rows.filter(r=>r.fid!==i);P0.cur=P0.ord[0]||0;DQ=DQS[P0.cur]||null;sv6();rr6();return}
+ if(op=='del'){const j=P0.ord.indexOf(i);if(j<0)return;P0.ord.splice(j,1);{const gk0=P0.files[i]&&P0.files[i].gk;if(gk0&&!P0.ord.some(j=>P0.files[j]&&P0.files[j].gk==gk0))gDel(gk0)}delete P0.files[i];delete DQS[i];GTRY.delete(i);P0.rb.rows=P0.rb.rows.filter(r=>r.fid!==i);P0.cur=P0.ord[0]||0;DQ=DQS[P0.cur]||null;sv6();rr6();return}
  if(op=='rbx'){rbExtract();rr6();return}
  if(op=='rba'){rbS().rows.push({on:true,src:'manual',t:'',n:'',d:12,L:'',k:1,nt:''});rr6();return}
  if(op=='rbd'){rbS().rows.splice(i,1);rr6();return}
  if(op=='ifc'||op=='rvj'||op=='rvp'){
-  if(op=='rvp'){xSave('FABRUM_Revit_Dynamo.py',RV_PY,'text/x-python;charset=utf-8').then(ok=>{if(ok)toast6(P('تم تجهيز سكربت Dynamo','Dynamo script ready'))});return}
+  if(op=='rvp'){rvDeliver('FABRUM_Revit_Dynamo.py',RV_PY,'text/x-python;charset=utf-8').then(ok=>{if(ok)toast6(P('تم تجهيز سكربت Dynamo','Dynamo script ready'))});return}
   const mo=rvModel(rvCompute()),n=mo.columns.length+mo.beams.length+mo.slabs.length+mo.footings.length+mo.walls.length+mo.lean.length;
   if(!n&&rvMissing().length){toast6(P('الملفات محفوظة بدون رسم: أعد رفعها ثم صدّر.','The files were saved without the drawing: upload them again, then export.'));return}
   if(!n){toast6(P('لا توجد عناصر إنشائية قابلة للتصدير: تحتاج أعمدة أو جسورًا أو بلاطات أو قواعد من الرسم.','No structural elements to export: the drawing needs columns, beams, slabs or footings.'));return}
   const nt=mo.notes.typical?P(' · ملاحظة: '+mo.notes.typical+' عنصرًا يمثل طوابق متكررة ويُصدَّر مرة واحدة',' · note: '+mo.notes.typical+' elements stand for typical floors and are exported once'):'';
-  if(op=='ifc'){xSave(rvName('ifc'),ifcBuild(mo),'application/octet-stream').then(ok=>{if(ok)toast6(rvSummary(mo)+nt)});return}
-  xSave(rvName('json'),JSON.stringify(mo),'application/json;charset=utf-8').then(ok=>{if(ok)toast6(rvSummary(mo)+nt)});return}
+  if(op=='ifc'){rvDeliver(rvName('ifc'),ifcBuild(mo),'application/octet-stream').then(ok=>{if(ok)toast6(rvSummary(mo)+nt)});return}
+  rvDeliver(rvName('json'),JSON.stringify(mo),'application/json;charset=utf-8').then(ok=>{if(ok)toast6(rvSummary(mo)+nt)});return}
  const out=computeAll(),rows=out.rows;
  if(!rows.length){toast6(P('لا توجد كميات: اختر نوع الحساب لطبقة واحدة على الأقل.','No quantities: choose a calculation for at least one layer.'));return}
  if(op=='xlsx'){const data=X6.xlsx(sheets(out),EN()?false:true);xSave(fname('xlsx'),data,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').then(ok=>{if(ok)toast6(P('تم تجهيز ملف Excel','Excel file ready'))});return}
@@ -11105,6 +11558,28 @@ A6.dxq=function(op,i){
    Q.rows.push({c:u=='kg'?'حديد':u=='m3'?'خرسانة':'أعمال من مخطط',d:r.desc,loc:(r.lvl||r.layer),L:'',B:'',H:'',n:'',u:u,q:+(+q).toFixed(3),w:'',p:'',nt:r.fn||'DXF'})});
   sv6();toast6(P('أُضيفت '+rows.length+' بنود إلى سجل الكميات','Added '+rows.length+' items to the quantity register'));act('site:qreg');return}
 };
+
+/* ---------------- keep the drawings in this browser (IndexedDB) so they survive a reload ---------------- */
+const GDB='fabrum-dxq-geo';
+const gOpen=()=>new Promise((ok,no)=>{try{const q=indexedDB.open(GDB,1);q.onupgradeneeded=()=>q.result.createObjectStore('g');q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error);q.onblocked=()=>no(new Error('blocked'))}catch(e){no(e)}});
+const gPut=async(k,v)=>{try{const d=await gOpen();await new Promise((ok,no)=>{const t=d.transaction('g','readwrite');t.objectStore('g').put(v,k);t.oncomplete=ok;t.onerror=()=>no(t.error);t.onabort=()=>no(t.error)});d.close()}catch(e){}};
+const gGet=async k=>{try{const d=await gOpen();const v=await new Promise((ok,no)=>{const q=d.transaction('g','readonly').objectStore('g').get(k);q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)});d.close();return v}catch(e){return undefined}};
+const gDel=async k=>{try{const d=await gOpen();await new Promise(ok=>{const t=d.transaction('g','readwrite');t.objectStore('g').delete(k);t.oncomplete=ok;t.onerror=ok;t.onabort=ok});d.close()}catch(e){}};
+const GTRY=new Set();let GBUSY=false;
+async function dxqRestore(){
+ if(GBUSY)return;const P0=PS();if(!P0||!P0.ord)return;
+ const miss=P0.ord.filter(id=>P0.files[id]&&P0.files[id].gk&&!DQS[id]&&!GTRY.has(id));if(!miss.length)return;
+ GBUSY=true;let n=0;const cur=P0.cur;
+ try{for(const id of miss){GTRY.add(id);const txt=await gGet(P0.files[id].gk);if(typeof txt!='string')continue;
+   let r;try{r=parseDXF(txt)}catch(x){continue}if(!r||!r.st||!r.st.ents)continue;
+   DQS[id]={paths:r.paths,sg:r.sg,pg:r.pg,lp:r.lp,ins:r.ins,tx:r.tx,c3:r.c3,st:r.st,vb:null};
+   useFile(id);try{twAll()}catch(x){}n++}}
+ finally{GBUSY=false;useFile(P0.files[cur]?cur:(P0.ord[0]||0))}
+ if(n){rr6();toast6(P('أُعيدت '+n+' ملف(ات) رسم من ذاكرة المتصفح','Restored '+n+' drawing file(s) from this browser'))}}
+{const _a=SITE.dxq,_b=SITE.dxr;
+ if(_a)SITE.dxq=function(){setTimeout(dxqRestore,0);return _a.apply(this,arguments)};
+ if(_b)SITE.dxr=function(){setTimeout(dxqRestore,0);return _b.apply(this,arguments)};
+ setTimeout(dxqRestore,900)}
 /* ---------------- file import (several files) ---------------- */
 const rdTxt=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result));r.onerror=no;r.readAsText(f)});
 document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.dxqimp)return;const fs=[...(t.files||[])];t.value='';if(!fs.length)return;
@@ -11116,12 +11591,14 @@ document.addEventListener('change',async e=>{const t=e.target;if(!t||!t.dataset|
   if(!/\.dxf$/i.test(f.name)){msg.push(f.name+': '+P('ليس DXF','not a DXF'));continue}
   let txt;try{txt=await rdTxt(f)}catch(x){msg.push(f.name+': '+P('تعذرت القراءة','could not be read'));continue}
   if(/^AutoCAD Binary DXF/.test(txt)){msg.push(f.name+': '+P('DXF ثنائي غير مدعوم؛ احفظه ASCII','binary DXF is not supported; save as ASCII'));continue}
+  const gk=f.name+'|'+f.size+'|'+(f.lastModified||0);gPut(gk,txt);let hk=txt.length+':';{let a=2166136261;for(let q=0;q<txt.length;q+=7){a^=txt.charCodeAt(q);a=Math.imul(a,16777619)}hk+=(a>>>0).toString(36)}
   let r;try{r=parseDXF(txt)}catch(x){msg.push(f.name+': '+P('ملف تالف','corrupt file'));continue}
   if(!r.st.ents){msg.push(f.name+': '+P('لا عناصر هندسية (فكّك الكتل بالأمر EXPLODE)','no geometry (EXPLODE the blocks)'));continue}
   let id=P0.ord.find(i=>P0.files[i].fn==f.name);
   if(id===undefined){id=++P0.nid;P0.ord.push(id)}
   const L2=Object.values(r.ls).reduce((a,o)=>a+o.len,0),c3n=Object.values(r.c3).reduce((a,b)=>a+b.filter(x=>x[12]=='m'&&x[6]===0).length,0);
-  P0.files[id]={id:id,fn:f.name,role:c3n>0?'3d':'plan',lvl:f.name.replace(/\.dxf$/i,''),mult:1,inc:true,zb:'',zt:'',sb:'',ox:'',oy:'',hu:r.hu,u:'auto',ext:r.ext,ls:r.ls,cfg:{},foc:'',rbml:'',cache:null};
+  P0.files[id]={id:id,fn:f.name,role:c3n>0?'3d':'plan',lvl:f.name.replace(/\.dxf$/i,''),mult:1,inc:true,zb:'',zt:'',sb:'',ox:'',oy:'',hu:r.hu,u:'auto',ext:r.ext,ls:r.ls,cfg:{},foc:'',rbml:'',cache:null,gk:gk,hk:hk};
+  {const o=P0.ord.find(j=>j!==id&&P0.files[j]&&P0.files[j].hk==hk&&!P0.files[j].dup);if(o!==undefined){P0.files[id].dup=P0.files[o].fn;msg.push(f.name+': '+P('مطابق لـ «'+P0.files[o].fn+'» في المحتوى؛ سيُستبعد من تصدير ريفت (وانتبه من تكراره في الكميات)','identical in content to “'+P0.files[o].fn+'”; it will be left out of the Revit export (beware of counting it twice in the quantities)'))}}
   DQS[id]={paths:r.paths,sg:r.sg,pg:r.pg,lp:r.lp,ins:r.ins,tx:r.tx,c3:r.c3,st:r.st,vb:null};
   useFile(id);twAll();if(first===null)first=id;nok++;
   if(!P0.pn)P0.pn=f.name.replace(/\.dxf$/i,'')}
