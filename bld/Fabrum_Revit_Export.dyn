@@ -1,0 +1,89 @@
+{
+  "Uuid": "cad5e61d-d307-4356-b33e-caf690e9de72",
+  "IsCustomNode": false,
+  "Description": "FABRUM: export bearing-wall model to JSON (read only)",
+  "Name": "Fabrum_Revit_Export",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "# FABRUM - export bearing-wall model to JSON for the FABRUM design engine\n# Revit 2022 and later. Reads only, does not change the model.\nimport clr, json, os, math\nclr.AddReference('RevitServices')\nfrom RevitServices.Persistence import DocumentManager\nclr.AddReference('RevitAPI')\nfrom Autodesk.Revit.DB import *\nfrom Autodesk.Revit.DB.Architecture import Stairs\n\ndoc = DocumentManager.Instance.CurrentDBDocument\nFT = 0.3048\nlog = []\n\ndef m(v):\n    return round(v * FT, 4)\n\ndef eid(x):\n    try:\n        return str(x.Value)\n    except:\n        return str(x.IntegerValue)\n\ndef name_of(e):\n    try:\n        return e.Name\n    except:\n        try:\n            return Element.Name.GetValue(e)\n        except:\n            return ''\n\ndef demolished(e):\n    try:\n        p = e.get_Parameter(BuiltInParameter.PHASE_DEMOLISHED)\n        return p is not None and p.AsElementId() != ElementId.InvalidElementId\n    except:\n        return False\n\ndef pdouble(e, bips, names):\n    for holder in [e, doc.GetElement(e.GetTypeId()) if e.GetTypeId() != ElementId.InvalidElementId else None]:\n        if holder is None:\n            continue\n        for b in bips:\n            try:\n                p = holder.get_Parameter(b)\n                if p is not None and p.HasValue and p.AsDouble() > 0:\n                    return p.AsDouble()\n            except:\n                pass\n        for n in names:\n            try:\n                p = holder.LookupParameter(n)\n                if p is not None and p.HasValue and p.AsDouble() > 0:\n                    return p.AsDouble()\n            except:\n                pass\n    return 0.0\n\ndef bip(n):\n    try:\n        return getattr(BuiltInParameter, n)\n    except:\n        return None\n\ndef bips(*names):\n    return [b for b in [bip(n) for n in names] if b is not None]\n\ndef loops_of(host):\n    out = []\n    try:\n        for r in HostObjectUtils.GetTopFaces(host):\n            face = host.GetGeometryObjectFromReference(r)\n            for cl in face.GetEdgesAsCurveLoops():\n                pts = []\n                for c in cl:\n                    t = list(c.Tessellate())\n                    for q in t[:-1]:\n                        pts.append([m(q.X), m(q.Y)])\n                if len(pts) >= 3:\n                    out.append(pts)\n    except Exception as ex:\n        log.append('loops: ' + str(ex))\n    if not out:\n        bb = host.get_BoundingBox(None)\n        out = [[[m(bb.Min.X), m(bb.Min.Y)], [m(bb.Max.X), m(bb.Min.Y)], [m(bb.Max.X), m(bb.Max.Y)], [m(bb.Min.X), m(bb.Max.Y)]]]\n    def area(p):\n        a = 0.0\n        for i in range(len(p)):\n            j = (i + 1) % len(p)\n            a += p[i][0] * p[j][1] - p[j][0] * p[i][1]\n        return abs(a) / 2.0\n    out.sort(key=area, reverse=True)\n    return out\n\ntry:\n    data = {'meta': {'project': doc.Title, 'revit': str(doc.Application.VersionNumber), 'units': 'm', 'tool': 'fabrum-export-3'},\n            'levels': [], 'walls': [], 'openings': [], 'floors': [], 'rafts': [], 'strips': [], 'stairs': [], 'columns': [], 'beams': []}\n\n    for lv in FilteredElementCollector(doc).OfClass(Level):\n        data['levels'].append({'name': name_of(lv), 'elev': m(lv.Elevation)})\n    data['levels'].sort(key=lambda d: d['elev'])\n\n    wallinfo = {}\n    for w in FilteredElementCollector(doc).OfClass(Wall):\n        try:\n            if demolished(w):\n                continue\n            try:\n                if w.WallType.Kind == WallKind.Curtain or w.IsStackedWall:\n                    continue\n            except:\n                pass\n            loc = w.Location\n            if not isinstance(loc, LocationCurve):\n                continue\n            c = loc.Curve\n            p0 = c.GetEndPoint(0)\n            p1 = c.GetEndPoint(1)\n            bb = w.get_BoundingBox(None)\n            if bb is None:\n                continue\n            st = False\n            try:\n                sp = w.get_Parameter(BuiltInParameter.WALL_STRUCTURAL_SIGNIFICANT)\n                st = sp is not None and sp.AsInteger() == 1\n            except:\n                pass\n            wid = eid(w.Id)\n            d = {'id': wid, 'x1': m(p0.X), 'y1': m(p0.Y), 'x2': m(p1.X), 'y2': m(p1.Y), 'base': m(bb.Min.Z), 'height': m(bb.Max.Z - bb.Min.Z),\n                 'thk': m(w.Width), 'type': name_of(w), 'structural': st}\n            if not isinstance(c, Line):\n                d['curved'] = True\n            data['walls'].append(d)\n            wallinfo[wid] = (p0, p1, bb.Min.Z)\n        except Exception as ex:\n            log.append('wall: ' + str(ex))\n\n    for cat, kind in [(BuiltInCategory.OST_Doors, 'door'), (BuiltInCategory.OST_Windows, 'window')]:\n        for fi in FilteredElementCollector(doc).OfCategory(cat).OfClass(FamilyInstance):\n            try:\n                if demolished(fi) or fi.Host is None:\n                    continue\n                hid = eid(fi.Host.Id)\n                if hid not in wallinfo:\n                    continue\n                p0, p1, zb = wallinfo[hid]\n                lp = fi.Location\n                if not isinstance(lp, LocationPoint):\n                    continue\n                pt = lp.Point\n                L = p0.DistanceTo(p1)\n                pos = ((pt.X - p0.X) * (p1.X - p0.X) + (pt.Y - p0.Y) * (p1.Y - p0.Y)) / L\n                if kind == 'door':\n                    wd = pdouble(fi, bips('DOOR_WIDTH', 'FAMILY_WIDTH_PARAM', 'FAMILY_ROUGH_WIDTH_PARAM', 'GENERIC_WIDTH'), ['Width', 'Rough Width'])\n                    ht = pdouble(fi, bips('DOOR_HEIGHT', 'FAMILY_HEIGHT_PARAM', 'FAMILY_ROUGH_HEIGHT_PARAM', 'GENERIC_HEIGHT'), ['Height', 'Rough Height'])\n                else:\n                    wd = pdouble(fi, bips('WINDOW_WIDTH', 'FAMILY_WIDTH_PARAM', 'FAMILY_ROUGH_WIDTH_PARAM', 'GENERIC_WIDTH'), ['Width', 'Rough Width'])\n                    ht = pdouble(fi, bips('WINDOW_HEIGHT', 'FAMILY_HEIGHT_PARAM', 'FAMILY_ROUGH_HEIGHT_PARAM', 'GENERIC_HEIGHT'), ['Height', 'Rough Height'])\n                if wd <= 0 or ht <= 0:\n                    log.append('opening without size: ' + eid(fi.Id))\n                    continue\n                sill = 0.0\n                try:\n                    sp = fi.get_Parameter(BuiltInParameter.INSTANCE_SILL_HEIGHT_PARAM)\n                    lev = doc.GetElement(fi.LevelId)\n                    sill = (lev.Elevation if lev is not None else zb) + (sp.AsDouble() if sp is not None else 0.0) - zb\n                except:\n                    pass\n                data['openings'].append({'id': eid(fi.Id), 'wall': hid, 'kind': kind, 'width': m(wd), 'height': m(ht), 'sill': max(0.0, m(sill)), 'pos': m(pos)})\n            except Exception as ex:\n                log.append('opening: ' + str(ex))\n\n    skipped = 0\n    for fl in FilteredElementCollector(doc).OfClass(Floor):\n        try:\n            if demolished(fl):\n                continue\n            bb = fl.get_BoundingBox(None)\n            if bb is None:\n                continue\n            th = pdouble(fl, bips('FLOOR_ATTR_THICKNESS_PARAM', 'FLOOR_ATTR_DEFAULT_THICKNESS_PARAM'), ['Thickness', 'Default Thickness'])\n            if th <= 0:\n                th = bb.Max.Z - bb.Min.Z\n            d = {'id': eid(fl.Id), 'elev': m(bb.Max.Z), 'thk': m(th), 'type': name_of(fl), 'loops': loops_of(fl)}\n            isf = False\n            try:\n                isf = eid(fl.Category.Id) == str(int(BuiltInCategory.OST_StructuralFoundation))\n            except:\n                try:\n                    isf = fl.Category.Name in ['Structural Foundations']\n                except:\n                    pass\n            if isf:\n                data['rafts'].append(d)\n            elif th * FT >= 0.10:\n                try:\n                    lev = doc.GetElement(fl.LevelId)\n                    d['levelName'] = name_of(lev) if lev is not None else ''\n                except:\n                    pass\n                data['floors'].append(d)\n            else:\n                skipped += 1\n        except Exception as ex:\n            log.append('floor: ' + str(ex))\n    if skipped:\n        log.append('thin floors skipped (finish layers): ' + str(skipped))\n\n    try:\n        for wf in FilteredElementCollector(doc).OfClass(WallFoundation):\n            try:\n                hid = eid(wf.WallId)\n                bb = wf.get_BoundingBox(None)\n                wd = pdouble(wf, bips('CONTINUOUS_FOOTING_WIDTH', 'STRUCTURAL_FOUNDATION_WIDTH'), ['Width'])\n                th = pdouble(wf, bips('STRUCTURAL_FOUNDATION_THICKNESS'), ['Foundation Thickness', 'Thickness'])\n                if th <= 0 and bb is not None:\n                    th = bb.Max.Z - bb.Min.Z\n                if wd <= 0 and bb is not None:\n                    wd = min(bb.Max.X - bb.Min.X, bb.Max.Y - bb.Min.Y)\n                data['strips'].append({'id': eid(wf.Id), 'wall': hid, 'width': m(wd), 'thk': m(th)})\n            except Exception as ex:\n                log.append('strip: ' + str(ex))\n    except Exception as ex:\n        log.append('strips: ' + str(ex))\n\n    for st in FilteredElementCollector(doc).OfClass(Stairs):\n        try:\n            if demolished(st):\n                continue\n            bb = st.get_BoundingBox(None)\n            tread = st.ActualTreadDepth\n            d = {'id': eid(st.Id), 'base': m(bb.Min.Z), 'top': m(bb.Max.Z), 'riser': m(st.ActualRiserHeight), 'tread': m(tread), 'bbox': [m(bb.Min.X), m(bb.Min.Y), m(bb.Max.X), m(bb.Max.Y)], 'runs': [], 'landings': []}\n            wmax = 0.0\n            for rid in st.GetStairsRuns():\n                r = doc.GetElement(rid)\n                n = r.ActualRisersNumber\n                t = r.ActualTreadsNumber\n                wmax = max(wmax, r.ActualRunWidth)\n                d['runs'].append({'risers': int(n), 'length': m(t * tread), 'width': m(r.ActualRunWidth)})\n            for lid in st.GetStairsLandings():\n                l = doc.GetElement(lid)\n                lb = l.get_BoundingBox(None)\n                a = lb.Max.X - lb.Min.X\n                b = lb.Max.Y - lb.Min.Y\n                d['landings'].append({'length': m(min(a, b)), 'width': m(max(a, b))})\n            d['width'] = m(wmax)\n            if d['runs']:\n                data['stairs'].append(d)\n        except Exception as ex:\n            log.append('stair: ' + str(ex))\n\n    # concrete columns (vertical) and beams (horizontal). Sizes come from the element's bounding box, so a rotated\n    # rectangular column still gets its real plan dimensions; members that are not concrete are skipped.\n    def concrete(e):\n        try:\n            t = str(e.StructuralMaterialType)\n            return ('Concrete' in t) or ('Undefined' in t) or ('Other' in t)\n        except:\n            return True\n\n    for cat in ['OST_StructuralColumns', 'OST_Columns']:\n        try:\n            for c in FilteredElementCollector(doc).OfCategory(getattr(BuiltInCategory, cat)).WhereElementIsNotElementType():\n                try:\n                    if demolished(c):\n                        continue\n                    if not concrete(c):\n                        log.append('column skipped (not concrete): ' + eid(c.Id))\n                        continue\n                    bb = c.get_BoundingBox(None)\n                    if bb is None:\n                        continue\n                    try:\n                        if c.IsSlantedColumn:\n                            log.append('slanted column skipped: ' + eid(c.Id))\n                            continue\n                    except:\n                        pass\n                    b = bb.Max.X - bb.Min.X\n                    h = bb.Max.Y - bb.Min.Y\n                    data['columns'].append({'id': eid(c.Id), 'x': m((bb.Min.X + bb.Max.X) / 2.0), 'y': m((bb.Min.Y + bb.Max.Y) / 2.0), 'base': m(bb.Min.Z), 'top': m(bb.Max.Z), 'b': m(b), 'h': m(h), 'type': name_of(c)})\n                except Exception as ex:\n                    log.append('column: ' + str(ex))\n        except Exception as ex:\n            log.append('columns: ' + str(ex))\n\n    try:\n        for b in FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_StructuralFraming).WhereElementIsNotElementType():\n            try:\n                if demolished(b):\n                    continue\n                if not concrete(b):\n                    log.append('beam skipped (not concrete): ' + eid(b.Id))\n                    continue\n                loc = b.Location\n                if not isinstance(loc, LocationCurve) or not isinstance(loc.Curve, Line):\n                    log.append('beam skipped (not a straight line): ' + eid(b.Id))\n                    continue\n                p0 = loc.Curve.GetEndPoint(0)\n                p1 = loc.Curve.GetEndPoint(1)\n                if abs(p1.Z - p0.Z) > 0.5:\n                    log.append('sloped beam skipped: ' + eid(b.Id))\n                    continue\n                bb = b.get_BoundingBox(None)\n                if bb is None:\n                    continue\n                dx = abs(p1.X - p0.X)\n                dy = abs(p1.Y - p0.Y)\n                wd = pdouble(b, [], ['b', 'Width', 'bf'])\n                if wd <= 0:\n                    wd = (bb.Max.Y - bb.Min.Y) if dx >= dy else (bb.Max.X - bb.Min.X)\n                data['beams'].append({'id': eid(b.Id), 'x1': m(p0.X), 'y1': m(p0.Y), 'x2': m(p1.X), 'y2': m(p1.Y), 'elev': m(bb.Max.Z), 'b': m(wd), 'h': m(bb.Max.Z - bb.Min.Z), 'type': name_of(b)})\n            except Exception as ex:\n                log.append('beam: ' + str(ex))\n    except Exception as ex:\n        log.append('beams: ' + str(ex))\n\n    path = None\n    try:\n        if IN[0]:\n            path = str(IN[0])\n    except:\n        pass\n    if not path:\n        home = os.environ.get('USERPROFILE') or os.path.expanduser('~')\n        folder = os.path.join(home, 'Desktop')\n        if not os.path.isdir(folder):\n            folder = home\n        safe = ''.join([ch if (ch.isalnum() or ch in '-_ ') else '_' for ch in doc.Title])\n        path = os.path.join(folder, safe + '_fabrum.json')\n    f = open(path, 'w')\n    f.write(json.dumps(data, ensure_ascii=True))\n    f.close()\n    OUT = ['SAVED: ' + path,\n           'walls: %d, openings: %d, floors: %d, rafts: %d, strip footings: %d, stairs: %d, columns: %d, beams: %d' % (len(data['walls']), len(data['openings']), len(data['floors']), len(data['rafts']), len(data['strips']), len(data['stairs']), len(data['columns']), len(data['beams'])),\n           'notes: ' + ('; '.join(log) if log else 'none')]\nexcept Exception as e:\n    import traceback\n    OUT = 'ERROR: ' + str(e) + '\\n' + traceback.format_exc()",
+      "Engine": "CPython3",
+      "EngineName": "CPython3",
+      "VariableInputPorts": true,
+      "Id": "04c8b283d89540ac8a19a64cd190d361",
+      "Inputs": [
+        {
+          "Id": "a5548732415a4f84a1fc4ae470bf3ace",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "ada4e352216d4179ae1ee22678baea01",
+          "Name": "OUT",
+          "Description": "Result of the python script",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "Runs an embedded Python script."
+    }
+  ],
+  "Connectors": [],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "EnableLaceByDefault": true,
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.10.1.3976",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "Background Preview",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "NodeViews": [
+      {
+        "Name": "FABRUM Export (Python)",
+        "ShowGeometry": true,
+        "Id": "04c8b283d89540ac8a19a64cd190d361",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 250.0,
+        "Y": 100.0
+      }
+    ],
+    "Annotations": [],
+    "X": -100.0,
+    "Y": -50.0,
+    "Zoom": 1.0
+  }
+}

@@ -11947,7 +11947,9 @@ window.FABRUM_DXQ={all:computeAll,state:PS,geo:id=>DQS[id],c3:()=>C3C,dbg:{dropG
     dx.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><b><span class="la">تحويل المخطط إلى ريفت</span><span class="le">Drawing to Revit</span></b><span><span class="la">من DXF/3D إلى نموذج ريفت (IFC أو Dynamo): أعمدة وجسور وبلاطات وجدران وسلالم</span><span class="le">DXF/3D to a Revit model (IFC or Dynamo): columns, beams, slabs, walls, stairs</span></span>';by['site:dxr']=dx}
    if(!by['site:cad']){var cd=D.createElement('button');cd.className='card';cd.dataset.a='site:cad';
     cd.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11a2.1 2.1 0 0 0-3-3L5 16z"/><path d="M14 7l3 3M3 7h4M5 5v4"/></svg><b><span class="la">رسم المخططات</span><span class="le">Drawing board</span></b><span><span class="la">ارسم مخططك بأدوات مثل الأوتوكاد وصدّره DXF أو PDF</span><span class="le">Draw your plan with AutoCAD-style tools, export DXF or PDF</span></span>';by['site:cad']=cd}
-   ['dsg','smd','site:cad','qhub','site:dxr','site:sched','sec:survey'].forEach(function(a){if(by[a]){wrap(by[a]);ut.appendChild(by[a])}});
+   if(!by['site:bld']){var bl=D.createElement('button');bl.className='card';bl.dataset.a='site:bld';
+    bl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/><path d="M5 12h14"/></svg><b><span class="la">تصميم بناية</span><span class="le">Building design</span></b><span><span class="la">من موديل Revit: تحليل البناية كاملة وتصميمها وتقرير ومخططات وجدول حديد</span><span class="le">From a Revit model: whole-building analysis and design, report, drawings and bar schedule</span></span>';by['site:bld']=bl}
+   ['site:bld','dsg','smd','site:cad','qhub','site:dxr','site:sched','sec:survey'].forEach(function(a){if(by[a]){wrap(by[a]);ut.appendChild(by[a])}});
    ['map','guide'].forEach(function(a){if(by[a]){wrap(by[a]);us.appendChild(by[a])}});
    var more=D.createElement('details');more.className='um';
    more.innerHTML='<summary><span class="la">المزيد من الأقسام</span><span class="le">More sections</span></summary>';
@@ -14734,6 +14736,55 @@ R6.cad=mount;
 /* menu + home card */
 (function reg(){try{const MS=window.MS37;if(MS&&!MS.some(s=>s[2].some(y=>y[0]==='site:cad'))){const sec=MS.find(s=>s[2].some(y=>y[0]==='smd'))||MS[0];sec[2].splice(1,0,['site:cad','رسم المخططات (أداة رسم مثل الأوتوكاد)','cad draw drawing autocad dxf line polyline layers dimension رسم مخطط اوتوكاد رسم هندسي'])}}catch(e){}})();
 window.FCAD={toDXF2000:()=>toDXF2000({units:ST.units,layers:ST.layers,cur:ST.cur,th:ST.th,ents:ST.ents,blocks:ST.blocks,ltscale:ST.ltscale}),addImageSrc,ST,OPT,H,runCmd,submit,undo,redo,fit,toDXF:()=>toDXF({units:ST.units,layers:ST.layers,ents:ST.ents,blocks:ST.blocks,ltscale:ST.ltscale}),CMDS,HOPT,CLIP,copyClip,purge,hatchModal,loopsAt,blockModal,symBlock,SYM_DEF,editTextEnt,textDialog,colorModal,buildSVG,doc:()=>docOut(),openText:t=>{const d=parseDXF(t);return d},get cmd(){return cmd},P,s2w,w2s,pickAt,snapAt,updateCursor,selectAll,addLayer,A,xAction,windowSelect,msg};
+})();
+
+
+/* ================= «تصميم بناية»: the structural analysis & design engine (bld/engine.html, bld/engine-en.html) in a frame ================= */
+(function(){
+const D=document,$=s=>D.querySelector(s),B=window.B37,isEn=()=>D.documentElement.lang=='en',EV='2';
+try{Object.assign(EN_D,{'تصميم بناية كاملة من موديل Revit (تحليل وتصميم)':'Whole-building design from a Revit model (analysis and design)','تصميم بناية':'Building design','تجريبي':'Beta'})}catch(e){}
+const src=()=>'bld/'+(isEn()?'engine-en.html':'engine.html')+'?v='+EV;
+const css=`.bld .bldb{display:inline-block;vertical-align:middle;font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;background:var(--acc);color:var(--card);margin-inline-start:6px}
+.bld .bldw{border:1px solid var(--line);border-inline-start:4px solid #b5622a;background:var(--card);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
+.bld details.bldh{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:6px 12px;margin:10px 0}.bld details.bldh summary{cursor:pointer;font-weight:700;padding:4px 0}.bld details.bldh ol{margin:6px 0 4px;padding-inline-start:22px;line-height:1.9}.bld details.bldh code{direction:ltr;unicode-bidi:embed}
+.bld .bldtb{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.bld .bldtb a,.bld .bldtb button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 14px;font:inherit;font-weight:600;text-decoration:none;cursor:pointer}.bld .bldtb .pri{background:var(--acc);border-color:var(--acc);color:var(--card)}
+.bld .bldf{position:relative;height:max(520px,calc(100dvh - 150px));border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}.bld .bldf iframe{width:100%;height:100%;border:0;display:block}
+.bld .bldf.full{position:fixed;inset:0;height:100dvh;border-radius:0;border:0;z-index:10000}.bld .bldx{position:absolute;top:6px;inset-inline-end:8px;z-index:2;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;width:34px;height:34px;font-size:16px;cursor:pointer}.bld .bldf:not(.full) .bldx{display:none}
+body.bldfull{overflow:hidden}`;
+if(!D.getElementById('bldcss')){const s=D.createElement('style');s.id='bldcss';s.textContent=css;D.head.appendChild(s)}
+SITE.bld=function(){return `<div class='gp bld' id='bldroot' data-nomath='1'>
+<h2>تصميم بناية <span class='bldb'>تجريبي</span></h2>
+<p class='nt'>${B('افتح موديل Revit لبيتك فتحلّل الأداة البناية كاملة بالعناصر المحددة وتصمّمها حسب ACI 318-19: السقوف والجسور والأعمدة والأعتاب والدرج والرافت أو الأسس الشريطية والقواعد المنفصلة، مع فحص الجدران الحاملة حسب TMS 402. تعرض النتائج خرائط ملوّنة على المسقط ومنظورًا ثلاثي الأبعاد، وتُخرج تقرير حسابات ومخططات إنشائية وجدول حديد. تصلح للبيوت ذات الجدران الحاملة حتى 3 طوابق، وللبنايات الهيكلية الصغيرة.','Open the Revit model of your house and the tool analyzes the whole building with finite elements and designs it to ACI 318-19: slabs, beams, columns, lintels, stairs, and the raft, strip or isolated footings, with bearing walls checked to TMS 402. Results appear as color maps on the plan and in a 3D view, with a calculation report, shop drawings and a bar schedule. It suits bearing-wall houses up to 3 stories and small framed buildings.')}</p>
+<div class='bldw'>⚠️ ${B('النتائج تصميم أولي للتعلّم والتدقيق. قبل التنفيذ يراجعها ويوقّعها مهندس إنشائي مختص.','The results are a preliminary design for learning and checking. Before construction they must be reviewed and signed by a qualified structural engineer.')}</div>
+<details class='bldh'><summary>${B('طريقة الاستخدام','How to use it')}</summary><ol>
+<li>${B('نزّل سكربت Revit من الزر أدناه.','Download the Revit script with the button below.')}</li>
+<li>${B('افتح موديلك في Revit 2022 أو أحدث، ثم من تبويب Manage اختر Dynamo، وافتح الملف <code>Fabrum_Revit_Export.dyn</code> واضغط Run. السكربت يقرأ الموديل فقط ولا يغيّر فيه شيئًا، ويحفظ ملف JSON على سطح المكتب باسم الموديل.','Open your model in Revit 2022 or later, choose Dynamo from the Manage tab, open <code>Fabrum_Revit_Export.dyn</code> and press Run. The script only reads the model and changes nothing; it saves a JSON file named after the model on your desktop.')}</li>
+<li>${B('في الأداة اضغط «فتح موديل» واختر ملف JSON، أو اضغط «بيت نموذجي» للتجربة.','In the tool press “Open model” and choose the JSON file, or press “Sample house” to try it.')}</li>
+<li>${B('تأكد من الجدران: المتصل حامل والمقطّع قاطع، واضغط على أي جدار لتبديله. أدخل الأحمال والمواد وتحمل التربة، ثم اضغط «حلّل وصمّم».','Check the walls: solid is bearing and dashed is a partition; click any wall to toggle it. Enter the loads, materials and soil bearing, then press “Analyze and design”.')}</li>
+<li>${B('إذا ظهر عضو غير كافٍ، اضغط «صمّم تلقائيًا» فيكبّر المقاطع ويضيف الجسور الناقصة ويعيد التحليل. طبّق التعديلات بعدها على موديل Revit.','If a member fails, press “Auto design” to enlarge sections, add missing beams and re-analyze. Then apply the changes to the Revit model.')}</li>
+<li>${B('صدّر تقرير الحسابات والمخططات بـ «طباعة / PDF»، والمخططات بـ DXF، وجدول الحديد بـ CSV، واحفظ عملك في «نشاطاتي».','Export the report and drawings with “Print / PDF”, the drawings as DXF and the bar schedule as CSV, and save your work in “My activities”.')}</li>
+</ol></details>
+<div class='bldtb'><a class='pri' href='bld/Fabrum_Revit_Export.dyn' download='Fabrum_Revit_Export.dyn'>⬇ ${B('سكربت Revit (Dynamo)','Revit script (Dynamo)')}</a><button type='button' data-bld='fs'>⤢ ${B('ملء الشاشة','Full screen')}</button><a id='bldnew' href='${src()}' target='_blank' rel='noopener'>↗ ${B('فتح في نافذة جديدة','Open in a new window')}</a></div>
+<div class='bldf' id='bldf'><iframe id='bldfr' title='${isEn()?'Building design':'تصميم بناية'}' src='${src()}' allow='fullscreen'></iframe><button type='button' class='bldx' data-bld='fs' aria-label='${isEn()?'Close full screen':'إغلاق ملء الشاشة'}'>✕</button></div>
+</div>`};
+const api=()=>{const f=$('#bldfr');try{return f&&f.contentWindow&&f.contentWindow.SDEAPI}catch(e){return null}};
+/* keep the latest work in S6.bld so it survives page changes and can be saved to «نشاطاتي» */
+function grab(){const a=api();if(!a)return false;const st=a.state();if(!st)return false;S6.bld=JSON.parse(JSON.stringify(st));try{sv6()}catch(e){}return true}
+function changed(){grab();const r=$('#bldroot');if(r)r.dispatchEvent(new Event('change',{bubbles:true}))}
+function full(on){const f=$('#bldf');if(!f)return;on=on==null?!f.classList.contains('full'):on;f.classList.toggle('full',on);D.body.classList.toggle('bldfull',on);const a=api();if(a)setTimeout(()=>a.redraw(),60)}
+window.addEventListener('message',e=>{const f=$('#bldfr');if(!f||e.source!==f.contentWindow||e.origin!==location.origin||!e.data)return;const k=e.data.sde;
+ if(k==='ready'){const a=api();if(a&&S6.bld&&S6.bld.model&&!a.hasModel())a.load(S6.bld)}
+ else if(k==='model'||k==='result')changed()});
+/* save buttons and wall toggles happen inside the frame: refresh the snapshot first */
+D.addEventListener('click',e=>{if(CUR6==='bld'&&e.target.closest&&e.target.closest('#acbar [data-ac]'))grab()},true);
+D.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-bld]');if(!b)return;if(b.dataset.bld==='fs')full()});
+D.addEventListener('keydown',e=>{if(e.key==='Escape'){const f=$('#bldf.full');if(f)full(false)}});
+setInterval(()=>{if(CUR6!=='bld'||D.visibilityState!=='visible')return;const a=api();if(!a||!a.hasModel())return;const st=a.state();if(!st)return;const j=JSON.stringify(st);if(j===JSON.stringify(S6.bld||null))return;S6.bld=JSON.parse(j);try{sv6()}catch(e){}const r=$('#bldroot');if(r)r.dispatchEvent(new Event('change',{bubbles:true}))},4000);
+R6.bld=function(){const nw=$('#bldnew');if(nw)nw.href=src()};
+/* language switch: reload the frame in the other language and restore the work */
+new MutationObserver(()=>{const f=$('#bldfr');if(!f)return;grab();const nw=$('#bldnew');if(nw)nw.href=src();f.title=isEn()?'Building design':'تصميم بناية';f.src=src()}).observe(D.documentElement,{attributes:true,attributeFilter:['lang']});
+/* menu entry (structural design section) */
+try{const MS=window.MS37;if(MS&&!MS.some(s=>s[2].some(y=>y[0]==='site:bld'))){const sec=MS.find(s=>s[2].some(y=>y[0]==='dsg'))||MS[0];sec[2].splice(0,0,['site:bld','تصميم بناية كاملة من موديل Revit (تحليل وتصميم)','building design structural analysis revit model 3d fem etabs safe raft bearing wall تصميم بناية تحليل انشائي موديل ريفت بيت'])}}catch(e){}
 })();
 
 

@@ -9,3 +9,8 @@
 /videos/*
   Cache-Control: public, max-age=86400
   Content-Type: video/mp4
+/bld/*.html
+  Cache-Control: no-cache
+/bld/*.dyn
+  Content-Type: application/octet-stream
+  Content-Disposition: attachment; filename="Fabrum_Revit_Export.dyn"
