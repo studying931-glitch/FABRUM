@@ -1,4 +1,4 @@
-const V='daftar-v1';
+const V='daftar-v2';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable.png','./apple-180.png',
 './vendor/xlsx.full.min.js','./vendor/html2pdf.bundle.min.js',
 './fonts/arabic-400.woff2','./fonts/arabic-600.woff2','./fonts/arabic-700.woff2','./fonts/latin-400.woff2','./fonts/latin-600.woff2','./fonts/latin-700.woff2'];

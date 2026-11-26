@@ -4,15 +4,29 @@
   "description": "تسجيل الصرفيات والديون والتسديدات لكل مشروع",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./",
+  "start_url": "./?app=daftar-almuqawil",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#e9e5de",
   "theme_color": "#171513",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
-    {"src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
-  ]
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "./?app=daftar-almuqawil"
 }
