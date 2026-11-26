@@ -11,3 +11,13 @@
   Content-Type: video/mp4
 /bld/*
   Cache-Control: no-cache
+
+/daftar/sw.js
+  Cache-Control: no-cache
+/daftar/index.html
+  Cache-Control: no-cache
+/daftar/
+  Cache-Control: no-cache
+/daftar/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: no-cache
